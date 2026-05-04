@@ -18,6 +18,12 @@ function App() {
   const [selectedExpense, setSelectedExpense] = useState(null);
   const { state, user, authLoading, dataLoading, signOut, updateSettings } = useFinance();
 
+  // Always go to current month when pressing Inicio
+  const goHome = () => {
+    updateSettings({ selectedMonth: state.currentCiclo?.nombre || null });
+    setCurrentScreen('dashboard');
+  };
+
   // ─── Auth gate ───
   if (authLoading) {
     return (
@@ -113,7 +119,7 @@ function App() {
 
       {/* Bottom Nav */}
       <nav className="bottom-nav">
-        <button className={`nav-btn ${currentScreen === 'dashboard' ? 'active' : ''}`} onClick={() => setCurrentScreen('dashboard')}>
+        <button className={`nav-btn ${currentScreen === 'dashboard' ? 'active' : ''}`} onClick={goHome}>
           <Home size={22} /><span>Inicio</span>
         </button>
         <button className={`nav-btn ${currentScreen === 'summary' ? 'active' : ''}`} onClick={() => setCurrentScreen('summary')}>

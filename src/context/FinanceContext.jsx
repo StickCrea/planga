@@ -179,7 +179,14 @@ export function FinanceProvider({ children }) {
   };
 
   const mapGastoToExpense = (g, cycleDay) => {
-    const expenseDate = g.fecha_gasto ? new Date(g.fecha_gasto + 'T12:00:00') : new Date();
+    // Parse the date correctly in local time to avoid UTC offset issues
+    let expenseDate;
+    if (g.fecha_gasto) {
+      const [year, month, day] = g.fecha_gasto.split('-').map(Number);
+      expenseDate = new Date(year, month - 1, day, 12, 0, 0); // noon local time
+    } else {
+      expenseDate = new Date();
+    }
     const cycleInfo = getCycleInfo(expenseDate, cycleDay || 25);
     return {
       id: g.id,
