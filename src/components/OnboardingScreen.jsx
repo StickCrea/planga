@@ -1,24 +1,22 @@
 import React, { useState } from 'react';
 import { supabase } from '../lib/supabase';
-import { fmt } from '../utils/financeUtils';
-import { getCycleInfo } from '../utils/financeUtils';
+import { fmt, getCycleInfo } from '../utils/financeUtils';
 
 const STEPS = ['Bienvenida', 'Ingresos', 'Ciclo', 'Compromisos'];
 
 export default function OnboardingScreen({ user, onComplete }) {
   const [step, setStep] = useState(0);
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
 
-  const [nombre, setNombre] = useState(user?.user_metadata?.nombre || '');
+  const [nombre, setNombre] = useState('');
   const [moneda, setMoneda] = useState('COP');
   const [income, setIncome] = useState('');
-  const [cycleDay, setCycleDay] = useState('25');
-  const [commitments, setCommitments] = useState([
-    { id: 'c1', name: 'Arriendo', amount: '', day: 1 }
-  ]);
+  const [cycleDay, setCycleDay] = useState('');
+  const [commitments, setCommitments] = useState([]);
 
   const addCommitment = () => {
-    setCommitments([...commitments, { id: 'c' + Date.now(), name: '', amount: '', day: 1 }]);
+    setCommitments([...commitments, { id: 'c' + Date.now(), name: '', amount: '', day: '' }]);
   };
 
   const removeCommitment = (id) => {
@@ -31,15 +29,16 @@ export default function OnboardingScreen({ user, onComplete }) {
 
   const handleFinish = async () => {
     setSaving(true);
+    setError('');
     try {
-      const cd = effectiveCycleDay;
-      const inc = effectiveIncome;
+      const cd = parseInt(cycleDay) || 25;
+      const inc = parseFloat(income) || 0;
       const totalFixed = commitments.reduce((s, c) => s + (parseFloat(c.amount) || 0), 0);
 
-      // Save profile
+      // Save profile — this marks onboarding as done (ciclo_dia is set)
       await supabase.from('profiles').upsert({
         id: user.id,
-        nombre: nombre || 'Usuario',
+        nombre: nombre.trim() || 'Usuario',
         moneda,
         ciclo_dia: cd,
         frecuencia: 'mensual'
@@ -56,30 +55,27 @@ export default function OnboardingScreen({ user, onComplete }) {
         gastos_fijos: totalFixed
       });
 
-      // Save commitments to localStorage
+      // Save commitments to per-user localStorage key
       const validCommitments = commitments
         .filter(c => c.name && c.amount)
-        .map(c => ({ ...c, amount: parseFloat(c.amount) }));
-      localStorage.setItem('planga_commitments', JSON.stringify(validCommitments));
+        .map(c => ({
+          id: c.id,
+          name: c.name,
+          amount: parseFloat(c.amount),
+          day: parseInt(c.day) || 1
+        }));
+      localStorage.setItem(`planga_commitments_${user.id}`, JSON.stringify(validCommitments));
 
       onComplete();
     } catch (err) {
       console.error('Onboarding error:', err);
-      alert('Error guardando tu configuración. Intenta de nuevo.');
+      setError('Error guardando tu configuración: ' + (err.message || 'Intenta de nuevo.'));
     } finally {
       setSaving(false);
     }
   };
 
-  const canNext = () => {
-    if (step === 0) return nombre.trim().length > 0;
-    // Steps 1, 2, 3 are always valid (have defaults)
-    return true;
-  };
-
-  // Ensure cycleDay has valid default
-  const effectiveCycleDay = parseInt(cycleDay) >= 1 && parseInt(cycleDay) <= 31 ? parseInt(cycleDay) : 25;
-  const effectiveIncome = parseFloat(income) > 0 ? parseFloat(income) : 0;
+  const canNext = () => step === 0 ? nombre.trim().length > 0 : true;
 
   return (
     <div style={{
@@ -97,7 +93,7 @@ export default function OnboardingScreen({ user, onComplete }) {
           <h1 style={{ fontSize: '2.2rem', fontWeight: 900, marginBottom: '4px' }}>
             Planga<span style={{ color: 'var(--green)' }}>.</span>
           </h1>
-          {step === 0 && <p style={{ color: 'var(--text3)', fontSize: '0.9rem' }}>Vamos a configurar tu perfil financiero</p>}
+          <p style={{ color: 'var(--text3)', fontSize: '0.88rem' }}>Configuración inicial — solo se hace una vez</p>
         </div>
 
         {/* Progress bar */}
@@ -112,32 +108,35 @@ export default function OnboardingScreen({ user, onComplete }) {
         </div>
 
         <div className="glass-card">
-          <p style={{ fontSize: '0.75rem', color: 'var(--text3)', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '1px' }}>
+          <p style={{ fontSize: '0.72rem', color: 'var(--text3)', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '1px' }}>
             Paso {step + 1} de {STEPS.length} — {STEPS[step]}
           </p>
 
-          {/* Step 0: Bienvenida + nombre */}
+          {/* Step 0: Nombre y moneda */}
           {step === 0 && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              <h2 style={{ fontSize: '1.3rem', fontWeight: 800 }}>¡Hola! ¿Cómo te llamas?</h2>
-              <p style={{ color: 'var(--text2)', fontSize: '0.87rem' }}>
-                Cada usuario tiene su propia información. Vamos a personalizar tu experiencia financiera.
+              <h2 style={{ fontSize: '1.25rem', fontWeight: 800 }}>¡Bienvenido/a a Planga!</h2>
+              <p style={{ color: 'var(--text2)', fontSize: '0.85rem' }}>
+                Esta información es completamente privada. Solo tú la verás. Cada usuario tiene su propia configuración.
               </p>
               <div className="form-group">
-                <label>Tu nombre</label>
+                <label>¿Cómo te llamas?</label>
                 <input
-                  type="text" className="input" placeholder="Ej: Stiven"
+                  type="text" className="input"
+                  placeholder="Tu nombre o apodo"
                   value={nombre} onChange={e => setNombre(e.target.value)}
                   autoFocus
                 />
               </div>
               <div className="form-group">
-                <label>Moneda</label>
+                <label>¿Con qué moneda trabajas?</label>
                 <select className="input" value={moneda} onChange={e => setMoneda(e.target.value)}>
                   <option value="COP">COP — Peso Colombiano</option>
                   <option value="USD">USD — Dólar Americano</option>
                   <option value="EUR">EUR — Euro</option>
                   <option value="MXN">MXN — Peso Mexicano</option>
+                  <option value="PEN">PEN — Sol Peruano</option>
+                  <option value="ARS">ARS — Peso Argentino</option>
                 </select>
               </div>
             </div>
@@ -146,11 +145,11 @@ export default function OnboardingScreen({ user, onComplete }) {
           {/* Step 1: Ingresos */}
           {step === 1 && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              <h2 style={{ fontSize: '1.3rem', fontWeight: 800 }}>¿Cuánto ganas al mes?</h2>
-              <p style={{ color: 'var(--text2)', fontSize: '0.87rem' }}>
-                Este es tu ingreso base mensual. Podrás modificarlo cuando quieras desde Configuración.
-              </p>
-              <div className="amount-card" style={{ marginTop: '8px' }}>
+              <h2 style={{ fontSize: '1.25rem', fontWeight: 800 }}>¿Cuánto ganas al mes?</h2>
+              <div style={{ padding: '10px 12px', background: 'rgba(59,130,246,0.08)', borderRadius: '8px', border: '1px solid rgba(59,130,246,0.2)', fontSize: '0.8rem', color: 'var(--text2)' }}>
+                💡 Ingresa tu salario neto (lo que recibes después de impuestos). Si tienes ingresos variables, puedes usar un promedio. Podrás modificarlo después.
+              </div>
+              <div className="amount-card">
                 <label className="amount-label">Ingreso mensual</label>
                 <div className="amount-input-wrap">
                   <span className="currency-prefix">$</span>
@@ -164,7 +163,7 @@ export default function OnboardingScreen({ user, onComplete }) {
               </div>
               {income && parseFloat(income) > 0 && (
                 <div style={{ textAlign: 'center', color: 'var(--green)', fontWeight: 700, fontSize: '0.9rem' }}>
-                  ✅ {fmt(parseFloat(income))} por mes
+                  ✅ {fmt(parseFloat(income))} / mes
                 </div>
               )}
             </div>
@@ -173,46 +172,53 @@ export default function OnboardingScreen({ user, onComplete }) {
           {/* Step 2: Día de ciclo */}
           {step === 2 && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              <h2 style={{ fontSize: '1.3rem', fontWeight: 800 }}>¿Cuándo te pagan?</h2>
-              <p style={{ color: 'var(--text2)', fontSize: '0.87rem' }}>
-                El día de tu ciclo es cuando recibes tu ingreso. La app calculará tu presupuesto a partir de ese día cada mes.
-              </p>
+              <h2 style={{ fontSize: '1.25rem', fontWeight: 800 }}>¿Cuándo te pagan?</h2>
+              <div style={{ padding: '10px 12px', background: 'rgba(59,130,246,0.08)', borderRadius: '8px', border: '1px solid rgba(59,130,246,0.2)', fontSize: '0.8rem', color: 'var(--text2)' }}>
+                💡 El <strong>día de ciclo</strong> es el día del mes en que recibes tu ingreso (quincena, nomina). Por ejemplo: si te pagan el día 25, escribe 25. Planga organizará tus gastos a partir de ese día cada mes.
+              </div>
               <div className="form-group">
                 <label>Día del mes (1 al 31)</label>
                 <input
                   type="number" className="input"
-                  min="1" max="31" placeholder="Ej: 25 (día 25 de cada mes)"
+                  min="1" max="31"
+                  placeholder="Ej: 25"
                   value={cycleDay} onChange={e => setCycleDay(e.target.value)}
                   autoFocus
                 />
               </div>
-              <div style={{ padding: '12px', background: 'rgba(34,197,94,0.08)', borderRadius: '8px', border: '1px solid rgba(34,197,94,0.2)' }}>
-                <p style={{ fontSize: '0.8rem', color: 'var(--text2)' }}>
-                  📅 Tu ciclo va del <strong>día {cycleDay || '?'}</strong> de un mes al <strong>día {cycleDay ? parseInt(cycleDay) - 1 : '?'}</strong> del siguiente.
-                </p>
-              </div>
+              {cycleDay && parseInt(cycleDay) >= 1 && parseInt(cycleDay) <= 31 && (
+                <div style={{ padding: '10px', background: 'rgba(34,197,94,0.08)', borderRadius: '8px', border: '1px solid rgba(34,197,94,0.2)', fontSize: '0.8rem', color: 'var(--text2)' }}>
+                  📅 Tu ciclo va del <strong>día {cycleDay}</strong> de cada mes al <strong>día {parseInt(cycleDay) - 1}</strong> del siguiente mes.
+                </div>
+              )}
             </div>
           )}
 
           {/* Step 3: Compromisos */}
           {step === 3 && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-              <h2 style={{ fontSize: '1.3rem', fontWeight: 800 }}>Gastos fijos mensuales</h2>
-              <p style={{ color: 'var(--text2)', fontSize: '0.87rem' }}>
-                Agrega tus compromisos fijos (arriendo, internet, etc.). Se descuentan automáticamente de tu presupuesto. Puedes modificarlos después.
-              </p>
+              <h2 style={{ fontSize: '1.25rem', fontWeight: 800 }}>Gastos fijos mensuales</h2>
+              <div style={{ padding: '10px 12px', background: 'rgba(59,130,246,0.08)', borderRadius: '8px', border: '1px solid rgba(59,130,246,0.2)', fontSize: '0.8rem', color: 'var(--text2)' }}>
+                💡 Son los pagos que haces sí o sí cada mes: arriendo, internet, cuota del gym, etc. Planga los descuenta automáticamente de tu presupuesto disponible. Puedes saltarte este paso y agregarlos después en la pestaña "Compromisos".
+              </div>
+
+              {commitments.length === 0 && (
+                <p style={{ color: 'var(--text3)', fontSize: '0.82rem', textAlign: 'center', padding: '8px 0' }}>
+                  No has agregado compromisos aún. Puedes agregarlos ahora o después.
+                </p>
+              )}
 
               {commitments.map((c, idx) => (
                 <div key={c.id} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr auto', gap: '8px', alignItems: 'end' }}>
                   <div className="form-group" style={{ margin: 0 }}>
-                    {idx === 0 && <label>Nombre</label>}
+                    {idx === 0 && <label style={{ fontSize: '0.72rem' }}>Nombre</label>}
                     <input
                       type="text" className="input" placeholder="Ej: Arriendo"
                       value={c.name} onChange={e => updateCommitment(c.id, 'name', e.target.value)}
                     />
                   </div>
                   <div className="form-group" style={{ margin: 0 }}>
-                    {idx === 0 && <label>Monto</label>}
+                    {idx === 0 && <label style={{ fontSize: '0.72rem' }}>Monto</label>}
                     <input
                       type="number" className="input" placeholder="0"
                       value={c.amount} onChange={e => updateCommitment(c.id, 'amount', e.target.value)}
@@ -230,23 +236,29 @@ export default function OnboardingScreen({ user, onComplete }) {
                 type="button" onClick={addCommitment}
                 style={{ background: 'none', border: '1px dashed var(--glass-border)', borderRadius: '8px', color: 'var(--accent)', padding: '10px', cursor: 'pointer', fontSize: '0.85rem' }}
               >
-                + Agregar otro compromiso
+                + Agregar compromiso fijo
               </button>
 
               {commitments.filter(c => c.amount).length > 0 && (
-                <div style={{ textAlign: 'right', color: 'var(--red)', fontWeight: 700 }}>
+                <div style={{ textAlign: 'right', color: 'var(--red)', fontWeight: 700, fontSize: '0.85rem' }}>
                   Total fijos: {fmt(commitments.reduce((s, c) => s + (parseFloat(c.amount) || 0), 0))}
                 </div>
               )}
             </div>
           )}
 
-          {/* Navigation buttons */}
+          {error && (
+            <div style={{ marginTop: '12px', padding: '10px', background: 'rgba(239,68,68,0.1)', borderRadius: '8px', color: '#ef4444', fontSize: '0.8rem' }}>
+              {error}
+            </div>
+          )}
+
+          {/* Navigation */}
           <div style={{ display: 'flex', gap: '10px', marginTop: '24px' }}>
             {step > 0 && (
               <button
                 type="button" onClick={() => setStep(step - 1)}
-                className="btn-secondary" style={{ flex: 1 }}
+                style={{ flex: 1, padding: '12px', borderRadius: '10px', border: '1px solid var(--glass-border)', background: 'transparent', color: 'var(--text)', cursor: 'pointer', fontWeight: 600 }}
               >← Atrás</button>
             )}
             {step < STEPS.length - 1 ? (
@@ -256,7 +268,9 @@ export default function OnboardingScreen({ user, onComplete }) {
                 className="btn-primary"
                 style={{ flex: 2 }}
                 disabled={!canNext()}
-              >Siguiente →</button>
+              >
+                Siguiente →
+              </button>
             ) : (
               <button
                 type="button"
@@ -265,14 +279,14 @@ export default function OnboardingScreen({ user, onComplete }) {
                 style={{ flex: 2 }}
                 disabled={saving}
               >
-                {saving ? 'Guardando...' : '¡Comenzar a usar Planga! 🚀'}
+                {saving ? 'Guardando...' : '¡Comenzar con Planga! 🚀'}
               </button>
             )}
           </div>
         </div>
 
         <p style={{ textAlign: 'center', fontSize: '0.72rem', color: 'var(--text3)', marginTop: '16px' }}>
-          Toda esta información es privada y solo visible para ti.
+          Toda tu información es privada y encriptada. Solo tú tienes acceso.
         </p>
       </div>
     </div>

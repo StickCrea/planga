@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Home, PieChart, Wallet, Plus, Settings, BarChart2, Globe, ListChecks, LogOut, Loader2 } from 'lucide-react';
 import Dashboard from './components/Dashboard';
 import Summary from './components/Summary';
@@ -14,10 +14,35 @@ import OnboardingScreen from './components/OnboardingScreen';
 import { useFinance } from './context/FinanceContext';
 import { getCycleInfo } from './utils/financeUtils';
 
+const INACTIVITY_TIMEOUT = 60 * 60 * 1000; // 1 hour in ms
+
 function App() {
   const [currentScreen, setCurrentScreen] = useState('dashboard');
   const [selectedExpense, setSelectedExpense] = useState(null);
   const { state, user, authLoading, dataLoading, needsOnboarding, completeOnboarding, signOut, updateSettings } = useFinance();
+  const inactivityTimer = useRef(null);
+
+  // ─── Auto-logout after 1 hour of inactivity ───
+  useEffect(() => {
+    if (!user) return;
+
+    const resetTimer = () => {
+      clearTimeout(inactivityTimer.current);
+      inactivityTimer.current = setTimeout(() => {
+        signOut();
+      }, INACTIVITY_TIMEOUT);
+    };
+
+    const events = ['mousedown', 'mousemove', 'keydown', 'scroll', 'touchstart', 'click'];
+    events.forEach(e => window.addEventListener(e, resetTimer, { passive: true }));
+    resetTimer(); // start timer on mount
+
+    return () => {
+      clearTimeout(inactivityTimer.current);
+      events.forEach(e => window.removeEventListener(e, resetTimer));
+    };
+  }, [user]);
+
 
   // Always go to current month when pressing Inicio
   const goHome = () => {
