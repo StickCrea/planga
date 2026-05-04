@@ -9,7 +9,10 @@ export const CATEGORY_COLORS = {
 };
 
 export function fmt(n) {
-  return '$' + Math.round(n).toLocaleString('es-CO');
+  const num = Math.round(Math.abs(n || 0));
+  // Use regex to add thousands separator (period = Colombian format)
+  const str = num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  return (n < 0 ? '-$' : '$') + str;
 }
 
 export function getCycleInfo(date, cycleDay) {
