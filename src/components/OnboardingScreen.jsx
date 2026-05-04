@@ -36,17 +36,18 @@ export default function OnboardingScreen({ user, onComplete }) {
       const totalFixed = commitments.reduce((s, c) => s + (parseFloat(c.amount) || 0), 0);
 
       // Save profile — this marks onboarding as done (ciclo_dia is set)
-      await supabase.from('profiles').upsert({
+      const { error: profileError } = await supabase.from('profiles').upsert({
         id: user.id,
         nombre: nombre.trim() || 'Usuario',
         moneda,
         ciclo_dia: cd,
         frecuencia: 'mensual'
       });
+      if (profileError) throw profileError;
 
       // Create first ciclo
       const cycleInfo = getCycleInfo(new Date(), cd);
-      await supabase.from('ciclos').upsert({
+      const { error: cicloError } = await supabase.from('ciclos').upsert({
         user_id: user.id,
         nombre: cycleInfo.monthKey,
         fecha_inicio: cycleInfo.startDate.toISOString().slice(0, 10),
@@ -54,6 +55,7 @@ export default function OnboardingScreen({ user, onComplete }) {
         ingreso: inc,
         gastos_fijos: totalFixed
       });
+      if (cicloError) throw cicloError;
 
       // Save commitments to per-user localStorage key
       const validCommitments = commitments
