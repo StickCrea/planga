@@ -51,7 +51,7 @@ export default function OnboardingScreen({ user, onComplete }) {
         nombre: cycleInfo.monthKey,
         fecha_inicio: cycleInfo.startDate.toISOString().slice(0, 10),
         fecha_fin: cycleInfo.endDate.toISOString().slice(0, 10),
-        ingresos: inc,
+        ingreso: inc,
         gastos_fijos: totalFixed
       });
 

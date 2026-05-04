@@ -126,7 +126,7 @@ export function FinanceProvider({ children }) {
         nombre: cycleInfo.monthKey,
         fecha_inicio: startStr,
         fecha_fin: endStr,
-        ingresos: 2400000,
+        ingreso: 0,
         gastos_fijos: 0,
       })
       .select()
@@ -160,7 +160,7 @@ export function FinanceProvider({ children }) {
 
     setState(prev => ({
       ...prev,
-      income: ciclo.ingresos || 2400000,
+      income: ciclo.ingreso || 0,
       cycleDay,
       currentCiclo: ciclo,
       selectedMonth: ciclo.nombre,
@@ -350,7 +350,7 @@ export function FinanceProvider({ children }) {
         await supabase.from('profiles').update({ ciclo_dia: updates.cycleDay }).eq('id', user.id);
       }
       if (updates.income && state.currentCiclo) {
-        await supabase.from('ciclos').update({ ingresos: updates.income }).eq('id', state.currentCiclo.id);
+        await supabase.from('ciclos').update({ ingreso: updates.income }).eq('id', state.currentCiclo.id);
       }
     }
 
