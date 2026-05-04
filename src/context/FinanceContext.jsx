@@ -367,7 +367,8 @@ export function FinanceProvider({ children }) {
   // ─── Complete onboarding ───
   const completeOnboarding = () => {
     setNeedsOnboarding(false);
-    loadAllData();
+    // Defer data load so React can re-render the main app first
+    setTimeout(() => loadAllData(), 300);
   };
 
   return (
