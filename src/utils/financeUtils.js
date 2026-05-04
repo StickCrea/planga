@@ -18,22 +18,44 @@ export function fmt(n) {
 export function getCycleInfo(date, cycleDay) {
   const d = new Date(date);
   const year = d.getFullYear();
-  const month = d.getMonth();
+  const month = d.getMonth(); // 0 to 11
   const day = d.getDate();
+  const cd = parseInt(cycleDay) || 1;
 
-  let effYear, effMonth;
-  if (day >= cycleDay) {
-    effYear = year;
-    effMonth = month + 1;
+  let startYear, startMonth;
+
+  if (day >= cd) {
+    // We are on or past the cycle start day in the current month
+    startYear = year;
+    startMonth = month;
   } else {
-    const prev = new Date(year, month - 1, 1);
-    effYear = prev.getFullYear();
-    effMonth = prev.getMonth() + 1;
+    // We are before the cycle start day, so the cycle started last month
+    if (month === 0) {
+      startYear = year - 1;
+      startMonth = 11;
+    } else {
+      startYear = year;
+      startMonth = month - 1;
+    }
   }
 
+  // Calculate start date
+  const startDate = new Date(startYear, startMonth, cd, 0, 0, 0);
+  
+  // Calculate end date (it's 1 millisecond before the NEXT cycle start)
+  let nextStartYear = startYear;
+  let nextStartMonth = startMonth + 1;
+  if (nextStartMonth > 11) {
+    nextStartMonth = 0;
+    nextStartYear += 1;
+  }
+  const nextStartDate = new Date(nextStartYear, nextStartMonth, cd, 0, 0, 0);
+  const endDate = new Date(nextStartDate.getTime() - 1);
+  
+  // Name the cycle after the month in which it ends
+  const effYear = endDate.getFullYear();
+  const effMonth = endDate.getMonth() + 1;
   const monthKey = `${effYear}-${String(effMonth).padStart(2, '0')}`;
-  const endDate = new Date(effYear, effMonth, cycleDay - 1, 23, 59, 59);
-  const startDate = new Date(effYear, effMonth - 1, cycleDay, 0, 0, 0);
   
   return { monthKey, startDate, endDate };
 }
