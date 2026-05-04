@@ -32,8 +32,8 @@ export default function OnboardingScreen({ user, onComplete }) {
   const handleFinish = async () => {
     setSaving(true);
     try {
-      const cd = parseInt(cycleDay) || 25;
-      const inc = parseFloat(income) || 0;
+      const cd = effectiveCycleDay;
+      const inc = effectiveIncome;
       const totalFixed = commitments.reduce((s, c) => s + (parseFloat(c.amount) || 0), 0);
 
       // Save profile
@@ -73,10 +73,13 @@ export default function OnboardingScreen({ user, onComplete }) {
 
   const canNext = () => {
     if (step === 0) return nombre.trim().length > 0;
-    if (step === 1) return parseFloat(income) > 0;
-    if (step === 2) return parseInt(cycleDay) >= 1 && parseInt(cycleDay) <= 31;
+    // Steps 1, 2, 3 are always valid (have defaults)
     return true;
   };
+
+  // Ensure cycleDay has valid default
+  const effectiveCycleDay = parseInt(cycleDay) >= 1 && parseInt(cycleDay) <= 31 ? parseInt(cycleDay) : 25;
+  const effectiveIncome = parseFloat(income) > 0 ? parseFloat(income) : 0;
 
   return (
     <div style={{
