@@ -4,15 +4,6 @@ import { getCycleInfo } from '../utils/financeUtils';
 
 const FinanceContext = createContext();
 
-const CATEGORY_BUDGETS_DEFAULT = {
-  comida: 500000,
-  mercado: 600000,
-  transporte: 200000,
-  ocio: 150000,
-  suscripciones: 100000,
-  otro: 100000
-};
-
 const LOCAL_COMMITMENTS_KEY = 'planga_commitments';
 const LOCAL_BUDGETS_KEY = 'planga_budgets';
 
@@ -21,11 +12,11 @@ export function FinanceProvider({ children }) {
   const [authLoading, setAuthLoading] = useState(true);
   const [needsOnboarding, setNeedsOnboarding] = useState(false);
   const [state, setState] = useState({
-    income: 2400000,
-    cycleDay: 25,
+    income: 0,
+    cycleDay: null,
     expenses: [],
-    categoryBudgets: CATEGORY_BUDGETS_DEFAULT,
-    commitments: JSON.parse(localStorage.getItem(LOCAL_COMMITMENTS_KEY) || '[{"id":"c1","name":"Arriendo","amount":800000,"day":1}]'),
+    categoryBudgets: JSON.parse(localStorage.getItem(LOCAL_BUDGETS_KEY) || 'null') || {},
+    commitments: JSON.parse(localStorage.getItem(LOCAL_COMMITMENTS_KEY) || '[]'),
     savings: [],
     investments: [],
     debts: [],
@@ -96,13 +87,18 @@ export function FinanceProvider({ children }) {
       return;
     }
 
-    if (data) {
-      setState(prev => ({
-        ...prev,
-        cycleDay: data.ciclo_dia || 25,
-        categoryBudgets: JSON.parse(localStorage.getItem(LOCAL_BUDGETS_KEY) || 'null') || CATEGORY_BUDGETS_DEFAULT,
-      }));
+    // If profile exists but cyclo_dia is null → also needs onboarding
+    if (!data || !data.ciclo_dia) {
+      setNeedsOnboarding(true);
+      return;
     }
+
+    setState(prev => ({
+      ...prev,
+      cycleDay: data.ciclo_dia,
+      categoryBudgets: JSON.parse(localStorage.getItem(LOCAL_BUDGETS_KEY) || 'null') || {},
+      commitments: JSON.parse(localStorage.getItem(`${LOCAL_COMMITMENTS_KEY}_${user.id}`) || '[]'),
+    }));
   };
 
   const findOrCreateCiclo = async (cycleDay) => {
