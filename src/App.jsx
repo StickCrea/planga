@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Home, PieChart, Wallet, Plus, Settings, BarChart2, Globe, ListChecks } from 'lucide-react';
+import { Home, PieChart, Wallet, Plus, Settings, BarChart2, Globe, ListChecks, LogOut, Loader2 } from 'lucide-react';
 import Dashboard from './components/Dashboard';
 import Summary from './components/Summary';
 import Analytics from './components/Analytics';
@@ -9,13 +9,28 @@ import Commitments from './components/Commitments';
 import ExpenseForm from './components/ExpenseForm';
 import SettingsScreen from './components/SettingsScreen';
 import ExpenseDetailsModal from './components/ExpenseDetailsModal';
+import AuthScreen from './components/AuthScreen';
 import { useFinance } from './context/FinanceContext';
 import { getCycleInfo } from './utils/financeUtils';
 
 function App() {
   const [currentScreen, setCurrentScreen] = useState('dashboard');
   const [selectedExpense, setSelectedExpense] = useState(null);
-  const { state, updateSettings } = useFinance();
+  const { state, user, authLoading, dataLoading, signOut, updateSettings } = useFinance();
+
+  // ─── Auth gate ───
+  if (authLoading) {
+    return (
+      <div style={{ minHeight: '100vh', background: 'var(--bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: '16px' }}>
+        <h1 style={{ fontSize: '2.5rem', fontWeight: 900 }}>Planga<span style={{ color: 'var(--green)' }}>.</span></h1>
+        <Loader2 size={28} style={{ color: 'var(--green)', animation: 'spin 1s linear infinite' }} />
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <AuthScreen />;
+  }
 
   const handleMonthSelect = (monthKey) => {
     updateSettings({ selectedMonth: monthKey });
@@ -23,6 +38,15 @@ function App() {
   };
 
   const renderScreen = () => {
+    if (dataLoading) {
+      return (
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', paddingTop: '60px', flexDirection: 'column', gap: '12px' }}>
+          <Loader2 size={32} style={{ color: 'var(--green)', animation: 'spin 1s linear infinite' }} />
+          <p style={{ color: 'var(--text3)', fontSize: '0.85rem' }}>Cargando tus datos...</p>
+        </div>
+      );
+    }
+
     switch (currentScreen) {
       case 'dashboard': return <Dashboard onSelectExpense={setSelectedExpense} />;
       case 'summary': return <Summary onSelectExpense={setSelectedExpense} />;
@@ -37,8 +61,9 @@ function App() {
   };
 
   const getMonthDisplay = () => {
-    if (state.selectedMonth) {
-      const [year, month] = state.selectedMonth.split('-').map(Number);
+    const mk = state.selectedMonth || state.currentCiclo?.nombre;
+    if (mk) {
+      const [year, month] = mk.split('-').map(Number);
       const d = new Date(year, month - 1);
       return d.toLocaleDateString('es-CO', { month: 'long', year: 'numeric' });
     }
@@ -58,9 +83,14 @@ function App() {
               {getMonthDisplay()}
             </span>
           </div>
-          <button className="icon-btn" onClick={() => setCurrentScreen('settings')}>
-            <Settings size={20} />
-          </button>
+          <div style={{ display: 'flex', gap: '6px' }}>
+            <button className="icon-btn" onClick={() => setCurrentScreen('settings')}>
+              <Settings size={20} />
+            </button>
+            <button className="icon-btn" onClick={signOut} title="Cerrar sesión">
+              <LogOut size={18} />
+            </button>
+          </div>
         </header>
 
         {renderScreen()}
@@ -68,13 +98,13 @@ function App() {
 
       {/* Expense Details Modal */}
       {selectedExpense && (
-        <ExpenseDetailsModal 
-          expense={selectedExpense} 
-          onClose={() => setSelectedExpense(null)} 
+        <ExpenseDetailsModal
+          expense={selectedExpense}
+          onClose={() => setSelectedExpense(null)}
         />
       )}
 
-      {/* FAB for add expense */}
+      {/* FAB */}
       {currentScreen !== 'add' && (
         <button className="fab" onClick={() => setCurrentScreen('add')}>
           <Plus size={28} />
@@ -83,47 +113,23 @@ function App() {
 
       {/* Bottom Nav */}
       <nav className="bottom-nav">
-        <button 
-          className={`nav-btn ${currentScreen === 'dashboard' ? 'active' : ''}`}
-          onClick={() => setCurrentScreen('dashboard')}
-        >
-          <Home size={22} />
-          <span>Inicio</span>
+        <button className={`nav-btn ${currentScreen === 'dashboard' ? 'active' : ''}`} onClick={() => setCurrentScreen('dashboard')}>
+          <Home size={22} /><span>Inicio</span>
         </button>
-        <button 
-          className={`nav-btn ${currentScreen === 'summary' ? 'active' : ''}`}
-          onClick={() => setCurrentScreen('summary')}
-        >
-          <PieChart size={22} />
-          <span>Resumen</span>
+        <button className={`nav-btn ${currentScreen === 'summary' ? 'active' : ''}`} onClick={() => setCurrentScreen('summary')}>
+          <PieChart size={22} /><span>Historial</span>
         </button>
-        <button 
-          className={`nav-btn ${currentScreen === 'analytics' ? 'active' : ''}`}
-          onClick={() => setCurrentScreen('analytics')}
-        >
-          <BarChart2 size={22} />
-          <span>Análisis</span>
+        <button className={`nav-btn ${currentScreen === 'analytics' ? 'active' : ''}`} onClick={() => setCurrentScreen('analytics')}>
+          <BarChart2 size={22} /><span>Análisis</span>
         </button>
-        <button 
-          className={`nav-btn ${currentScreen === 'portfolio' ? 'active' : ''}`}
-          onClick={() => setCurrentScreen('portfolio')}
-        >
-          <Wallet size={22} />
-          <span>Cartera</span>
+        <button className={`nav-btn ${currentScreen === 'portfolio' ? 'active' : ''}`} onClick={() => setCurrentScreen('portfolio')}>
+          <Wallet size={22} /><span>Cartera</span>
         </button>
-        <button 
-          className={`nav-btn ${currentScreen === 'reports' ? 'active' : ''}`}
-          onClick={() => setCurrentScreen('reports')}
-        >
-          <Globe size={22} />
-          <span>Global</span>
+        <button className={`nav-btn ${currentScreen === 'reports' ? 'active' : ''}`} onClick={() => setCurrentScreen('reports')}>
+          <Globe size={22} /><span>Global</span>
         </button>
-        <button 
-          className={`nav-btn ${currentScreen === 'commitments' ? 'active' : ''}`}
-          onClick={() => setCurrentScreen('commitments')}
-        >
-          <ListChecks size={22} />
-          <span>Compromisos</span>
+        <button className={`nav-btn ${currentScreen === 'commitments' ? 'active' : ''}`} onClick={() => setCurrentScreen('commitments')}>
+          <ListChecks size={22} /><span>Compromisos</span>
         </button>
       </nav>
     </div>
