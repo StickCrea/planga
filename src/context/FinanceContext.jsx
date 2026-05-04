@@ -99,6 +99,8 @@ export function FinanceProvider({ children }) {
       categoryBudgets: JSON.parse(localStorage.getItem(LOCAL_BUDGETS_KEY) || 'null') || {},
       commitments: JSON.parse(localStorage.getItem(`${LOCAL_COMMITMENTS_KEY}_${user.id}`) || '[]'),
     }));
+
+    return data;
   };
 
   const findOrCreateCiclo = async (cycleDay) => {
@@ -107,16 +109,26 @@ export function FinanceProvider({ children }) {
     const startStr = cycleInfo.startDate.toISOString().slice(0, 10);
     const endStr = cycleInfo.endDate.toISOString().slice(0, 10);
 
-    // Look for existing ciclo
-    const { data: existing } = await supabase
+    // Look for existing ciclo (use order to avoid error if duplicates exist due to previous bug)
+    const { data: existingList } = await supabase
       .from('ciclos')
       .select('*')
       .eq('user_id', user.id)
       .lte('fecha_inicio', today.toISOString().slice(0, 10))
       .gte('fecha_fin', today.toISOString().slice(0, 10))
-      .single();
+      .order('created_at', { ascending: false })
+      .limit(1);
 
-    if (existing) return existing;
+    if (existingList && existingList.length > 0) return existingList[0];
+
+    // Get default income from the most recent cycle
+    const { data: lastCiclo } = await supabase
+      .from('ciclos')
+      .select('ingreso')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false })
+      .limit(1);
+    const defaultIncome = (lastCiclo && lastCiclo.length > 0) ? lastCiclo[0].ingreso : 0;
 
     // Create new ciclo
     const { data: newCiclo, error } = await supabase
@@ -126,7 +138,7 @@ export function FinanceProvider({ children }) {
         nombre: cycleInfo.monthKey,
         fecha_inicio: startStr,
         fecha_fin: endStr,
-        ingreso: 0,
+        ingreso: defaultIncome,
         gastos_fijos: 0,
       })
       .select()
