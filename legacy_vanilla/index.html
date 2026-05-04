@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="description" content="Control financiero personal — visualiza tu presupuesto diario, registra gastos y mantén disciplina financiera." />
+  <meta name="theme-color" content="#0f172a" />
+  <title>Planga — Control Financiero Personal</title>
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <!-- ==================== APP SHELL ==================== -->
+  <div id="app">
+
+    <!-- ===== SCREEN: DASHBOARD ===== -->
+    <section id="screen-dashboard" class="screen active">
+      <header class="screen-header">
+        <h1 class="logo">Planga<span class="logo-dot">.</span></h1>
+        <button id="btn-settings" class="icon-btn" aria-label="Configuración" onclick="openSettings()">
+          <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        </button>
+      </header>
+
+      <!-- Status message -->
+      <div id="status-banner" class="status-banner status-green">
+        <span id="status-icon" class="status-emoji">✅</span>
+        <span id="status-text">Vas bien, sigue así.</span>
+      </div>
+
+      <!-- Main card: Available money -->
+      <div id="main-card" class="glass-card main-card pulse-border-green">
+        <p class="card-label">Dinero disponible</p>
+        <h2 id="available-money" class="money-big">$0</h2>
+        <div class="card-row">
+          <div class="card-stat">
+            <span class="stat-label">Días restantes</span>
+            <span id="days-remaining" class="stat-value">0</span>
+          </div>
+          <div class="card-divider"></div>
+          <div class="card-stat">
+            <span class="stat-label">Puedes gastar hoy</span>
+            <span id="daily-budget" class="stat-value stat-highlight">$0</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Progress ring -->
+      <div class="glass-card progress-card">
+        <div class="progress-ring-container">
+          <svg class="progress-ring" width="110" height="110" viewBox="0 0 110 110">
+            <circle class="progress-ring-bg" cx="55" cy="55" r="48" />
+            <circle id="progress-ring-fill" class="progress-ring-fill" cx="55" cy="55" r="48" />
+          </svg>
+          <div class="progress-ring-text">
+            <span id="spent-percent" class="ring-percent">0%</span>
+            <span class="ring-label">gastado</span>
+          </div>
+        </div>
+        <div class="progress-stats">
+          <div class="pstat">
+            <span class="pstat-val" id="total-spent-dash">$0</span>
+            <span class="pstat-label">Gastado</span>
+          </div>
+          <div class="pstat">
+            <span class="pstat-val" id="daily-avg-dash">$0</span>
+            <span class="pstat-label">Promedio/día</span>
+          </div>
+          <div class="pstat">
+            <span class="pstat-val" id="commitments-total">$0</span>
+            <span class="pstat-label">Compromisos</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Recent expenses mini list -->
+      <div class="glass-card recent-card">
+        <div class="card-header-row">
+          <h3 class="card-title">Últimos gastos</h3>
+          <button class="link-btn" onclick="navigateTo('screen-summary')">Ver todo →</button>
+        </div>
+        <ul id="recent-expenses" class="expense-list-mini">
+          <li class="empty-state">Sin gastos registrados hoy.</li>
+        </ul>
+      </div>
+
+  
+    <!-- Scripts -->
+      <button id="fab-add" class="fab" onclick="navigateTo('screen-add')" aria-label="Agregar gasto">
+        <svg width="28" height="28" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="14" y1="6" x2="14" y2="22"/><line x1="6" y1="14" x2="22" y2="14"/></svg>
+      </button>
+    </section>
+
+    <!-- ===== SCREEN: PORTFOLIO ===== -->
+    <section id="screen-portfolio" class="screen">
+      <header class="screen-header">
+        <button class="icon-btn" onclick="navigateTo('screen-dashboard')" aria-label="Volver">
+          <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+        </button>
+        <h2 class="screen-title">Patrimonio</h2>
+        <div style="width:38px"></div>
+      </header>
+
+      <div class="glass-card net-worth-card" style="text-align: center; padding: 24px;">
+        <p class="card-label">Patrimonio Neto</p>
+        <h2 id="net-worth-amount" class="money-big">$0</h2>
+        <div class="card-row" style="margin-top: 16px;">
+          <div class="card-stat">
+            <span class="stat-label">Activos</span>
+            <span id="total-assets" class="stat-value" style="color: var(--green); font-size: 1.1rem;">$0</span>
+          </div>
+          <div class="card-divider"></div>
+          <div class="card-stat">
+            <span class="stat-label">Deudas</span>
+            <span id="total-liabilities" class="stat-value" style="color: var(--red); font-size: 1.1rem;">$0</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="portfolio-sections" style="display: flex; flex-direction: column; gap: 16px;">
+        <div class="glass-card">
+          <div class="card-header-row">
+            <h3 class="card-title">💰 Ahorros</h3>
+            <button class="icon-btn-sm" onclick="openAddAsset('saving')">+</button>
+          </div>
+          <div id="savings-list" class="portfolio-list"></div>
+        </div>
+
+        <div class="glass-card">
+          <div class="card-header-row">
+            <h3 class="card-title">📈 Inversiones</h3>
+            <button class="icon-btn-sm" onclick="openAddAsset('investment')">+</button>
+          </div>
+          <div id="investments-list" class="portfolio-list"></div>
+        </div>
+
+        <div class="glass-card">
+          <div class="card-header-row">
+            <h3 class="card-title">💸 Deudas</h3>
+            <button class="icon-btn-sm" onclick="openAddLiability()">+</button>
+          </div>
+          <div id="debts-list" class="portfolio-list"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== SCREEN: ADD EXPENSE ===== -->
+    <section id="screen-add" class="screen">
+      <header class="screen-header">
+        <button class="icon-btn" onclick="if(typeof clearOcrPreview==='function')clearOcrPreview(); navigateTo('screen-dashboard')" aria-label="Volver">
+          <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+        </button>
+        <h2 class="screen-title">Agregar gasto</h2>
+        <div style="width:38px"></div>
+      </header>
+
+      <form id="expense-form" class="expense-form" onsubmit="return handleAddExpense(event)">
+        <!-- OCR Scan Button -->
+        <div class="ocr-scan-container">
+          <button type="button" class="ocr-btn" onclick="triggerScanner()">
+            <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+            <span>Escanear factura</span>
+          </button>
+          <input id="ocr-input" type="file" accept="image/*" capture="environment" class="hidden" onchange="handleOcrScan(event)" />
+          <div id="ocr-status" class="ocr-status hidden">
+            <div class="ocr-spinner"></div>
+            <span id="ocr-status-text">Escaneando...</span>
+          </div>
+        </div>
+
+        <div id="ocr-preview-container" class="glass-card ocr-preview-card hidden">
+          <div class="ocr-preview-header">
+            <span class="ocr-preview-title">Vista previa de factura</span>
+            <div class="ocr-preview-actions">
+              <button type="button" class="icon-btn-sm" onclick="rotatePreview()" title="Rotar 90°">
+                <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+              </button>
+              <button type="button" class="link-btn" onclick="clearOcrPreview()">Quitar</button>
+            </div>
+          </div>
+          <img id="ocr-preview-img" class="ocr-preview-img" src="" alt="Vista previa" />
+          <div class="ocr-debug-info">
+            <p><strong>Lo que leyó la app:</strong></p>
+            <div id="ocr-debug-text" class="ocr-debug-text"></div>
+          </div>
+        </div>
+
+        <div class="glass-card amount-card">
+          <label for="expense-amount" class="amount-label">¿Cuánto gastaste?</label>
+          <div class="amount-input-wrap">
+            <span class="currency-prefix">$</span>
+            <input id="expense-amount" type="number" inputmode="numeric" class="amount-input" placeholder="0" min="0" required autofocus />
+          </div>
+          <p id="amount-feedback" class="amount-feedback"></p>
+        </div>
+
+        <div class="glass-card" style="margin-bottom: 14px;">
+          <label for="expense-date" style="display: block; font-size: .78rem; color: var(--text2); margin-bottom: 6px; font-weight: 600;">Fecha del gasto</label>
+          <input type="date" id="expense-date" class="input" style="width: 100%; border: none; background: transparent; color: var(--text); font-family: inherit; font-size: 1rem;">
+        </div>
+
+        <div class="glass-card payment-card" style="margin-bottom: 14px;">
+          <label class="cat-label">Medio de Pago</label>
+          <div class="payment-method-grid">
+            <button type="button" class="pay-btn selected" data-method="efectivo" onclick="selectPaymentMethod(this)">
+              <span class="pay-icon">💵</span><span class="pay-name">Efectivo</span>
+            </button>
+            <button type="button" class="pay-btn" data-method="tarjeta" onclick="selectPaymentMethod(this)">
+              <span class="pay-icon">💳</span><span class="pay-name">Tarjeta</span>
+            </button>
+          </div>
+          
+          <div id="card-details-section" class="card-details-sub hidden" style="margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--glass-border);">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+              <div class="form-group">
+                <label style="font-size: .7rem; color: var(--text3); margin-bottom: 4px; display: block;">Entidad</label>
+                <select id="payment-entity" class="input" style="padding: 8px; font-size: .85rem;">
+                  <option value="Bancolombia">Bancolombia</option>
+                  <option value="Nu">Nu</option>
+                  <option value="Rappi">Rappi</option>
+                  <option value="Daviplata">Daviplata</option>
+                  <option value="Nequi">Nequi</option>
+                  <option value="Otro">Otro</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label style="font-size: .7rem; color: var(--text3); margin-bottom: 4px; display: block;">Tipo</label>
+                <div class="type-selector" style="display: flex; gap: 4px; background: var(--glass-bg); padding: 4px; border-radius: 8px;">
+                  <button type="button" id="type-debito" class="type-btn selected" onclick="selectCardType('debito')" style="flex:1; font-size: .75rem; padding: 6px; border-radius: 6px; border: none; background: var(--accent); color: white; cursor: pointer;">Débito</button>
+                  <button type="button" id="type-credito" class="type-btn" onclick="selectCardType('credito')" style="flex:1; font-size: .75rem; padding: 6px; border-radius: 6px; border: none; background: transparent; color: var(--text2); cursor: pointer;">Crédito</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="glass-card category-card">
+          <label class="cat-label">Categoría</label>
+          <div id="category-grid" class="category-grid">
+            <button type="button" class="cat-btn selected" data-cat="comida" onclick="selectCategory(this)">
+              <span class="cat-icon">🍔</span><span class="cat-name">Comida</span>
+            </button>
+            <button type="button" class="cat-btn" data-cat="mercado" onclick="selectCategory(this)">
+              <span class="cat-icon">🛒</span><span class="cat-name">Mercado</span>
+            </button>
+            <button type="button" class="cat-btn" data-cat="transporte" onclick="selectCategory(this)">
+              <span class="cat-icon">🚌</span><span class="cat-name">Transporte</span>
+            </button>
+            <button type="button" class="cat-btn" data-cat="ocio" onclick="selectCategory(this)">
+              <span class="cat-icon">🎮</span><span class="cat-name">Ocio</span>
+            </button>
+            <button type="button" class="cat-btn" data-cat="suscripciones" onclick="selectCategory(this)">
+              <span class="cat-icon">📱</span><span class="cat-name">Suscripciones</span>
+            </button>
+            <button type="button" class="cat-btn" data-cat="otro" onclick="selectCategory(this)">
+              <span class="cat-icon">📦</span><span class="cat-name">Otro</span>
+            </button>
+          </div>
+        </div>
+
+        <button id="btn-register" type="submit" class="btn-primary">
+          <span class="btn-text">Registrar gasto</span>
+          <span id="btn-check" class="btn-check hidden">✓</span>
+        </button>
+      </form>
+    </section>
+
+    <!-- ===== SCREEN: REPORTS (GLOBAL) ===== -->
+    <section id="screen-reports" class="screen">
+      <header class="screen-header">
+        <h2 class="screen-title">Vista Global</h2>
+        <div style="width:38px"></div>
+      </header>
+
+      <div class="glass-card">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px">
+          <h3 class="card-title" style="margin:0">Vista Global</h3>
+          <button class="icon-btn-sm" onclick="exportToCSV()" title="Exportar CSV">
+            <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          </button>
+        </div>
+        <p class="card-subtitle" style="font-size: .75rem; color: var(--text3); margin-top: -8px; margin-bottom: 12px;">Ingresos vs Gastos por mes</p>
+        <div id="annual-trend-chart" class="merchant-breakdown">
+          <!-- Will be populated by JS -->
+        </div>
+      </div>
+
+      <div class="glass-card">
+        <h3 class="card-title">Histórico de Meses</h3>
+        <div id="monthly-history-list" class="expense-list-full" style="margin-top: 12px;">
+          <!-- Will be populated by JS -->
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== SCREEN: SUMMARY ===== -->
+    <section id="screen-summary" class="screen">
+      <header class="screen-header">
+        <button class="icon-btn" onclick="navigateTo('screen-dashboard')" aria-label="Volver">
+          <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+        </button>
+        <h2 class="screen-title">Resumen</h2>
+        <div style="width:38px"></div>
+      </header>
+
+      <!-- Summary stats -->
+      <div class="summary-stats-row">
+        <div class="glass-card summary-stat-card">
+          <span class="summary-stat-label">Total gastado</span>
+          <span id="summary-total" class="summary-stat-val">$0</span>
+        </div>
+        <div class="glass-card summary-stat-card">
+          <span class="summary-stat-label">Promedio/día</span>
+          <span id="summary-avg" class="summary-stat-val">$0</span>
+        </div>
+      </div>
+
+      <div class="glass-card">
+        <div class="budget-compare">
+          <div class="budget-bar-wrap">
+            <div class="budget-bar-label">
+              <span>Gastado vs Presupuesto</span>
+              <span id="budget-ratio">0%</span>
+            </div>
+            <div class="budget-bar-track">
+              <div id="budget-bar-fill" class="budget-bar-fill" style="width:0%"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Category breakdown -->
+      <div class="glass-card">
+        <h3 class="card-title" style="margin-bottom:12px">Por categoría</h3>
+        <div id="category-breakdown" class="category-breakdown"></div>
+      </div>
+
+      <!-- Full expense list -->
+      <div class="glass-card">
+        <h3 class="card-title" style="margin-bottom:12px">Historial de gastos</h3>
+        <ul id="full-expense-list" class="expense-list-full">
+          <li class="empty-state">Sin gastos registrados.</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- ===== SCREEN: ANALYTICS ===== -->
+    <section id="screen-analytics" class="screen">
+      <header class="screen-header">
+        <button class="icon-btn" onclick="navigateTo('screen-dashboard')" aria-label="Volver">
+          <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+        </button>
+        <h2 class="screen-title">Dashboard Analítico</h2>
+        <div style="width:38px"></div>
+      </header>
+
+      <!-- KPI Row -->
+      <div class="kpi-row">
+        <div class="glass-card kpi-card kpi-income">
+          <span class="kpi-icon">💰</span>
+          <span class="kpi-label">Ingresos</span>
+          <span id="kpi-income" class="kpi-value">$0</span>
+        </div>
+        <div class="glass-card kpi-card kpi-expense">
+          <span class="kpi-icon">📉</span>
+          <span class="kpi-label">Gastos</span>
+          <span id="kpi-expenses" class="kpi-value">$0</span>
+        </div>
+        <div class="glass-card kpi-card kpi-balance">
+          <span class="kpi-icon">📊</span>
+          <span class="kpi-label">Balance</span>
+          <span id="kpi-balance" class="kpi-value">$0</span>
+        </div>
+      </div>
+
+      <!-- Merchant Breakdown -->
+      <div class="glass-card analytics-card">
+        <h3 class="card-title">Principales Comercios</h3>
+        <p class="card-subtitle" style="font-size: .75rem; color: var(--text3); margin-top: -8px; margin-bottom: 12px;">¿Dónde estás dejando tu dinero?</p>
+        <div id="merchant-breakdown" class="merchant-breakdown">
+          <!-- Will be populated by JS -->
+        </div>
+      </div>
+
+      <!-- Top Products Breakdown -->
+      <div class="glass-card analytics-card">
+        <h3 class="card-title">Lo más comprado</h3>
+        <p class="card-subtitle" style="font-size: .75rem; color: var(--text3); margin-top: -8px; margin-bottom: 12px;">Artículos que más se repiten en tus facturas</p>
+        <div id="products-breakdown" class="merchant-breakdown">
+          <!-- Will be populated by JS -->
+        </div>
+      </div>
+
+      <!-- Comparison Table: Budget vs Actual -->
+      <div class="glass-card budget-table-card">
+        <h3 class="card-title">Comparativo Mensual</h3>
+        <div class="budget-table-container">
+          <table class="budget-table">
+            <thead>
+              <tr>
+                <th>Categoría</th>
+                <th>Presupuesto</th>
+                <th>Real</th>
+                <th style="text-align:right">Var.</th>
+              </tr>
+            </thead>
+            <tbody id="budget-table-body">
+              <!-- Dynamically populated -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Donut: Income vs Expenses -->
+      <div class="glass-card chart-card">
+        <h3 class="card-title">Ingresos vs Gastos</h3>
+        <div class="chart-wrap">
+          <canvas id="chart-donut" width="200" height="200"></canvas>
+          <div id="donut-legend" class="donut-legend"></div>
+        </div>
+      </div>
+
+      <!-- Bar chart: Expenses by Category -->
+      <div class="glass-card chart-card">
+        <h3 class="card-title">Gastos por Categoría</h3>
+        <canvas id="chart-bar" width="380" height="220"></canvas>
+      </div>
+
+      <!-- Line chart: Daily Spending Trend -->
+      <div class="glass-card chart-card">
+        <h3 class="card-title">Tendencia diaria de gasto</h3>
+        <canvas id="chart-line" width="380" height="200"></canvas>
+      </div>
+
+      <!-- Waterfall: Budget Flow -->
+      <div class="glass-card chart-card">
+        <h3 class="card-title">Flujo del presupuesto</h3>
+        <canvas id="chart-waterfall" width="380" height="220"></canvas>
+      </div>
+
+      <!-- Income management -->
+      <div class="glass-card">
+        <div class="card-header-row">
+          <h3 class="card-title">Ingresos registrados</h3>
+          <button class="link-btn" onclick="openAddIncome()">+ Agregar</button>
+        </div>
+        <ul id="income-list" class="expense-list-full"></ul>
+      </div>
+    </section>
+
+    <!-- ===== SCREEN: COMMITMENTS ===== -->
+    <section id="screen-commitments" class="screen">
+      <header class="screen-header">
+        <button class="icon-btn" onclick="navigateTo('screen-dashboard')" aria-label="Volver">
+          <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+        </button>
+        <h2 class="screen-title">Compromisos</h2>
+        <div style="width:38px"></div>
+      </header>
+
+      <div id="commitments-list" class="commitments-list"></div>
+
+      <button class="btn-secondary" onclick="openAddCommitment()">
+        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="9" y1="3" x2="9" y2="15"/><line x1="3" y1="9" x2="15" y2="9"/></svg>
+        Agregar compromiso
+      </button>
+    </section>
+
+    <!-- ===== MODAL: SETTINGS ===== -->
+    <div id="modal-settings" class="modal-overlay hidden" onclick="closeModalOnBackdrop(event, 'modal-settings')">
+      <div class="modal glass-card">
+        <div class="modal-header">
+          <h3 class="modal-title">Configuración</h3>
+          <button class="icon-btn" onclick="closeModal('modal-settings')" aria-label="Cerrar">
+            <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="5" y1="5" x2="15" y2="15"/><line x1="15" y1="5" x2="5" y2="15"/></svg>
+          </button>
+        </div>
+        <form id="settings-form" onsubmit="return saveSettings(event)">
+          <div class="form-group">
+            <label for="setting-income">Ingreso mensual (COP)</label>
+            <input id="setting-income" type="number" inputmode="numeric" class="input" placeholder="2400000" min="0" />
+          </div>
+          <div class="form-group">
+            <label for="setting-day">Día de inicio del ciclo</label>
+            <input id="setting-day" type="number" class="input" placeholder="1" min="1" max="31" />
+          </div>
+
+          <div class="settings-section">
+            <h4 class="settings-subtitle">Presupuestos por categoría</h4>
+            <div id="category-budgets-grid" class="category-budgets-grid">
+              <!-- Dynamically populated -->
+            </div>
+          </div>
+          <button type="submit" class="btn-primary" style="margin-top:16px">Guardar</button>
+          <button type="button" class="btn-danger" style="margin-top:8px" onclick="resetAllData()">Reiniciar todo</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- ===== MODAL: ADD COMMITMENT ===== -->
+    <div id="modal-commitment" class="modal-overlay hidden" onclick="closeModalOnBackdrop(event, 'modal-commitment')">
+      <div class="modal glass-card">
+        <div class="modal-header">
+          <h3 class="modal-title">Nuevo compromiso</h3>
+          <button class="icon-btn" onclick="closeModal('modal-commitment')" aria-label="Cerrar">
+            <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="5" y1="5" x2="15" y2="15"/><line x1="15" y1="5" x2="5" y2="15"/></svg>
+          </button>
+        </div>
+        <form id="commitment-form" onsubmit="return saveCommitment(event)">
+          <div class="form-group">
+            <label for="commit-name">Nombre</label>
+            <input id="commit-name" type="text" class="input" placeholder="Arriendo" required />
+          </div>
+          <div class="form-group">
+            <label for="commit-amount">Monto (COP)</label>
+            <input id="commit-amount" type="number" inputmode="numeric" class="input" placeholder="800000" min="0" required />
+          </div>
+          <div class="form-group">
+            <label for="commit-day">Día del mes</label>
+            <input id="commit-day" type="number" class="input" placeholder="1" min="1" max="31" required />
+          </div>
+          <button type="submit" class="btn-primary" style="margin-top:16px">Guardar compromiso</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- ===== MODAL: ADD INCOME ===== -->
+    <div id="modal-income" class="modal-overlay hidden" onclick="closeModalOnBackdrop(event, 'modal-income')">
+      <div class="modal glass-card">
+        <div class="modal-header">
+          <h3 class="modal-title">Registrar ingreso</h3>
+          <button class="icon-btn" onclick="closeModal('modal-income')" aria-label="Cerrar">
+            <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="5" y1="5" x2="15" y2="15"/><line x1="15" y1="5" x2="5" y2="15"/></svg>
+          </button>
+        </div>
+        <form id="income-form" onsubmit="return saveIncome(event)">
+          <div class="form-group">
+            <label for="income-desc">Descripción</label>
+            <input id="income-desc" type="text" class="input" placeholder="Salario, freelance..." required />
+          </div>
+          <div class="form-group">
+            <label for="income-amount">Monto (COP)</label>
+            <input id="income-amount" type="number" inputmode="numeric" class="input" placeholder="2400000" min="0" required />
+          </div>
+          <button type="submit" class="btn-primary" style="margin-top:16px">Guardar ingreso</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- ===== MODAL: EXPENSE DETAILS ===== -->
+    <div id="modal-details" class="modal-overlay hidden" onclick="closeModalOnBackdrop(event, 'modal-details')">
+      <div class="modal glass-card">
+        <div class="modal-header">
+          <h3 class="modal-title">Detalle del gasto</h3>
+          <button class="icon-btn" onclick="closeModal('modal-details')" aria-label="Cerrar">
+            <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="5" y1="5" x2="15" y2="15"/><line x1="15" y1="5" x2="5" y2="15"/></svg>
+          </button>
+        </div>
+        <div class="details-content">
+          <div class="details-main">
+            <div id="details-icon" class="details-icon"></div>
+            <div>
+              <h2 id="details-merchant" class="details-merchant"></h2>
+              <p id="details-date" class="details-date"></p>
+              <div id="details-payment-tag" class="payment-tag hidden"></div>
+            </div>
+          </div>
+          
+          <div class="details-divider"></div>
+          
+          <div id="details-items-container" class="details-items-container">
+            <p class="details-subtitle">Productos</p>
+            <ul id="details-items-list" class="details-items-list"></ul>
+          </div>
+
+          <div id="details-meta-container" class="details-meta-container">
+            <button type="button" class="details-meta-toggle" onclick="toggleMetadata()">
+              <span>Datos técnicos / extra</span>
+              <svg id="meta-chevron" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+            </button>
+            <div id="details-meta-content" class="details-meta-content hidden">
+              <ul id="details-meta-list" class="details-meta-list"></ul>
+            </div>
+          </div>
+          
+          <div class="details-footer">
+            <span>Total</span>
+            <span id="details-total" class="details-total"></span>
+          </div>
+        </div>
+        <button class="btn-danger" style="margin-top:20px" onclick="deleteCurrentExpense()">Eliminar este gasto</button>
+      </div>
+    </div>
+
+    <!-- ===== TOAST ===== -->
+    <div id="toast" class="toast hidden"></div>
+
+    <!-- ===== BOTTOM NAV ===== -->
+    <nav id="bottom-nav" class="bottom-nav">
+      <button class="nav-btn active" data-screen="screen-dashboard" onclick="navigateTo('screen-dashboard')">
+        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        <span>Inicio</span>
+      </button>
+      <button class="nav-btn" data-screen="screen-summary" onclick="navigateTo('screen-summary')">
+        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+        <span>Historial</span>
+      </button>
+      <button class="nav-btn" data-screen="screen-analytics" onclick="navigateTo('screen-analytics')">
+        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-6.22-8.56"/><path d="M21 3v9h-9"/></svg>
+        <span>Análisis</span>
+      </button>
+      <button class="nav-btn" data-screen="screen-portfolio" onclick="navigateTo('screen-portfolio')">
+        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12V8H6a2 2 0 0 1-2-2c0-1.1.9-2 2-2h12v4"/><path d="M4 6v12c0 1.1.9 2 2 2h14v-4"/><path d="M18 12a2 2 0 0 0-2 2c0 1.1.9 2 2 2h4v-4h-4z"/></svg>
+        <span>Patrimonio</span>
+      </button>
+      <button class="nav-btn" data-screen="screen-reports" onclick="navigateTo('screen-reports')">
+        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"/><path d="M22 12A10 10 0 0 0 12 2v10z"/></svg>
+        <span>Global</span>
+      </button>
+      <button class="nav-btn" data-screen="screen-commitments" onclick="navigateTo('screen-commitments')">
+        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        <span>Compromisos</span>
+      </button>
+    </nav>
+
+  </div>
+
+    <!-- ===== MODAL: MERCHANT DETAILS ===== -->
+    <div id="modal-merchant-details" class="modal-overlay hidden">
+      <div class="modal glass-card">
+        <header class="modal-header">
+          <div style="display:flex; align-items:center; gap:12px">
+            <div id="merchant-details-icon" class="expense-icon">🏪</div>
+            <div>
+              <h2 id="merchant-details-name" class="modal-title">Nombre del Comercio</h2>
+              <p id="merchant-details-count" style="font-size: .75rem; color: var(--text3)">0 compras este mes</p>
+            </div>
+          </div>
+          <button class="icon-btn" onclick="closeModal('modal-merchant-details')" aria-label="Cerrar">✕</button>
+        </header>
+        
+        <div class="details-body" style="max-height: 50vh; overflow-y: auto;">
+          <div class="details-items-container">
+            <p class="details-subtitle">Todos los productos comprados</p>
+            <ul id="merchant-products-list" class="details-items-list">
+              <!-- Will be populated by JS -->
+            </ul>
+          </div>
+        </div>
+        
+        <div class="details-footer">
+          <span>Total acumulado</span>
+          <span id="merchant-details-total" class="details-total">$0</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== MODAL: CONFIRM DELETE ===== -->
+    <div id="modal-confirm-delete" class="modal-overlay hidden" style="z-index: 3000;">
+      <div class="modal glass-card" style="max-width: 320px; text-align: center; padding: 30px 20px;">
+        <div class="expense-icon" style="background: var(--red-glow); color: var(--red); margin: 0 auto 16px; font-size: 1.5rem; width: 60px; height: 60px;">🗑️</div>
+        <h2 class="modal-title" style="margin-bottom: 8px;">¿Eliminar gasto?</h2>
+        <p style="font-size: .85rem; color: var(--text3); margin-bottom: 24px;">Esta acción no se puede deshacer y el registro desaparecerá de todos tus reportes.</p>
+        
+        <div style="display: flex; flex-direction: column; gap: 10px;">
+          <button class="btn-danger" onclick="executeDelete()">Sí, eliminar permanentemente</button>
+          <button class="btn-secondary" onclick="closeModal('modal-confirm-delete')" style="background: transparent; border: 1px solid var(--glass-border);">Cancelar</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== MODAL: ADD ASSET ===== -->
+    <div id="modal-asset" class="modal-overlay hidden" onclick="closeModalOnBackdrop(event, 'modal-asset')">
+      <div class="modal glass-card">
+        <div class="modal-header">
+          <h3 id="asset-modal-title" class="modal-title">Nuevo Activo</h3>
+          <button class="icon-btn" onclick="closeModal('modal-asset')" aria-label="Cerrar">✕</button>
+        </div>
+        <form id="asset-form" onsubmit="return saveAsset(event)">
+          <input type="hidden" id="asset-type" />
+          <div class="form-group">
+            <label for="asset-name">Nombre (ej: Fondo Ahorro, Acciones Apple)</label>
+            <input id="asset-name" type="text" class="input" placeholder="Nombre" required />
+          </div>
+          <div class="form-group">
+            <label for="asset-amount">Monto Actual (COP)</label>
+            <input id="asset-amount" type="number" inputmode="numeric" class="input" placeholder="0" min="0" required />
+          </div>
+          <button type="submit" class="btn-primary" style="margin-top:16px">Guardar</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- ===== MODAL: ADD DEBT ===== -->
+    <div id="modal-liability" class="modal-overlay hidden" onclick="closeModalOnBackdrop(event, 'modal-liability')">
+      <div class="modal glass-card">
+        <div class="modal-header">
+          <h3 class="modal-title">Nueva Deuda</h3>
+          <button class="icon-btn" onclick="closeModal('modal-liability')" aria-label="Cerrar">✕</button>
+        </div>
+        <form id="liability-form" onsubmit="return saveLiability(event)">
+          <div class="form-group">
+            <label for="debt-name">Descripción (ej: Préstamo Banco, Tarjeta de Crédito)</label>
+            <input id="debt-name" type="text" class="input" placeholder="Nombre de la deuda" required />
+          </div>
+          <div class="form-group">
+            <label for="debt-total">Monto Total de la Deuda</label>
+            <input id="debt-total" type="number" inputmode="numeric" class="input" placeholder="0" min="0" required />
+          </div>
+          <div class="form-group">
+            <label for="debt-paid">Monto Ya Pagado</label>
+            <input id="debt-paid" type="number" inputmode="numeric" class="input" placeholder="0" min="0" required />
+          </div>
+          <button type="submit" class="btn-primary" style="margin-top:16px">Guardar Deuda</button>
+        </form>
+      </div>
+    </div>
+
+  <script src="app.js"></script>
+  <script src="charts.js"></script>
+  <script src="ocr.js"></script>
+</body>
+</html>
