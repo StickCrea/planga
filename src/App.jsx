@@ -10,13 +10,14 @@ import ExpenseForm from './components/ExpenseForm';
 import SettingsScreen from './components/SettingsScreen';
 import ExpenseDetailsModal from './components/ExpenseDetailsModal';
 import AuthScreen from './components/AuthScreen';
+import OnboardingScreen from './components/OnboardingScreen';
 import { useFinance } from './context/FinanceContext';
 import { getCycleInfo } from './utils/financeUtils';
 
 function App() {
   const [currentScreen, setCurrentScreen] = useState('dashboard');
   const [selectedExpense, setSelectedExpense] = useState(null);
-  const { state, user, authLoading, dataLoading, signOut, updateSettings } = useFinance();
+  const { state, user, authLoading, dataLoading, needsOnboarding, completeOnboarding, signOut, updateSettings } = useFinance();
 
   // Always go to current month when pressing Inicio
   const goHome = () => {
@@ -34,9 +35,9 @@ function App() {
     );
   }
 
-  if (!user) {
-    return <AuthScreen />;
-  }
+  if (!user) return <AuthScreen />;
+
+  if (needsOnboarding) return <OnboardingScreen user={user} onComplete={completeOnboarding} />;
 
   const handleMonthSelect = (monthKey) => {
     updateSettings({ selectedMonth: monthKey });

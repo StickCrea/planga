@@ -19,6 +19,7 @@ const LOCAL_BUDGETS_KEY = 'planga_budgets';
 export function FinanceProvider({ children }) {
   const [user, setUser] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
+  const [needsOnboarding, setNeedsOnboarding] = useState(false);
   const [state, setState] = useState({
     income: 2400000,
     cycleDay: 25,
@@ -90,15 +91,8 @@ export function FinanceProvider({ children }) {
       .single();
 
     if (error && error.code === 'PGRST116') {
-      // Profile doesn't exist, create it
-      const nombre = user.user_metadata?.nombre || user.email?.split('@')[0] || 'Usuario';
-      await supabase.from('profiles').insert({
-        id: user.id,
-        nombre,
-        moneda: 'COP',
-        ciclo_dia: 25,
-        frecuencia: 'mensual'
-      });
+      // Profile doesn't exist → first time user, needs onboarding
+      setNeedsOnboarding(true);
       return;
     }
 
@@ -374,11 +368,19 @@ export function FinanceProvider({ children }) {
     await supabase.auth.signOut();
   };
 
+  // ─── Complete onboarding ───
+  const completeOnboarding = () => {
+    setNeedsOnboarding(false);
+    loadAllData();
+  };
+
   return (
     <FinanceContext.Provider value={{
       user,
       authLoading,
       dataLoading,
+      needsOnboarding,
+      completeOnboarding,
       state,
       setState,
       signOut,
