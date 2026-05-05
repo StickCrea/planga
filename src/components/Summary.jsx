@@ -9,7 +9,12 @@ export default function Summary({ onSelectExpense }) {
   const { state } = useFinance();
   const expenses = getCurrentMonthExpenses(state);
   const totalSpent = getTotalSpent(state);
-  const daysElapsed = Math.max(new Date().getDate(), 1);
+  // Calculate days elapsed since cycle start (not since month start)
+  const today = new Date();
+  const cycleStart = state.currentCiclo
+    ? new Date(state.currentCiclo.fecha_inicio + 'T00:00:00')
+    : today;
+  const daysElapsed = Math.max(Math.ceil((today - cycleStart) / (1000 * 60 * 60 * 24)) + 1, 1);
   const dailyAvg = totalSpent / daysElapsed;
   
   const totalCommitments = state.commitments.reduce((s,c) => s + c.amount, 0);

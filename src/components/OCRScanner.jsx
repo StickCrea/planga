@@ -58,13 +58,14 @@ export default function OCRScanner({ onScanComplete }) {
         onScanComplete({ ...ocrData, paymentInfo });
       }
 
+      setStatus(''); // Clear status on success
+
     } catch (err) {
       console.error("OCR Error:", err);
       setStatus('Error al procesar la imagen. Intenta de nuevo.');
       setTimeout(() => setStatus(''), 3000);
     } finally {
       setIsScanning(false);
-      if (!isScanning) setStatus('');
     }
   };
 

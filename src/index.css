@@ -670,6 +670,8 @@ body {
     padding: 28px 32px 32px;
     padding-left: calc(var(--sidebar-w) + 32px);
     width: 100%;
+    max-width: 1000px;
+    margin: 0 auto;
   }
 
   /* --- Dashboard 2-col grid --- */
@@ -743,7 +745,7 @@ body {
    RESPONSIVE — DESKTOP (≥1200px)
    ========================================================== */
 @media (min-width: 1200px) {
-  :root { --sidebar-w: 260px; }
+  :root { --sidebar-w: 280px; }
 
   .bottom-nav { padding: 32px 16px 24px; }
 
@@ -764,7 +766,7 @@ body {
   .screen {
     padding: 36px 48px 48px;
     padding-left: calc(var(--sidebar-w) + 48px);
-    max-width: 1400px;
+    max-width: 1200px;
   }
 
   /* --- Dashboard 3-col --- */

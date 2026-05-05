@@ -6,6 +6,7 @@ const FinanceContext = createContext();
 
 const LOCAL_COMMITMENTS_KEY = 'planga_commitments';
 const LOCAL_BUDGETS_KEY = 'planga_budgets';
+const LOCAL_INCOMES_KEY = 'planga_incomes';
 
 export function FinanceProvider({ children }) {
   const [user, setUser] = useState(null);
@@ -61,10 +62,13 @@ export function FinanceProvider({ children }) {
   const loadAllData = async () => {
     setDataLoading(true);
     try {
-      await Promise.all([
-        loadProfile(),
-        loadAssetsAndDebts(),
-      ]);
+      const profileOk = await loadProfile();
+      if (!profileOk) {
+        setDataLoading(false);
+        return;
+      }
+
+      await loadAssetsAndDebts();
       // Load expenses after profile (needs cycleDay for cycle detection)
       await loadCurrentCycleAndExpenses();
     } catch (err) {
@@ -84,13 +88,19 @@ export function FinanceProvider({ children }) {
     if (error && error.code === 'PGRST116') {
       // Profile doesn't exist → first time user, needs onboarding
       setNeedsOnboarding(true);
-      return;
+      return false;
     }
 
-    // If profile exists but cyclo_dia is null → also needs onboarding
-    if (!data || !data.ciclo_dia) {
+    // If profile exists but they have no cycles, they still need onboarding
+    // (This handles cases where a DB trigger auto-creates the profile)
+    const { count } = await supabase
+      .from('ciclos')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', user.id);
+
+    if (count === 0 || !data || !data.ciclo_dia) {
       setNeedsOnboarding(true);
-      return;
+      return false;
     }
 
     setState(prev => ({
@@ -98,9 +108,10 @@ export function FinanceProvider({ children }) {
       cycleDay: data.ciclo_dia,
       categoryBudgets: JSON.parse(localStorage.getItem(LOCAL_BUDGETS_KEY) || 'null') || {},
       commitments: JSON.parse(localStorage.getItem(`${LOCAL_COMMITMENTS_KEY}_${user.id}`) || '[]'),
+      incomes: JSON.parse(localStorage.getItem(`${LOCAL_INCOMES_KEY}_${user.id}`) || '[]'),
     }));
 
-    return data;
+    return true;
   };
 
   const findOrCreateCiclo = async (cycleDay) => {
@@ -184,7 +195,9 @@ export function FinanceProvider({ children }) {
     // Parse the date correctly in local time to avoid UTC offset issues
     let expenseDate;
     if (g.fecha_gasto) {
-      const [year, month, day] = g.fecha_gasto.split('-').map(Number);
+      // Handle both "YYYY-MM-DD" and "YYYY-MM-DDTHH:mm..." formats
+      const dateString = g.fecha_gasto.substring(0, 10);
+      const [year, month, day] = dateString.split('-').map(Number);
       expenseDate = new Date(year, month - 1, day, 12, 0, 0); // noon local time
     } else {
       expenseDate = new Date();
@@ -194,7 +207,7 @@ export function FinanceProvider({ children }) {
       id: g.id,
       amount: g.total || 0,
       category: g.categoria || 'otro',
-      date: g.fecha_gasto || new Date().toISOString().slice(0, 10),
+      date: g.fecha_gasto ? g.fecha_gasto.substring(0, 10) : new Date().toISOString().slice(0, 10),
       month: cycleInfo.monthKey,
       timestamp: g.created_at,
       merchant: g.comercio || null,
@@ -236,23 +249,42 @@ export function FinanceProvider({ children }) {
     // Find current ciclo_id
     const cicloId = state.currentCiclo?.id;
 
-    const { data: gasto, error } = await supabase
-      .from('gastos')
-      .insert({
-        user_id: user.id,
-        ciclo_id: cicloId || null,
-        comercio: expense.merchant || null,
-        total: expense.amount,
-        categoria: expense.category,
-        medio_pago: expense.paymentMethod || 'efectivo',
-        entidad_banco: expense.paymentEntity || null,
-        fecha_gasto: expense.date,
-        origen: 'manual',
-      })
-      .select()
-      .single();
+    // Optimistic UI update
+    setState(prev => ({
+      ...prev,
+      expenses: [expense, ...prev.expenses]
+    }));
 
-    if (error) { console.error('addExpense error:', error); return; }
+    let insertPayload = {
+      user_id: user.id,
+      ciclo_id: cicloId || null,
+      comercio: expense.merchant || null,
+      total: expense.amount,
+      categoria: expense.category,
+      medio_pago: expense.paymentMethod ? expense.paymentMethod.charAt(0).toUpperCase() + expense.paymentMethod.slice(1) : 'Efectivo',
+      entidad_banco: expense.paymentEntity || null,
+      fecha_gasto: expense.date,
+      origen: 'manual',
+    };
+
+    let response = await supabase.from('gastos').insert(insertPayload).select().single();
+
+    // Fallback if the user's DB doesn't have the new columns OR if the ENUM values still don't match
+    if (response.error && (response.error.message?.includes('does not exist') || response.error.message?.includes('enum'))) {
+      delete insertPayload.medio_pago;
+      delete insertPayload.entidad_banco;
+      response = await supabase.from('gastos').insert(insertPayload).select().single();
+    }
+
+    const { data: gasto, error } = response;
+
+    if (error) { 
+      console.error('addExpense error:', error); 
+      alert(`Error al guardar gasto: ${error.message || error.code}`);
+      // Revert optimistic update
+      await loadCurrentCycleAndExpenses();
+      return; 
+    }
 
     // Insert items
     if (expense.items && expense.items.length > 0) {
@@ -326,7 +358,17 @@ export function FinanceProvider({ children }) {
   const addCommitment = (commitment) => {
     setState(prev => {
       const updated = [...prev.commitments, commitment];
-      localStorage.setItem(LOCAL_COMMITMENTS_KEY, JSON.stringify(updated));
+      const storageKey = user ? `${LOCAL_COMMITMENTS_KEY}_${user.id}` : LOCAL_COMMITMENTS_KEY;
+      localStorage.setItem(storageKey, JSON.stringify(updated));
+      return { ...prev, commitments: updated };
+    });
+  };
+
+  const updateCommitment = (updatedCommitment) => {
+    setState(prev => {
+      const updated = prev.commitments.map(c => c.id === updatedCommitment.id ? updatedCommitment : c);
+      const storageKey = user ? `${LOCAL_COMMITMENTS_KEY}_${user.id}` : LOCAL_COMMITMENTS_KEY;
+      localStorage.setItem(storageKey, JSON.stringify(updated));
       return { ...prev, commitments: updated };
     });
   };
@@ -334,18 +376,29 @@ export function FinanceProvider({ children }) {
   const deleteCommitment = (id) => {
     setState(prev => {
       const updated = prev.commitments.filter(c => c.id !== id);
-      localStorage.setItem(LOCAL_COMMITMENTS_KEY, JSON.stringify(updated));
+      const storageKey = user ? `${LOCAL_COMMITMENTS_KEY}_${user.id}` : LOCAL_COMMITMENTS_KEY;
+      localStorage.setItem(storageKey, JSON.stringify(updated));
       return { ...prev, commitments: updated };
     });
   };
 
   // ─── Income (local) ───
   const addIncome = (income) => {
-    setState(prev => ({ ...prev, incomes: [...(prev.incomes || []), income] }));
+    setState(prev => {
+      const updated = [...(prev.incomes || []), income];
+      const storageKey = user ? `${LOCAL_INCOMES_KEY}_${user.id}` : LOCAL_INCOMES_KEY;
+      localStorage.setItem(storageKey, JSON.stringify(updated));
+      return { ...prev, incomes: updated };
+    });
   };
 
   const deleteIncome = (id) => {
-    setState(prev => ({ ...prev, incomes: (prev.incomes || []).filter(i => i.id !== id) }));
+    setState(prev => {
+      const updated = (prev.incomes || []).filter(i => i.id !== id);
+      const storageKey = user ? `${LOCAL_INCOMES_KEY}_${user.id}` : LOCAL_INCOMES_KEY;
+      localStorage.setItem(storageKey, JSON.stringify(updated));
+      return { ...prev, incomes: updated };
+    });
   };
 
   // ─── Settings ───
@@ -358,10 +411,10 @@ export function FinanceProvider({ children }) {
     setState(prev => ({ ...prev, ...updates }));
 
     if (user && (updates.income !== undefined || updates.cycleDay !== undefined)) {
-      if (updates.cycleDay) {
+      if (updates.cycleDay !== undefined) {
         await supabase.from('profiles').update({ ciclo_dia: updates.cycleDay }).eq('id', user.id);
       }
-      if (updates.income && state.currentCiclo) {
+      if (updates.income !== undefined && state.currentCiclo) {
         await supabase.from('ciclos').update({ ingreso: updates.income }).eq('id', state.currentCiclo.id);
       }
     }
@@ -397,6 +450,7 @@ export function FinanceProvider({ children }) {
       deleteExpense,
       updateSettings,
       addCommitment,
+      updateCommitment,
       deleteCommitment,
       addAsset,
       deleteAsset,

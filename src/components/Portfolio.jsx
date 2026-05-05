@@ -119,20 +119,28 @@ export default function Portfolio() {
           <p className="empty-state">No tienes deudas registradas.</p>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '12px' }}>
-            {state.debts.map(d => (
-              <div key={d.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px', background: 'rgba(255,255,255,0.05)', borderRadius: '8px' }}>
-                <div>
-                  <span style={{ fontWeight: 600, display: 'block' }}>{d.name}</span>
-                  <span style={{ fontSize: '0.75rem', color: 'var(--text2)' }}>Pagado: {fmt(d.paid)} / {fmt(d.total)}</span>
+            {state.debts.map(d => {
+              const progress = d.total > 0 ? Math.min((d.paid / d.total) * 100, 100) : 0;
+              return (
+                <div key={d.id} style={{ display: 'flex', flexDirection: 'column', gap: '8px', padding: '12px', background: 'rgba(255,255,255,0.05)', borderRadius: '8px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <div>
+                      <span style={{ fontWeight: 600, display: 'block' }}>{d.name}</span>
+                      <span style={{ fontSize: '0.75rem', color: 'var(--text2)' }}>Pagado: {fmt(d.paid)} / {fmt(d.total)}</span>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <span style={{ color: 'var(--red)', fontWeight: '700' }}>{fmt(d.total - d.paid)}</span>
+                      <button onClick={() => deleteDebt(d.id)} style={{ background: 'none', border: 'none', color: 'var(--text3)', cursor: 'pointer' }}>
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+                  </div>
+                  <div style={{ height: '4px', background: 'var(--bg3)', borderRadius: '2px', overflow: 'hidden' }}>
+                    <div style={{ height: '100%', width: `${progress}%`, background: 'var(--green)', borderRadius: '2px' }}></div>
+                  </div>
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <span style={{ color: 'var(--red)', fontWeight: '700' }}>{fmt(d.total - d.paid)}</span>
-                  <button onClick={() => deleteDebt(d.id)} style={{ background: 'none', border: 'none', color: 'var(--text3)', cursor: 'pointer' }}>
-                    <Trash2 size={16} />
-                  </button>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
@@ -166,7 +174,7 @@ export default function Portfolio() {
                 <div className="form-group">
                   <label>Monto Ya Pagado</label>
                   <input 
-                    type="number" className="input" required min="0" placeholder="0"
+                    type="number" className="input" required min="0" max={formData.amount} placeholder="0"
                     value={formData.paid} onChange={e => setFormData({...formData, paid: e.target.value})}
                   />
                 </div>
