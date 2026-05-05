@@ -67,12 +67,29 @@ export default function AuthScreen() {
           </p>
         </div>
 
-        <div className="glass-card">
+        <div className="glass-card" style={{ overflow: 'hidden' }}>
           {/* Tabs */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', background: 'var(--bg3)', borderRadius: '10px', padding: '4px', marginBottom: '24px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', background: 'var(--bg3)', borderRadius: '10px', padding: '4px', marginBottom: '24px', position: 'relative' }}>
+            {/* Animated Slider */}
+            <div style={{
+              position: 'absolute',
+              top: '4px',
+              bottom: '4px',
+              left: mode === 'login' ? '4px' : 'calc(50% + 2px)',
+              right: mode === 'login' ? 'calc(50% + 2px)' : '4px',
+              background: 'var(--bg2)',
+              borderRadius: '8px',
+              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+              zIndex: 0,
+              boxShadow: '0 2px 4px rgba(0,0,0,0.15)'
+            }} />
             <button
               type="button"
-              onClick={() => { setMode('login'); setError(''); }}
+              onClick={() => { 
+                if (mode !== 'login') {
+                  setMode('login'); setEmail(''); setPassword(''); setError(''); setMessage(''); setNombre('');
+                }
+              }}
               style={{
                 padding: '10px',
                 borderRadius: '8px',
@@ -80,14 +97,19 @@ export default function AuthScreen() {
                 cursor: 'pointer',
                 fontWeight: 700,
                 fontSize: '0.85rem',
-                transition: 'all 0.2s',
-                background: mode === 'login' ? 'var(--bg2)' : 'transparent',
-                color: mode === 'login' ? 'var(--text)' : 'var(--text3)'
+                transition: 'color 0.3s',
+                background: 'transparent',
+                color: mode === 'login' ? 'var(--text)' : 'var(--text3)',
+                zIndex: 1
               }}
             >Iniciar Sesión</button>
             <button
               type="button"
-              onClick={() => { setMode('register'); setError(''); }}
+              onClick={() => { 
+                if (mode !== 'register') {
+                  setMode('register'); setEmail(''); setPassword(''); setError(''); setMessage(''); setNombre('');
+                }
+              }}
               style={{
                 padding: '10px',
                 borderRadius: '8px',
@@ -95,33 +117,37 @@ export default function AuthScreen() {
                 cursor: 'pointer',
                 fontWeight: 700,
                 fontSize: '0.85rem',
-                transition: 'all 0.2s',
-                background: mode === 'register' ? 'var(--bg2)' : 'transparent',
-                color: mode === 'register' ? 'var(--text)' : 'var(--text3)'
+                transition: 'color 0.3s',
+                background: 'transparent',
+                color: mode === 'register' ? 'var(--text)' : 'var(--text3)',
+                zIndex: 1
               }}
             >Registrarse</button>
           </div>
 
-          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px', animation: 'fadeIn 0.4s ease-out' }} key={mode}>
             {mode === 'register' && (
               <div className="form-group">
-                <label>Tu nombre</label>
+                <label htmlFor="nombre">Tu nombre</label>
                 <input
-                  type="text" className="input" required placeholder="Ej: Stiven"
+                  id="nombre" name="nombre" autoComplete="name"
+                  type="text" className="input" required placeholder="Ej: María"
                   value={nombre} onChange={e => setNombre(e.target.value)}
                 />
               </div>
             )}
             <div className="form-group">
-              <label>Correo electrónico</label>
+              <label htmlFor="email">Correo electrónico</label>
               <input
+                id="email" name={`email_${mode}`} autoComplete={mode === 'login' ? 'email' : 'off'}
                 type="email" className="input" required placeholder="tu@correo.com"
                 value={email} onChange={e => setEmail(e.target.value)}
               />
             </div>
             <div className="form-group">
-              <label>Contraseña</label>
+              <label htmlFor="password">Contraseña</label>
               <input
+                id="password" name={`password_${mode}`} autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
                 type="password" className="input" required placeholder="Mínimo 6 caracteres"
                 minLength={6}
                 value={password} onChange={e => setPassword(e.target.value)}

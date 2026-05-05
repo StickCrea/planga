@@ -1,6 +1,6 @@
 import React from 'react';
 import { useFinance } from '../context/FinanceContext';
-import { fmt } from '../utils/financeUtils';
+import { fmt, getMonthKey } from '../utils/financeUtils';
 
 export default function Reports({ onMonthSelect }) {
   const { state } = useFinance();
@@ -19,18 +19,22 @@ export default function Reports({ onMonthSelect }) {
   });
 
   // Include base income for each month that has data
-  // Assuming base income applies to all months, we add state.income to allMonths[m].income
   Object.keys(allMonths).forEach(m => {
     allMonths[m].income += state.income;
   });
 
-  // Ensure current month exists
-  const currentMk = state.selectedMonth;
-  if (!allMonths[currentMk]) allMonths[currentMk] = { spent: 0, income: state.income };
+  // Ensure current month exists safely
+  const currentMk = getMonthKey(state);
+  if (currentMk && currentMk !== 'null' && currentMk !== 'NaN-NaN') {
+    if (!allMonths[currentMk]) allMonths[currentMk] = { spent: 0, income: state.income };
+  }
 
-  const sortedMonths = Object.keys(allMonths).sort().reverse();
-  const last6 = [...sortedMonths].reverse().slice(-6);
-  const maxVal = Math.max(...last6.map(m => Math.max(allMonths[m].spent, allMonths[m].income, 1)));
+  // Filter out any corrupted month keys before rendering
+  const validMonths = Object.keys(allMonths).filter(m => m && m !== 'null' && m !== 'NaN-NaN');
+  
+  const sortedMonths = validMonths.sort().reverse(); // descending for the list
+  const last6 = validMonths.sort().slice(-6); // ascending last 6 for bar chart
+  const maxVal = Math.max(...last6.map(m => Math.max(allMonths[m].spent, allMonths[m].income, 1)), 1);
 
   const handleExportCSV = () => {
     if (state.expenses.length === 0) {

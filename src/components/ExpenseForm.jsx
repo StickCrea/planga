@@ -4,11 +4,16 @@ import { getCycleInfo, CATEGORY_ICONS } from '../utils/financeUtils';
 import OCRScanner from './OCRScanner';
 import { CreditCard, Banknote } from 'lucide-react';
 
+const getLocalISODate = () => {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+};
+
 export default function ExpenseForm({ onSave }) {
   const { state, addExpense } = useFinance();
   
   const [amount, setAmount] = useState('');
-  const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
+  const [date, setDate] = useState(getLocalISODate());
   const [category, setCategory] = useState('comida');
   
   // OCR Data
@@ -38,7 +43,10 @@ export default function ExpenseForm({ onSave }) {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!amount || Number(amount) <= 0) return;
+    if (!amount || Number(amount) <= 0) {
+      alert('Por favor ingresa un monto válido mayor a 0');
+      return;
+    }
 
     const expenseDate = date ? new Date(date + 'T12:00:00') : new Date();
     const cycleInfo = getCycleInfo(expenseDate, state.cycleDay);

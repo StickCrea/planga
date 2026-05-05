@@ -76,7 +76,7 @@ export default function Analytics() {
   const barColors = barLabels.map(cat => CATEGORY_COLORS[cat] || '#3b82f6');
 
   const barData = {
-    labels: barLabels.map(l => l.charAt(0).toUpperCase() + l.slice(1, 6) + '...'),
+    labels: barLabels.map(l => l.length > 6 ? l.charAt(0).toUpperCase() + l.slice(1, 6) + '...' : l.charAt(0).toUpperCase() + l.slice(1)),
     datasets: [{
       label: 'Gastado',
       data: barValues,
@@ -92,6 +92,7 @@ export default function Analytics() {
     scales: {
       y: {
         beginAtZero: true,
+        min: 0,
         grid: { color: 'rgba(148,163,184,0.1)' },
         ticks: { 
           color: '#64748b',

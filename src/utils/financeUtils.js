@@ -72,15 +72,26 @@ export function getDaysInMonth(state) {
 
 export function getDaysRemaining(state) {
   const today = new Date();
+  today.setHours(0,0,0,0);
   const currentCycle = getCycleInfo(today, state.cycleDay);
   const mk = getMonthKey(state);
 
-  if (mk !== currentCycle.monthKey) {
-    return 30;
+  // If viewing current cycle
+  if (mk === currentCycle.monthKey) {
+    const diff = currentCycle.endDate - today;
+    return Math.max(Math.ceil(diff / (1000 * 60 * 60 * 24)), 1);
   }
 
-  const diff = currentCycle.endDate - today;
-  return Math.max(Math.ceil(diff / (1000 * 60 * 60 * 24)), 1);
+  // If historical/future month
+  const [year, month] = mk.split('-').map(Number);
+  const cycleMonthDate = new Date(year, month - 1, 15); // representative day
+  const cycleInfo = getCycleInfo(cycleMonthDate, state.cycleDay);
+  
+  if (cycleInfo.endDate < today) return 0; // Past
+  
+  // Future or other: return total days in that cycle
+  const totalDays = Math.round((cycleInfo.endDate - cycleInfo.startDate) / (1000 * 60 * 60 * 24)) + 1;
+  return totalDays;
 }
 
 export function getCurrentMonthExpenses(state) {
@@ -89,9 +100,8 @@ export function getCurrentMonthExpenses(state) {
 }
 
 export function getFutureCommitments(state) {
-  const today = new Date();
-  const day = today.getDate();
-  return state.commitments.filter(c => c.day >= day);
+  // Return all commitments for the cycle to avoid them disappearing mid-month
+  return state.commitments || [];
 }
 
 export function getTotalSpent(state) {
@@ -111,11 +121,14 @@ export function getDailyBudget(state) {
 }
 
 export function getTodaySpent(state) {
-  const today = new Date().toISOString().slice(0, 10);
+  const now = new Date();
+  const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
   return getCurrentMonthExpenses(state).filter(e => e.date === today).reduce((s, e) => s + e.amount, 0);
 }
 
 export function getStatus(state) {
+  if (state.income === 0) return { level: 'yellow', icon: '⚙️', text: 'Configura tu ingreso mensual en Ajustes para empezar.' };
+  
   const todaySpent = getTodaySpent(state);
   const budget = getDailyBudget(state);
   const available = getAvailableMoney(state);

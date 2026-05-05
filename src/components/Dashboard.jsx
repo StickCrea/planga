@@ -17,7 +17,12 @@ export default function Dashboard({ onSelectExpense }) {
   const expenses = getCurrentMonthExpenses(state);
   const commitmentsTotal = getTotalCommitments(state);
   
-  const daysElapsed = new Date().getDate();
+  // Calculate days elapsed since cycle start (not since month start)
+  const today = new Date();
+  const cycleStart = state.currentCiclo
+    ? new Date(state.currentCiclo.fecha_inicio + 'T00:00:00')
+    : today;
+  const daysElapsed = Math.max(Math.ceil((today - cycleStart) / (1000 * 60 * 60 * 24)) + 1, 1);
   const dailyAvg = daysElapsed > 0 ? totalSpent / daysElapsed : 0;
   
   const spentPercent = state.income > 0 ? Math.min((totalSpent + commitmentsTotal) / state.income * 100, 100) : 0;
@@ -26,7 +31,7 @@ export default function Dashboard({ onSelectExpense }) {
   const offset = circumference - (spentPercent / 100) * circumference;
   const ringColor = spentPercent > 90 ? 'var(--red)' : spentPercent > 70 ? 'var(--yellow)' : 'var(--green)';
 
-  const recentExpenses = [...expenses].reverse().slice(0, 4);
+  const recentExpenses = expenses.slice(0, 4);
 
   return (
     <>

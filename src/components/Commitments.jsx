@@ -1,25 +1,48 @@
 import React, { useState } from 'react';
 import { useFinance } from '../context/FinanceContext';
 import { fmt } from '../utils/financeUtils';
-import { Trash2, Plus } from 'lucide-react';
+import { Trash2, Plus, Edit2 } from 'lucide-react';
 
 export default function Commitments() {
-  const { state, addCommitment, deleteCommitment } = useFinance();
+  const { state, addCommitment, updateCommitment, deleteCommitment } = useFinance();
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingId, setEditingId] = useState(null);
   const [formData, setFormData] = useState({ name: '', amount: '', day: '' });
 
   const totalCommitments = state.commitments.reduce((s, c) => s + c.amount, 0);
 
+  const openNewModal = () => {
+    setEditingId(null);
+    setFormData({ name: '', amount: '', day: '' });
+    setIsModalOpen(true);
+  };
+
+  const openEditModal = (c) => {
+    setEditingId(c.id);
+    setFormData({ name: c.name, amount: c.amount, day: c.day || 1 });
+    setIsModalOpen(true);
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
-    addCommitment({
-      id: 'c' + Date.now(),
-      name: formData.name,
-      amount: Number(formData.amount),
-      day: Number(formData.day)
-    });
+    if (editingId) {
+      updateCommitment({
+        id: editingId,
+        name: formData.name,
+        amount: Number(formData.amount),
+        day: Number(formData.day)
+      });
+    } else {
+      addCommitment({
+        id: 'c' + Date.now(),
+        name: formData.name,
+        amount: Number(formData.amount),
+        day: Number(formData.day)
+      });
+    }
     setIsModalOpen(false);
     setFormData({ name: '', amount: '', day: '' });
+    setEditingId(null);
   };
 
   return (
@@ -35,7 +58,7 @@ export default function Commitments() {
       <div className="glass-card">
         <div className="card-header-row" style={{ marginBottom: '16px' }}>
           <h3 className="card-title">Tus Compromisos Fijos</h3>
-          <button className="icon-btn-sm" onClick={() => setIsModalOpen(true)} style={{ fontSize: '1.2rem' }}>
+          <button className="icon-btn-sm" onClick={openNewModal} style={{ fontSize: '1.2rem' }}>
             <Plus size={18} />
           </button>
         </div>
@@ -52,7 +75,10 @@ export default function Commitments() {
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                   <span style={{ fontWeight: 700, color: 'var(--red)' }}>{fmt(c.amount)}</span>
-                  <button onClick={() => deleteCommitment(c.id)} style={{ background: 'none', border: 'none', color: 'var(--text3)', cursor: 'pointer' }}>
+                  <button onClick={() => openEditModal(c)} style={{ background: 'none', border: 'none', color: 'var(--text3)', cursor: 'pointer' }}>
+                    <Edit2 size={16} />
+                  </button>
+                  <button onClick={() => deleteCommitment(c.id)} style={{ background: 'none', border: 'none', color: 'var(--red)', cursor: 'pointer' }}>
                     <Trash2 size={16} />
                   </button>
                 </div>
@@ -66,7 +92,7 @@ export default function Commitments() {
         <div className="modal-overlay active" onClick={(e) => e.target === e.currentTarget && setIsModalOpen(false)} style={{ display: 'flex' }}>
           <div className="modal glass-card">
             <div className="modal-header">
-              <span className="modal-title">Nuevo Compromiso Fijo</span>
+              <span className="modal-title">{editingId ? 'Editar Compromiso' : 'Nuevo Compromiso Fijo'}</span>
               <button className="icon-btn-sm" onClick={() => setIsModalOpen(false)}>✕</button>
             </div>
             <form onSubmit={handleSubmit}>
@@ -91,7 +117,7 @@ export default function Commitments() {
                   value={formData.day} onChange={e => setFormData({...formData, day: e.target.value})}
                 />
               </div>
-              <button type="submit" className="btn-primary" style={{ marginTop: '16px' }}>Guardar Compromiso</button>
+              <button type="submit" className="btn-primary" style={{ marginTop: '16px' }}>{editingId ? 'Actualizar Compromiso' : 'Guardar Compromiso'}</button>
             </form>
           </div>
         </div>

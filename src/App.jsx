@@ -94,15 +94,20 @@ function App() {
 
   const getMonthDisplay = () => {
     const mk = state.selectedMonth || state.currentCiclo?.nombre;
+    let label = '';
     if (mk) {
       const [year, month] = mk.split('-').map(Number);
       const d = new Date(year, month - 1);
-      return d.toLocaleDateString('es-CO', { month: 'long', year: 'numeric' });
+      label = d.toLocaleDateString('es-CO', { month: 'long', year: 'numeric' });
+    } else {
+      const cycle = getCycleInfo(new Date(), state.cycleDay);
+      const [year, month] = cycle.monthKey.split('-').map(Number);
+      const d = new Date(year, month - 1);
+      label = d.toLocaleDateString('es-CO', { month: 'long', year: 'numeric' });
     }
-    const cycle = getCycleInfo(new Date(), state.cycleDay);
-    const [year, month] = cycle.monthKey.split('-').map(Number);
-    const d = new Date(year, month - 1);
-    return d.toLocaleDateString('es-CO', { month: 'long', year: 'numeric' });
+    // Capitalize only first letter (ES-CO might return lowercase or mixed depending on browser)
+    const lower = label.toLowerCase();
+    return lower.charAt(0).toUpperCase() + lower.slice(1);
   };
 
   return (
@@ -111,7 +116,7 @@ function App() {
         <header className="screen-header">
           <div className="logo">Planga<span className="logo-dot">.</span></div>
           <div className="month-selector">
-            <span className="month-label" style={{ textTransform: 'capitalize' }}>
+            <span className="month-label">
               {getMonthDisplay()}
             </span>
           </div>
@@ -138,7 +143,12 @@ function App() {
 
       {/* FAB */}
       {currentScreen !== 'add' && (
-        <button className="fab" onClick={() => setCurrentScreen('add')}>
+        <button 
+          className="fab" 
+          onClick={() => setCurrentScreen('add')}
+          aria-label="Agregar gasto"
+          title="Agregar gasto"
+        >
           <Plus size={28} />
         </button>
       )}
