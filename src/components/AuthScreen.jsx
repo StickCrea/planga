@@ -60,7 +60,7 @@ export default function AuthScreen() {
         {/* Logo */}
         <div style={{ textAlign: 'center', marginBottom: '32px' }}>
           <h1 style={{ fontSize: '2.5rem', fontWeight: 900, letterSpacing: '-1px' }}>
-            Planga<span style={{ color: 'var(--green)' }}>.</span>
+            Finly<span style={{ color: 'var(--green)' }}>.</span>
           </h1>
           <p style={{ color: 'var(--text3)', fontSize: '0.9rem', marginTop: '6px' }}>
             Controla cada peso de tu vida financiera

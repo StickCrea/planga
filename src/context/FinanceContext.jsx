@@ -424,6 +424,20 @@ export function FinanceProvider({ children }) {
     }
   };
 
+  // ─── User Profile Metadata ───
+  const updateUserProfile = async (metadataUpdates) => {
+    if (!user) return;
+    const { data, error } = await supabase.auth.updateUser({
+      data: metadataUpdates
+    });
+    if (error) {
+      console.error("Error updating user profile:", error);
+      alert("Error al actualizar perfil: " + error.message);
+    } else {
+      setUser(data.user);
+    }
+  };
+
   // ─── Sign out ───
   const signOut = async () => {
     await supabase.auth.signOut();
@@ -458,6 +472,7 @@ export function FinanceProvider({ children }) {
       deleteDebt,
       addIncome,
       deleteIncome,
+      updateUserProfile,
     }}>
       {children}
     </FinanceContext.Provider>

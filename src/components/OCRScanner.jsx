@@ -155,6 +155,15 @@ export default function OCRScanner({ onScanComplete }) {
               </div>
             </div>
           )}
+          
+          <button 
+            type="button" 
+            className="btn-secondary" 
+            onClick={() => setPreviewSrc(null)}
+            style={{ marginTop: '12px', width: '100%', borderColor: 'var(--glass-border)' }}
+          >
+            Llenar formulario y cerrar
+          </button>
         </div>
       )}
     </div>

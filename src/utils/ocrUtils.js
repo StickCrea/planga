@@ -18,29 +18,39 @@ const MERCHANT_MAP = {
 
 export async function prepareImage(file, rotation) {
   return new Promise((resolve) => {
-    if (rotation === 0) {
-      const reader = new FileReader();
-      reader.onload = (e) => resolve(e.target.result);
-      reader.readAsDataURL(file);
-      return;
-    }
-
     const img = new Image();
     img.onload = () => {
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d');
       
-      if (rotation === 90 || rotation === 270) {
-        canvas.width = img.height;
-        canvas.height = img.width;
+      // Limit resolution to prevent memory crashes on mobile
+      const MAX_SIZE = 1200;
+      let width = img.width;
+      let height = img.height;
+      
+      if (width > height) {
+        if (width > MAX_SIZE) {
+          height *= MAX_SIZE / width;
+          width = MAX_SIZE;
+        }
       } else {
-        canvas.width = img.width;
-        canvas.height = img.height;
+        if (height > MAX_SIZE) {
+          width *= MAX_SIZE / height;
+          height = MAX_SIZE;
+        }
+      }
+
+      if (rotation === 90 || rotation === 270) {
+        canvas.width = height;
+        canvas.height = width;
+      } else {
+        canvas.width = width;
+        canvas.height = height;
       }
       
       ctx.translate(canvas.width / 2, canvas.height / 2);
       ctx.rotate((rotation * Math.PI) / 180);
-      ctx.drawImage(img, -img.width / 2, -img.height / 2);
+      ctx.drawImage(img, -width / 2, -height / 2, width, height);
       
       resolve(canvas.toDataURL('image/jpeg', 0.8));
     };
@@ -170,25 +180,42 @@ function extractDate(text) {
 }
 
 function extractTotal(text, lines) {
-  const totalRegex = /(?:TOTAL|PAGAR|VALOR|MONTO|SUMA|RECIBO)\s*[:$]*\s*([\d.,]+)/i;
+  // Capture typical total keywords. Allow common OCR typos like 'T0TAL'.
+  const totalRegex = /(?:TOTAL|PAGAR|VALOR|MONTO|SUMA|RECIBO|T0TAL)\s*[:$]*\s*([0-9.,\sOoIl]+)/i;
   let foundAmounts = [];
 
   lines.forEach(line => {
     const match = line.match(totalRegex);
     if (match) {
-      let numStr = match[1].replace(/[.,](?=\d{3})/g, '');
-      numStr = numStr.replace(',', '.');
+      let numStr = match[1].trim();
+      if (!numStr) return;
+
+      // Fix common OCR misreads in numbers
+      numStr = numStr.replace(/[Oo]/g, '0').replace(/[Il]/g, '1');
+      // Remove spaces between digits
+      numStr = numStr.replace(/\s+/g, '');
+      
+      // Remove thousands separators (dot or comma followed by exactly 3 digits)
+      numStr = numStr.replace(/[.,](?=\d{3}(?!\d))/g, '');
+      numStr = numStr.replace(',', '.'); // Any remaining comma is likely a decimal
+      
       const val = parseFloat(numStr);
       if (!isNaN(val) && val > 0) foundAmounts.push(val);
     }
   });
 
+  // If no keyword match, look for numbers formatted as currency (e.g., 58.880 or 58 880)
   if (foundAmounts.length === 0) {
-    const allNumbers = text.match(/\b\d{1,3}(?:[.,]\d{3})+\b|\b\d{4,}\b/g);
+    const currencyRegex = /\b\d{1,3}(?:[.,\s]\d{3})+\b/g;
+    const allNumbers = text.match(currencyRegex);
     if (allNumbers) {
       allNumbers.forEach(n => {
-        const val = parseFloat(n.replace(/[.,]/g, ''));
-        if (val > 100) foundAmounts.push(val);
+        const cleanVal = n.replace(/[\s.,]/g, '');
+        const val = parseFloat(cleanVal);
+        // Exclude huge numbers like NITs or phone numbers if they slip through
+        if (val > 100 && val < 10000000) {
+          foundAmounts.push(val);
+        }
       });
     }
   }
