@@ -1,0 +1,137 @@
+¡Claro que sí! Tienes un proyecto muy sólido entre manos. La idea de una PWA *mobile-first* para finanzas personales con OCR es fantástica.
+
+Me parece perfecto que quieras darle una identidad visual propia y alejarte de los valores por defecto de Vite. Es el momento ideal para definir esa personalidad.
+
+A continuación, te presento una propuesta integral que abarca desde un nuevo nombre hasta el diseño detallado del favicon y la interfaz, buscando esa estética minimalista y dinámica que pides.
+
+---
+
+### 1. Propuesta de Nombre: "Finly"
+
+Aunque "Planga" está bien, busquemos algo que suene más ligero, moderno y directo.
+
+* **¿Por qué Finly?** Suena a "Finanzas" de forma amigable ("Friendly Fin"). Es corto, fácil de recordar, se siente ágil y evoca simplicidad y ayuda.
+* **Significado:** Una herramienta que simplifica tus finanzas (Finance made simple).
+
+### 2. Visión del Diseño: "Minimalismo Dinámico"
+
+Para lograr esa sensación minimalista y dinámica en todas las interfaces, seguiremos estas directrices:
+
+* **Paleta de Colores Elegante:**
+* **Fondo (Oscuro):** Un gris muy oscuro (casi negro), pero con un toque de azul marino para darle profundidad (#0A0F1E), en lugar de un negro plano.
+* **Color de Acento (Dinámico):** Un verde esmeralda vibrante (#00E676) que represente la salud financiera. Este color se usará para elementos interactivos, barras de progreso y el favicon.
+* **Textos (Minimalistas):** Blanco puro para títulos y un gris claro (#B0BEC5) para textos secundarios.
+
+
+* **Tipografía Moderna:** Usaremos **Inter** o **Poiret One** para un toque aún más minimalista y geométrico en los títulos, y **Geist Sans** o la tipografía del sistema para el cuerpo del texto por su legibilidad.
+* **Interacciones Suaves (Dinamismo):** Transiciones sutiles (fade-in, transformaciones leves) al cambiar de sección o abrir modales. Nada brusco. El *Glassmorphism* debe ser muy sutil (poca opacidad y desenfoque) para no recargar la vista.
+
+### 3. El Favicon (Ícono para la Pestaña)
+
+Aquí tienes el prompt para generar el nuevo favicon de Finly. Este diseño debe reflejar la "F" de Finly, la salud financiera y la simplicidad.
+
+#### Prompt para generar el Favicon SVG (o la imagen base):
+
+> "A modern, minimalist, and dynamic app icon design for a personal finance app called 'Finly'. The icon is contained within a rounded square with softly curved corners. The background of the square is a vibrant, healthy emerald green (#00E676). At the center, there is a stylized, clean, and modern white 'F' character. The 'F' is composed of clean lines and forms a subtle upward-pointing arrow integrated into its top bar, symbolizing financial growth and positive momentum. Next to the bottom of the 'F' is a small, perfectly round white dot, indicating simplicity and focus. The overall aesthetic is sleek, simple, energetic, and highly readable even at small sizes. The style is flat graphic design with a hint of dynamic movement. Isolated on a dark background."
+
+**Cómo aplicarlo en tu `index.html`:**
+
+1. Genera o crea este ícono como un archivo `.svg` o un `.png` (ej: 64x64px).
+2. Actualiza la etiqueta en tu `<head>`:
+
+```html
+<!-- index.html actualizado para Finly -->
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" /> <!-- Tu nuevo ícono aquí -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    
+    <!-- Título de la Pestaña Actualizado -->
+    <title>Finly | Control de Gastos Inteligente</title>
+
+    <!-- Color de Tema Móvil (coincide con el fondo oscuro de Finly) -->
+    <meta name="theme-color" content="#0A0F1E" /> 
+</head>
+<body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+</body>
+</html>
+
+```
+
+### 4. Guía de Diseño para Interfaces y Módulos (Minimalismo Dinámico)
+
+Aplica estos principios a tus componentes de React:
+
+#### A. Layout General (Dashboard)
+
+* **Menos es más:** Elimina bordes innecesarios. Usa el color de fondo para separar secciones.
+* **Tarjetas (Cards):** Fondo oscuro ligeramente más claro que el principal (#141B2D) con un borde muy fino (1px) de color gris oscuro o el color de acento muy tenue. El efecto *backdrop-filter: blur* úsalo *solo* en la barra de navegación inferior y el encabezado para dar esa sensación *premium* sin saturar.
+* **Sombras:** Evita sombras densas. Usa sombras suaves y sutiles para dar elevación a las tarjetas sobre el fondo.
+
+#### B. Dashboard Financiero (Resumen)
+
+* **Indicador Principal:** En lugar de múltiples números, destaca el "Dinero Real Disponible". Úsalo en una tipografía grande y audaz (#00E676).
+* **Gráfico Circular:** Una barra de progreso circular minimalista y fina que muestre el % gastado del ciclo actual, usando el color de acento verde. El centro debe estar limpio o mostrar el % restante.
+* **Lista de Gastos Recientes:** Solo muestra los últimos 5 gastos. Cada ítem debe ser una línea simple: Icono minimalista (de `lucide-react`) | Tienda | Fecha | Monto.
+
+#### C. Escáner OCR (Módulo de Gastos)
+
+* **Interfaz de Cámara Limpia:** Cuando se active la cámara, muestra solo un visor minimalista con esquinas redondeadas en verde para encuadrar el recibo.
+* **Feedback Dinámico:** Mientras procesa (OCR), muestra una animación sutil (ej: una línea de luz verde escaneando de arriba a abajo sobre una miniatura del recibo).
+* **Formulario de Confirmación Pre-rellenado:** Tras el OCR, presenta un formulario muy limpio con los campos detectados. Destaca los campos vacíos o dudosos con un borde verde tenue para que el usuario los revise rápido.
+
+#### D. Cartera y Patrimonio
+
+* **Tarjetas de Cuenta:** Cada cuenta (Efectivo, Banco, Inversión) debe ser una tarjeta minimalista con el logo de la entidad (o un icono genérico minimalista) y el saldo. Usa el color de acento verde solo para saldos positivos.
+* **Compromisos (Pagos Fijos):** Una sección separada con una lista de casillas de verificación (checkboxes) de estilo minimalista para "marcar como pagado" cada mes.
+
+#### E. Formularios y Modales
+
+* **Inputs Limpios:** Campos de entrada sin bordes, solo una línea inferior que se ilumina en verde cuando está en foco.
+* **Botones (FAB - Botón Flotante):** El botón central de "+" debe ser un círculo verde sólido con el símbolo "+" en blanco, grande y fácil de tocar, flotando sobre la barra de navegación.
+
+### 5. Prompt Maestro Actualizado (para Finly)
+
+Aquí tienes el contexto de tu proyecto actualizado con el nuevo nombre y enfoque de diseño:
+
+📋 **Prompt Maestro: Contexto y Arquitectura de Finly**
+
+**Nombre del Proyecto:** Finly.
+**Objetivo Principal:** Una aplicación web progresiva (PWA) *mobile-first* para el control inteligente y minimalista de finanzas personales. Está diseñada para ser rápida, visualmente limpia e intuitiva, eliminando fricciones para el usuario. Su enfoque principal es ayudar al usuario a entender sus hábitos de consumo mediante ciclos mensuales personalizados, automatizar la lectura de recibos físicos mediante OCR y administrar su "dinero real disponible" contra compromisos fijos, con una estética de diseño "minimalista dinámica".
+
+**1. Stack Tecnológico:**
+
+* **Frontend:** React.js, construido con Vite.
+* **Estilos:** CSS Vanilla estructurado con variables globales. Diseño oscuro nativo (#0A0F1E) con detalles en verde esmeralda vibrante (#00E676). Uso sutil de *Glassmorphism*, bordes finos y tipografía moderna y limpia (ej. Inter).
+* **Backend & Base de Datos:** Supabase (PostgreSQL y Supabase Auth).
+* **Herramientas Clave:** `tesseract.js` para escaneo OCR de recibos, `chart.js`/`react-chartjs-2` para analíticas minimalistas, y `lucide-react` para iconografía limpia.
+
+**2. Arquitectura de Estado y Datos:**
+
+* **Estado Global:** Context API global (`FinanceContext.jsx`).
+* **Modelos de Datos Principales (Supabase):**
+* `profiles`: Datos del usuario y configuración base (`cycle_day`, `selected_month`, límite mensual).
+* `ciclos`: Períodos financieros dinámicos (ej. "Mayo 2026") que agrupan los gastos y el presupuesto.
+* `gastos`: Registros individuales de egresos, incluyendo detalle de OCR y método de pago.
+* `ingresos`: Dinero entrante (salarios, bonos, etc).
+* `cartera`: Activos (cuentas, ahorros, inversiones) y pasivos.
+* `compromisos`: Pagos fijos obligatorios que restan del saldo real disponible.
+
+
+
+**3. Características Core (Funcionalidades):**
+
+* **Navegación Mobile-First Limpia:** Barra inferior minimalista con efecto *blur* y un Botón de Acción Flotante (FAB) central prominente para añadir gastos rápidamente. Menú lateral (Drawer) para ajustes y perfil.
+* **Escáner OCR Inteligente y Ágil:** Permite tomar una foto de una factura, escalar automáticamente la imagen y extraer mediante IA la tienda, los artículos, el total y la fecha, con feedback visual dinámico durante el proceso.
+* **Dashboard Financiero Simplificado:** Vista destacada del "Dinero Real Disponible", una barra de progreso circular minimalista del límite mensual y una lista breve de los últimos gastos.
+* **Gestión de Cartera y Patrimonio:** Módulo para separar el dinero líquido de las deudas y las inversiones, presentado en tarjetas limpias.
+* **Resiliencia y UX:** Lógica de *fallback* automático en la creación de gastos para asegurar una experiencia sin errores. Enfoque en minimizar clics y formularios autocompletados.
+
+**4. Reglas de Diseño y Desarrollo (Directrices):**
+
+* **Estética "Minimalista Dinámica":** Nada de componentes genéricos ni sobrecargados. Uso de tarjetas oscuras con bordes finos, acentos en verde vibrante, tipografía moderna (Inter), y transiciones suaves para una experiencia *premium* y fluida.
+* **Responsividad:** La aplicación se siente nativa en celulares (sin barras de scroll) y se expande de forma ordenada en columnas estilo "Dashboard" en escritorio/tablets.

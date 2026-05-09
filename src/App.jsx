@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Home, PieChart, Wallet, Plus, Settings, BarChart2, Globe, ListChecks, LogOut, Loader2 } from 'lucide-react';
+import { Home, PieChart, Wallet, Plus, Settings, Loader2 } from 'lucide-react';
 import Dashboard from './components/Dashboard';
 import Summary from './components/Summary';
 import Analytics from './components/Analytics';
@@ -11,6 +11,7 @@ import SettingsScreen from './components/SettingsScreen';
 import ExpenseDetailsModal from './components/ExpenseDetailsModal';
 import AuthScreen from './components/AuthScreen';
 import OnboardingScreen from './components/OnboardingScreen';
+import SidebarMenu from './components/SidebarMenu';
 import { useFinance } from './context/FinanceContext';
 import { getCycleInfo } from './utils/financeUtils';
 
@@ -21,6 +22,8 @@ function App() {
   const [selectedExpense, setSelectedExpense] = useState(null);
   const { state, user, authLoading, dataLoading, needsOnboarding, completeOnboarding, signOut, updateSettings } = useFinance();
   const inactivityTimer = useRef(null);
+
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   // ─── Auto-logout after 1 hour of inactivity ───
   useEffect(() => {
@@ -54,7 +57,7 @@ function App() {
   if (authLoading) {
     return (
       <div style={{ minHeight: '100vh', background: 'var(--bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: '16px' }}>
-        <h1 style={{ fontSize: '2.5rem', fontWeight: 900 }}>Planga<span style={{ color: 'var(--green)' }}>.</span></h1>
+        <h1 style={{ fontSize: '2.5rem', fontWeight: 900 }}>Finly<span style={{ color: 'var(--green)' }}>.</span></h1>
         <Loader2 size={28} style={{ color: 'var(--green)', animation: 'spin 1s linear infinite' }} />
       </div>
     );
@@ -114,18 +117,17 @@ function App() {
     <div id="app">
       <main id={`screen-${currentScreen}`} className="screen active" style={{ paddingBottom: '80px' }}>
         <header className="screen-header">
-          <div className="logo">Planga<span className="logo-dot">.</span></div>
+          <div className="logo">Finly<span className="logo-dot">.</span></div>
           <div className="month-selector">
             <span className="month-label">
               {getMonthDisplay()}
             </span>
           </div>
           <div style={{ display: 'flex', gap: '6px' }}>
-            <button className="icon-btn" onClick={() => setCurrentScreen('settings')}>
-              <Settings size={20} />
-            </button>
-            <button className="icon-btn" onClick={signOut} title="Cerrar sesión">
-              <LogOut size={18} />
+            <button className="icon-btn" onClick={() => setIsSidebarOpen(true)}>
+              <div style={{ width: '24px', height: '24px', borderRadius: '50%', background: 'var(--accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: '10px', fontWeight: 'bold' }}>
+                {(user?.user_metadata?.nombre || user?.email || '?').charAt(0).toUpperCase()}
+              </div>
             </button>
           </div>
         </header>
@@ -141,37 +143,37 @@ function App() {
         />
       )}
 
-      {/* FAB */}
-      {currentScreen !== 'add' && (
-        <button 
-          className="fab" 
-          onClick={() => setCurrentScreen('add')}
-          aria-label="Agregar gasto"
-          title="Agregar gasto"
-        >
-          <Plus size={28} />
-        </button>
-      )}
+      <SidebarMenu 
+        isOpen={isSidebarOpen} 
+        onClose={() => setIsSidebarOpen(false)} 
+        onNavigate={setCurrentScreen} 
+      />
 
-      {/* Bottom Nav */}
+      {/* Bottom Nav (Trii Style) */}
       <nav className="bottom-nav">
         <button className={`nav-btn ${currentScreen === 'dashboard' ? 'active' : ''}`} onClick={goHome}>
           <Home size={22} /><span>Inicio</span>
         </button>
         <button className={`nav-btn ${currentScreen === 'summary' ? 'active' : ''}`} onClick={() => setCurrentScreen('summary')}>
-          <PieChart size={22} /><span>Historial</span>
+          <PieChart size={22} /><span>Movimientos</span>
         </button>
-        <button className={`nav-btn ${currentScreen === 'analytics' ? 'active' : ''}`} onClick={() => setCurrentScreen('analytics')}>
-          <BarChart2 size={22} /><span>Análisis</span>
-        </button>
+        
+        <div className="fab-center-container">
+          <button 
+            className={`fab-center ${currentScreen === 'add' ? 'active' : ''}`} 
+            onClick={() => setCurrentScreen('add')}
+            aria-label="Agregar gasto"
+          >
+            <Plus size={28} />
+            <span className="fab-center-text">Nuevo Gasto</span>
+          </button>
+        </div>
+
         <button className={`nav-btn ${currentScreen === 'portfolio' ? 'active' : ''}`} onClick={() => setCurrentScreen('portfolio')}>
           <Wallet size={22} /><span>Cartera</span>
         </button>
-        <button className={`nav-btn ${currentScreen === 'reports' ? 'active' : ''}`} onClick={() => setCurrentScreen('reports')}>
-          <Globe size={22} /><span>Global</span>
-        </button>
-        <button className={`nav-btn ${currentScreen === 'commitments' ? 'active' : ''}`} onClick={() => setCurrentScreen('commitments')}>
-          <ListChecks size={22} /><span>Compromisos</span>
+        <button className={`nav-btn ${isSidebarOpen ? 'active' : ''}`} onClick={() => setIsSidebarOpen(true)}>
+          <Settings size={22} /><span>Menú</span>
         </button>
       </nav>
     </div>

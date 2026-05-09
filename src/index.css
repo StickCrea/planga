@@ -2,22 +2,22 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
-  --bg: #0f172a;
-  --bg2: #1e293b;
-  --bg3: #334155;
-  --glass: rgba(30, 41, 59, 0.65);
-  --glass-border: rgba(148, 163, 184, 0.12);
+  --bg: #0A0F1E;
+  --bg2: #141B2D;
+  --bg3: #1E293B;
+  --glass: rgba(20, 27, 45, 0.65);
+  --glass-border: rgba(255, 255, 255, 0.08);
   --text: #f1f5f9;
   --text2: #94a3b8;
   --text3: #64748b;
-  --green: #22c55e;
-  --green-glow: rgba(34,197,94,0.25);
+  --green: #00E676;
+  --green-glow: rgba(0, 230, 118, 0.25);
   --yellow: #eab308;
-  --yellow-glow: rgba(234,179,8,0.25);
+  --yellow-glow: rgba(234, 179, 8, 0.25);
   --red: #ef4444;
-  --red-glow: rgba(239,68,68,0.25);
+  --red-glow: rgba(239, 68, 68, 0.25);
   --accent: #3b82f6;
-  --accent-glow: rgba(59,130,246,0.25);
+  --accent-glow: rgba(59, 130, 246, 0.25);
   --radius: 16px;
   --radius-sm: 10px;
   --nav-h: 68px;
@@ -181,24 +181,7 @@ body {
 .expense-delete:hover { color: var(--red); }
 .empty-state { font-size: .82rem; color: var(--text3); text-align: center; padding: 16px 0; }
 
-/* ===== FAB ===== */
-.fab {
-  position: fixed;
-  bottom: calc(var(--nav-h) + var(--safe-bottom) + 16px);
-  right: calc(50% - 215px + 16px);
-  width: 56px; height: 56px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, var(--green), #16a34a);
-  border: none;
-  color: #fff;
-  display: flex; align-items: center; justify-content: center;
-  box-shadow: 0 4px 20px var(--green-glow);
-  cursor: pointer;
-  transition: transform .2s, box-shadow .2s;
-  z-index: 50;
-}
-.fab:active { transform: scale(.9); }
-@media (max-width: 462px) { .fab { right: 16px; } }
+/* ===== FAB (Removed, using Sidebar Menu / Trii Bottom Nav instead) ===== */
 
 /* ===== BOTTOM NAV ===== */
 .bottom-nav {
@@ -208,33 +191,66 @@ body {
   width: 100%; max-width: 430px;
   height: var(--nav-h);
   padding-bottom: var(--safe-bottom);
-  background: rgba(15, 23, 42, 0.92);
+  background: rgba(15, 23, 42, 0.98);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border-top: 1px solid var(--glass-border);
   display: flex; align-items: center; justify-content: space-around;
-  overflow-x: auto;
-  white-space: nowrap;
-  scrollbar-width: none; /* Firefox */
   z-index: 100;
+  box-shadow: 0 -4px 20px rgba(0,0,0,0.2);
 }
-.bottom-nav::-webkit-scrollbar { display: none; /* Safari and Chrome */ }
 .nav-btn {
-  display: flex; flex-direction: column; align-items: center; gap: 3px;
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
   background: none; border: none;
   color: var(--text3);
   font-size: .65rem; font-weight: 600;
   cursor: pointer;
-  padding: 10px 16px;
+  padding: 8px 12px;
   transition: color .2s;
   -webkit-tap-highlight-color: transparent;
-  position: relative;
-  z-index: 101;
+  flex: 1;
 }
 .nav-btn.active { color: var(--green); }
 .nav-btn svg { transition: transform .2s; pointer-events: none; }
 .nav-btn span { pointer-events: none; }
 .nav-btn.active svg { transform: scale(1.1); }
+
+/* FAB Center (Trii style) */
+.fab-center-container {
+  flex: 1;
+  display: flex; justify-content: center;
+  position: relative;
+}
+.fab-center {
+  position: absolute;
+  top: -24px;
+  width: 60px; height: 60px;
+  border-radius: 50%;
+  background: var(--green);
+  border: 4px solid var(--bg);
+  color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 4px 16px var(--green-glow);
+  cursor: pointer;
+  transition: transform .2s, background .2s;
+  z-index: 110;
+}
+.fab-center:active { transform: scale(.92); }
+.fab-center.active { background: #16a34a; }
+.fab-center-text { display: none; }
+
+/* Sidebar Menu Items */
+.menu-item-btn {
+  display: flex; align-items: center; gap: 14px;
+  width: 100%; padding: 14px 16px;
+  background: transparent; border: none;
+  color: var(--text); font-size: .95rem; font-weight: 600;
+  cursor: pointer; text-align: left;
+  border-radius: 12px; transition: background .2s;
+}
+.menu-item-btn:hover, .menu-item-btn:active { background: rgba(255,255,255,0.05); }
+.menu-icon { color: var(--green); }
+.menu-chevron { margin-left: auto; color: var(--text3); }
 
 /* ===== ADD EXPENSE FORM ===== */
 .expense-form { display: flex; flex-direction: column; gap: 14px; }
@@ -650,6 +666,7 @@ body {
   }
 
   .nav-btn {
+    flex: none;
     flex-direction: row;
     justify-content: flex-start;
     gap: 10px;
@@ -664,6 +681,42 @@ body {
     color: var(--green);
   }
   .nav-btn.active svg { transform: none; }
+
+  /* Fix FAB in Sidebar for desktop */
+  .fab-center-container {
+    flex: none;
+    margin: 16px 12px;
+    display: block;
+  }
+  .fab-center {
+    position: relative;
+    top: 0;
+    width: 100%;
+    height: 48px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--green-glow);
+    background: rgba(0, 230, 118, 0.1);
+    color: var(--green);
+    box-shadow: none;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-size: 0.95rem;
+    font-weight: 700;
+    transition: all 0.2s;
+  }
+  .fab-center:hover {
+    background: rgba(0, 230, 118, 0.15);
+    border-color: rgba(0, 230, 118, 0.4);
+  }
+  .fab-center svg {
+    margin: 0;
+  }
+  .fab-center-text {
+    display: inline;
+  }
 
   /* --- Screens --- */
   .screen {
@@ -693,13 +746,6 @@ body {
   }
   #screen-dashboard .main-card {
     grid-column: 1 / -1;
-  }
-
-  /* --- FAB reposition --- */
-  .fab {
-    bottom: 28px;
-    right: 28px;
-    width: 60px; height: 60px;
   }
 
   /* --- Modals center on desktop --- */
