@@ -26,20 +26,87 @@ export function FinanceProvider({ children }) {
     currentCiclo: null,
   });
   const [dataLoading, setDataLoading] = useState(false);
+  const [toasts, setToasts] = useState([]);
 
-  // ─── Auth listener ───
+  const showToast = useCallback((message, type = 'success') => {
+    const id = Date.now();
+    setToasts(prev => [...prev, { id, message, type }]);
+    setTimeout(() => {
+      setToasts(prev => prev.filter(t => t.id !== id));
+    }, 4000);
+  }, []);
+
+  // ─── Auth listener & Inactivity Timer ───
   useEffect(() => {
+    let inactivityTimer;
+
+    const resetTimer = () => {
+      if (inactivityTimer) clearTimeout(inactivityTimer);
+      // Logout after 30 minutes of inactivity
+      inactivityTimer = setTimeout(() => {
+        supabase.auth.getSession().then(({ data: { session } }) => {
+          if (session?.user) {
+            supabase.auth.signOut();
+            showToast('Sesión cerrada por inactividad', 'info');
+          }
+        });
+      }, 30 * 60 * 1000); 
+    };
+
+    const events = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart'];
+    events.forEach(event => document.addEventListener(event, resetTimer));
+
     supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
+      if (session?.user) {
+        setUser(session.user);
+        resetTimer();
+      }
       setAuthLoading(false);
     });
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription: authSub } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
+      if (session?.user) resetTimer();
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      authSub.unsubscribe();
+      events.forEach(event => document.removeEventListener(event, resetTimer));
+      if (inactivityTimer) clearTimeout(inactivityTimer);
+    };
   }, []);
+
+  // ─── Supabase Realtime Listeners ───
+  useEffect(() => {
+    let channels = [];
+    if (user) {
+      console.log('FinanceContext: Setting up Realtime channels for user', user.id);
+      
+      const gastosChannel = supabase.channel(`gastos-${user.id}`)
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'gastos', filter: `user_id=eq.${user.id}` }, () => {
+          loadCurrentCycleAndExpenses();
+        })
+        .subscribe();
+
+      const budgetsChannel = supabase.channel(`budgets-${user.id}`)
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'presupuestos', filter: `user_id=eq.${user.id}` }, () => {
+          loadBudgets();
+        })
+        .subscribe();
+
+      const incomesChannel = supabase.channel(`incomes-${user.id}`)
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'ingresos_extra', filter: `user_id=eq.${user.id}` }, () => {
+          loadIncomesFromDB();
+        })
+        .subscribe();
+
+      channels = [gastosChannel, budgetsChannel, incomesChannel];
+    }
+
+    return () => {
+      channels.forEach(ch => supabase.removeChannel(ch));
+    };
+  }, [user]);
 
   // ─── Load data when user logs in ───
   useEffect(() => {
@@ -60,20 +127,38 @@ export function FinanceProvider({ children }) {
   }, [user]);
 
   const loadAllData = async () => {
+    if (dataLoading) return; // Prevent double loads
     setDataLoading(true);
+    console.log('FinanceContext: Starting loadAllData...');
+    
+    // Safety timeout: ensure loading finishes eventually
+    const safetyTimeout = setTimeout(() => {
+      console.warn('FinanceContext: Data loading timed out (8s safety triggered)');
+      setDataLoading(false);
+    }, 8000);
+
     try {
       const profileOk = await loadProfile();
       if (!profileOk) {
+        console.log('FinanceContext: Profile check failed or onboarding needed');
+        clearTimeout(safetyTimeout);
         setDataLoading(false);
         return;
       }
 
-      await loadAssetsAndDebts();
-      // Load expenses after profile (needs cycleDay for cycle detection)
-      await loadCurrentCycleAndExpenses();
+      console.log('FinanceContext: Profile OK, loading sub-modules...');
+      await Promise.all([
+        loadAssetsAndDebts(),
+        loadBudgets(),
+        loadCommitmentsFromDB(),
+        loadIncomesFromDB(),
+        loadCurrentCycleAndExpenses()
+      ]);
+      console.log('FinanceContext: All data loaded successfully');
     } catch (err) {
-      console.error('Error loading data:', err);
+      console.error('FinanceContext: Error loading data:', err);
     } finally {
+      clearTimeout(safetyTimeout);
       setDataLoading(false);
     }
   };
@@ -106,12 +191,73 @@ export function FinanceProvider({ children }) {
     setState(prev => ({
       ...prev,
       cycleDay: data.ciclo_dia,
-      categoryBudgets: JSON.parse(localStorage.getItem(LOCAL_BUDGETS_KEY) || 'null') || {},
-      commitments: JSON.parse(localStorage.getItem(`${LOCAL_COMMITMENTS_KEY}_${user.id}`) || '[]'),
-      incomes: JSON.parse(localStorage.getItem(`${LOCAL_INCOMES_KEY}_${user.id}`) || '[]'),
     }));
 
+    // Data will be loaded by specialized functions called in loadAllData
     return true;
+  };
+
+  const loadBudgets = async () => {
+    const { data, error } = await supabase.from('presupuestos').select('*').eq('user_id', user.id);
+    if (error) { console.error('loadBudgets error:', error); return; }
+
+    let budgets = {};
+    if (data && data.length > 0) {
+      data.forEach(b => { budgets[b.categoria] = b.monto; });
+    } else {
+      // Migration logic: if DB is empty, check localStorage
+      const local = JSON.parse(localStorage.getItem(LOCAL_BUDGETS_KEY) || 'null');
+      if (local) {
+        budgets = local;
+        // Push to DB
+        const inserts = Object.entries(local).map(([categoria, monto]) => ({
+          user_id: user.id, categoria, monto
+        }));
+        await supabase.from('presupuestos').insert(inserts);
+      }
+    }
+
+    setState(prev => ({ ...prev, categoryBudgets: budgets }));
+  };
+
+  const loadCommitmentsFromDB = async () => {
+    const { data, error } = await supabase.from('compromisos').select('*').eq('user_id', user.id);
+    if (error) { console.error('loadCommitments error:', error); return; }
+
+    let list = [];
+    if (data && data.length > 0) {
+      list = data.map(d => ({ id: d.id, name: d.nombre, amount: d.monto, day: d.dia_pago }));
+    } else {
+      // Migration
+      const local = JSON.parse(localStorage.getItem(`${LOCAL_COMMITMENTS_KEY}_${user.id}`) || localStorage.getItem(LOCAL_COMMITMENTS_KEY) || '[]');
+      if (local.length > 0) {
+        list = local;
+        await supabase.from('compromisos').insert(local.map(c => ({
+          user_id: user.id, nombre: c.name, monto: c.amount, dia_pago: c.day
+        })));
+      }
+    }
+    setState(prev => ({ ...prev, commitments: list }));
+  };
+
+  const loadIncomesFromDB = async () => {
+    const { data, error } = await supabase.from('ingresos_extra').select('*').eq('user_id', user.id);
+    if (error) { console.error('loadIncomes error:', error); return; }
+
+    let list = [];
+    if (data && data.length > 0) {
+      list = data.map(d => ({ id: d.id, name: d.nombre, amount: d.monto, date: d.fecha }));
+    } else {
+      // Migration
+      const local = JSON.parse(localStorage.getItem(`${LOCAL_INCOMES_KEY}_${user.id}`) || localStorage.getItem(LOCAL_INCOMES_KEY) || '[]');
+      if (local.length > 0) {
+        list = local;
+        await supabase.from('ingresos_extra').insert(local.map(i => ({
+          user_id: user.id, nombre: i.name, monto: i.amount, fecha: i.date || new Date().toISOString()
+        })));
+      }
+    }
+    setState(prev => ({ ...prev, incomes: list }));
   };
 
   const findOrCreateCiclo = async (cycleDay) => {
@@ -280,11 +426,13 @@ export function FinanceProvider({ children }) {
 
     if (error) { 
       console.error('addExpense error:', error); 
-      alert(`Error al guardar gasto: ${error.message || error.code}`);
+      showToast(`Error al guardar gasto: ${error.message || error.code}`, 'error');
       // Revert optimistic update
       await loadCurrentCycleAndExpenses();
       return; 
     }
+
+    showToast('Gasto guardado correctamente');
 
     // Insert items
     if (expense.items && expense.items.length > 0) {
@@ -354,51 +502,68 @@ export function FinanceProvider({ children }) {
     setState(prev => ({ ...prev, debts: prev.debts.filter(d => d.id !== id) }));
   };
 
-  // ─── Commitments (local) ───
-  const addCommitment = (commitment) => {
-    setState(prev => {
-      const updated = [...prev.commitments, commitment];
-      const storageKey = user ? `${LOCAL_COMMITMENTS_KEY}_${user.id}` : LOCAL_COMMITMENTS_KEY;
-      localStorage.setItem(storageKey, JSON.stringify(updated));
-      return { ...prev, commitments: updated };
-    });
+  // ─── Commitments (DB) ───
+  const addCommitment = async (commitment) => {
+    if (!user) return;
+    const { data, error } = await supabase.from('compromisos').insert({
+      user_id: user.id,
+      nombre: commitment.name,
+      monto: commitment.amount,
+      dia_pago: commitment.day
+    }).select().single();
+
+    if (error) { console.error('addCommitment error:', error); return; }
+
+    setState(prev => ({
+      ...prev,
+      commitments: [...prev.commitments, { id: data.id, name: data.nombre, amount: data.monto, day: data.dia_pago }]
+    }));
   };
 
-  const updateCommitment = (updatedCommitment) => {
-    setState(prev => {
-      const updated = prev.commitments.map(c => c.id === updatedCommitment.id ? updatedCommitment : c);
-      const storageKey = user ? `${LOCAL_COMMITMENTS_KEY}_${user.id}` : LOCAL_COMMITMENTS_KEY;
-      localStorage.setItem(storageKey, JSON.stringify(updated));
-      return { ...prev, commitments: updated };
-    });
+  const updateCommitment = async (updated) => {
+    if (!user) return;
+    const { error } = await supabase.from('compromisos').update({
+      nombre: updated.name,
+      monto: updated.amount,
+      dia_pago: updated.day
+    }).eq('id', updated.id);
+
+    if (error) { console.error('updateCommitment error:', error); return; }
+
+    setState(prev => ({
+      ...prev,
+      commitments: prev.commitments.map(c => c.id === updated.id ? updated : c)
+    }));
   };
 
-  const deleteCommitment = (id) => {
-    setState(prev => {
-      const updated = prev.commitments.filter(c => c.id !== id);
-      const storageKey = user ? `${LOCAL_COMMITMENTS_KEY}_${user.id}` : LOCAL_COMMITMENTS_KEY;
-      localStorage.setItem(storageKey, JSON.stringify(updated));
-      return { ...prev, commitments: updated };
-    });
+  const deleteCommitment = async (id) => {
+    if (!user) return;
+    await supabase.from('compromisos').delete().eq('id', id);
+    setState(prev => ({ ...prev, commitments: prev.commitments.filter(c => c.id !== id) }));
   };
 
-  // ─── Income (local) ───
-  const addIncome = (income) => {
-    setState(prev => {
-      const updated = [...(prev.incomes || []), income];
-      const storageKey = user ? `${LOCAL_INCOMES_KEY}_${user.id}` : LOCAL_INCOMES_KEY;
-      localStorage.setItem(storageKey, JSON.stringify(updated));
-      return { ...prev, incomes: updated };
-    });
+  // ─── Income (DB) ───
+  const addIncome = async (income) => {
+    if (!user) return;
+    const { data, error } = await supabase.from('ingresos_extra').insert({
+      user_id: user.id,
+      nombre: income.name,
+      monto: income.amount,
+      fecha: income.date || new Date().toISOString()
+    }).select().single();
+
+    if (error) { console.error('addIncome error:', error); return; }
+
+    setState(prev => ({
+      ...prev,
+      incomes: [...(prev.incomes || []), { id: data.id, name: data.nombre, amount: data.monto, date: data.fecha }]
+    }));
   };
 
-  const deleteIncome = (id) => {
-    setState(prev => {
-      const updated = (prev.incomes || []).filter(i => i.id !== id);
-      const storageKey = user ? `${LOCAL_INCOMES_KEY}_${user.id}` : LOCAL_INCOMES_KEY;
-      localStorage.setItem(storageKey, JSON.stringify(updated));
-      return { ...prev, incomes: updated };
-    });
+  const deleteIncome = async (id) => {
+    if (!user) return;
+    await supabase.from('ingresos_extra').delete().eq('id', id);
+    setState(prev => ({ ...prev, incomes: (prev.incomes || []).filter(i => i.id !== id) }));
   };
 
   // ─── Settings ───
@@ -420,6 +585,14 @@ export function FinanceProvider({ children }) {
     }
 
     if (updates.categoryBudgets) {
+      // Sync each category budget to DB
+      Object.entries(updates.categoryBudgets).forEach(async ([categoria, monto]) => {
+        await supabase.from('presupuestos').upsert({
+          user_id: user.id,
+          categoria,
+          monto
+        }, { onConflict: 'user_id,categoria' });
+      });
       localStorage.setItem(LOCAL_BUDGETS_KEY, JSON.stringify(updates.categoryBudgets));
     }
   };
@@ -432,9 +605,10 @@ export function FinanceProvider({ children }) {
     });
     if (error) {
       console.error("Error updating user profile:", error);
-      alert("Error al actualizar perfil: " + error.message);
+      showToast("Error al actualizar perfil: " + error.message, 'error');
     } else {
       setUser(data.user);
+      showToast("Perfil actualizado");
     }
   };
 
@@ -473,6 +647,9 @@ export function FinanceProvider({ children }) {
       addIncome,
       deleteIncome,
       updateUserProfile,
+      toasts,
+      showToast,
+      skipLoading: () => setDataLoading(false),
     }}>
       {children}
     </FinanceContext.Provider>

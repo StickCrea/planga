@@ -1,19 +1,26 @@
 const MERCHANT_MAP = {
   'exito': 'mercado',
+  'carulla': 'mercado',
+  'olimpica': 'mercado',
+  'jumbo': 'mercado',
+  'metro': 'mercado',
   'd1': 'mercado',
   'ara': 'mercado',
-  'jumbo': 'mercado',
-  'carulla': 'mercado',
+  'isimo': 'mercado',
   'mcdonald': 'comida',
+  'burger king': 'comida',
   'rappi': 'comida',
   'uber': 'transporte',
-  'did': 'transporte',
-  'beat': 'transporte',
+  'didi': 'transporte',
   'cabify': 'transporte',
+  'indriver': 'transporte',
   'netflix': 'suscripciones',
   'spotify': 'suscripciones',
   'disney': 'suscripciones',
-  'star+': 'suscripciones'
+  'star+': 'suscripciones',
+  'amazon': 'otro',
+  'cine colombia': 'ocio',
+  'procinal': 'ocio'
 };
 
 export async function prepareImage(file, rotation) {
@@ -23,7 +30,6 @@ export async function prepareImage(file, rotation) {
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d');
       
-      // Limit resolution to prevent memory crashes on mobile
       const MAX_SIZE = 1200;
       let width = img.width;
       let height = img.height;
@@ -180,44 +186,50 @@ function extractDate(text) {
 }
 
 function extractTotal(text, lines) {
-  // Capture typical total keywords. Allow common OCR typos like 'T0TAL'.
-  const totalRegex = /(?:TOTAL|PAGAR|VALOR|MONTO|SUMA|RECIBO|T0TAL)\s*[:$]*\s*([0-9.,\sOoIl]+)/i;
+  // Capture typical total keywords. Priority list.
+  const keywords = ['TOTAL A PAGAR', 'VALOR PAGADO', 'TOTAL', 'PAGAR', 'VALOR', 'MONTO', 'SUMA', 'RECIBO', 'T0TAL'];
   let foundAmounts = [];
 
-  lines.forEach(line => {
-    const match = line.match(totalRegex);
-    if (match) {
-      let numStr = match[1].trim();
-      if (!numStr) return;
+  for (const kw of keywords) {
+    const regex = new RegExp(`${kw}\\s*[:$]*\\s*([0-9.,\\sOoIl]{3,})`, 'i');
+    for (const line of lines) {
+      const match = line.match(regex);
+      if (match) {
+        let numStr = match[1].trim();
+        if (!numStr) continue;
 
-      // Fix common OCR misreads in numbers
-      numStr = numStr.replace(/[Oo]/g, '0').replace(/[Il]/g, '1');
-      // Remove spaces between digits
-      numStr = numStr.replace(/\s+/g, '');
-      
-      // Remove thousands separators (dot or comma followed by exactly 3 digits)
-      numStr = numStr.replace(/[.,](?=\d{3}(?!\d))/g, '');
-      numStr = numStr.replace(',', '.'); // Any remaining comma is likely a decimal
-      
-      const val = parseFloat(numStr);
-      if (!isNaN(val) && val > 0) foundAmounts.push(val);
-    }
-  });
-
-  // If no keyword match, look for numbers formatted as currency (e.g., 58.880 or 58 880)
-  if (foundAmounts.length === 0) {
-    const currencyRegex = /\b\d{1,3}(?:[.,\s]\d{3})+\b/g;
-    const allNumbers = text.match(currencyRegex);
-    if (allNumbers) {
-      allNumbers.forEach(n => {
-        const cleanVal = n.replace(/[\s.,]/g, '');
-        const val = parseFloat(cleanVal);
-        // Exclude huge numbers like NITs or phone numbers if they slip through
-        if (val > 100 && val < 10000000) {
-          foundAmounts.push(val);
+        // Fix common OCR misreads
+        numStr = numStr.replace(/[Oo]/g, '0').replace(/[Il]/g, '1');
+        // Remove all spaces
+        numStr = numStr.replace(/\s+/g, '');
+        
+        // Handle Colombian format: 58.880 -> 58880
+        // If it has a dot or comma, and there are 3 digits after it, it's likely a thousands separator
+        if (/[.,]\d{3}(?!\d)/.test(numStr)) {
+          numStr = numStr.replace(/[.,]/g, '');
+        } else {
+          // Normal decimal handling
+          numStr = numStr.replace(',', '.');
         }
-      });
+
+        const val = parseFloat(numStr);
+        if (!isNaN(val) && val > 0) return val; // Return the first strong match found (priority order)
+      }
     }
+  }
+
+  // Fallback: search all currency-like numbers
+  const currencyRegex = /\b\d{1,3}(?:[.,\s]\d{3})+\b|\b\d{4,7}\b/g;
+  const allNumbers = text.match(currencyRegex);
+  if (allNumbers) {
+    allNumbers.forEach(n => {
+      let cleanVal = n.replace(/[\s.,]/g, '');
+      const val = parseFloat(cleanVal);
+      // Exclude huge numbers like NITs or phone numbers
+      if (val > 500 && val < 2000000) {
+        foundAmounts.push(val);
+      }
+    });
   }
 
   return foundAmounts.length > 0 ? Math.max(...foundAmounts) : null;

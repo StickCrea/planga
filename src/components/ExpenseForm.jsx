@@ -10,7 +10,7 @@ const getLocalISODate = () => {
 };
 
 export default function ExpenseForm({ onSave }) {
-  const { state, addExpense } = useFinance();
+  const { state, addExpense, showToast } = useFinance();
   
   const [amount, setAmount] = useState('');
   const [date, setDate] = useState(getLocalISODate());
@@ -44,7 +44,7 @@ export default function ExpenseForm({ onSave }) {
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!amount || Number(amount) <= 0) {
-      alert('Por favor ingresa un monto válido mayor a 0');
+      showToast('Por favor ingresa un monto válido mayor a 0', 'error');
       return;
     }
 

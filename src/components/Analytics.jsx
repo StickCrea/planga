@@ -4,7 +4,7 @@ import {
   getCurrentMonthExpenses, getTotalSpent, getAvailableMoney, 
   fmt, CATEGORY_ICONS, CATEGORY_COLORS, getDaysInMonth, getMonthKey
 } from '../utils/financeUtils';
-import { Trash2 } from 'lucide-react';
+import { Trash2, AlertCircle, TrendingUp, CheckCircle2, Lightbulb, Sparkles } from 'lucide-react';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -74,15 +74,29 @@ export default function Analytics() {
   const barLabels = Object.keys(CATEGORY_ICONS);
   const barValues = barLabels.map(cat => catTotals[cat] || 0);
   const barColors = barLabels.map(cat => CATEGORY_COLORS[cat] || '#3b82f6');
+  const barBudgets = barLabels.map(cat => state.categoryBudgets?.[cat] || 0);
 
   const barData = {
     labels: barLabels.map(l => l.length > 6 ? l.charAt(0).toUpperCase() + l.slice(1, 6) + '...' : l.charAt(0).toUpperCase() + l.slice(1)),
-    datasets: [{
-      label: 'Gastado',
-      data: barValues,
-      backgroundColor: barColors,
-      borderRadius: 4
-    }]
+    datasets: [
+      {
+        label: 'Gastado',
+        data: barValues,
+        backgroundColor: barColors,
+        borderRadius: 4,
+        order: 2
+      },
+      {
+        label: 'Presupuesto',
+        data: barBudgets,
+        backgroundColor: 'rgba(255, 255, 255, 0.05)',
+        borderColor: 'rgba(255, 255, 255, 0.2)',
+        borderWidth: 1,
+        borderRadius: 4,
+        type: 'bar',
+        order: 1
+      }
+    ]
   };
 
   const commonOptions = {
@@ -104,6 +118,34 @@ export default function Analytics() {
         }
       },
       x: { grid: { display: false }, ticks: { color: '#64748b', font: { size: 10 } } }
+    }
+  };
+
+  const barOptions = {
+    ...commonOptions,
+    scales: {
+      ...commonOptions.scales,
+      x: {
+        ...commonOptions.scales.x,
+        stacked: false
+      },
+      y: {
+        ...commonOptions.scales.y,
+        stacked: false
+      }
+    },
+    plugins: {
+      ...commonOptions.plugins,
+      legend: { display: true, position: 'top', labels: { color: 'var(--text3)', font: { size: 10 } } },
+      tooltip: {
+        callbacks: {
+          label: (ctx) => {
+            const val = ctx.raw;
+            const label = ctx.dataset.label;
+            return ` ${label}: ${fmt(val)}`;
+          }
+        }
+      }
     }
   };
 
@@ -158,6 +200,73 @@ export default function Analytics() {
   const sortedMerchants = Object.entries(merchantTotals).sort((a,b) => b[1] - a[1]).slice(0, 5);
   const maxMerchant = sortedMerchants.length > 0 ? sortedMerchants[0][1] : 1;
 
+  // --- Intelligence Insights (Tips de Finly) ---
+  const generateInsights = () => {
+    const tips = [];
+    const budgets = state.categoryBudgets || {};
+    
+    // 1. Critical Budget Alert
+    Object.entries(catTotals).forEach(([cat, spent]) => {
+      const budget = budgets[cat];
+      if (budget > 0) {
+        const p = (spent / budget) * 100;
+        if (p >= 100) {
+          tips.push({
+            type: 'error',
+            icon: <AlertCircle size={18} />,
+            title: `Límite superado en ${cat}`,
+            text: `Has gastado el ${Math.round(p)}% de tu presupuesto. Considera reducir gastos en esta categoría.`
+          });
+        } else if (p >= 80) {
+          tips.push({
+            type: 'warning',
+            icon: <Lightbulb size={18} />,
+            title: `Cuidado con ${cat}`,
+            text: `Ya casi alcanzas tu límite (${Math.round(p)}%). ¡Aún puedes ahorrar!`
+          });
+        }
+      }
+    });
+
+    // 2. Spending Projection
+    if (currentDay > 5) {
+      const dailyAverage = totalExpenses / currentDay;
+      const projection = dailyAverage * daysInMonth;
+      if (projection > totalIncome && totalIncome > 0) {
+        tips.push({
+          type: 'error',
+          icon: <TrendingUp size={18} />,
+          title: 'Proyección crítica',
+          text: `A este ritmo, gastarás ${fmt(projection)} al final del mes, superando tus ingresos. ¡Hora de ajustar!`
+        });
+      }
+    }
+
+    // 3. Savings Potential
+    if (available > totalIncome * 0.4 && currentDay > 15) {
+      tips.push({
+        type: 'success',
+        icon: <TrendingUp size={18} />,
+        title: '¡Excelente gestión!',
+        text: 'Llevas más de la mitad del mes con un balance muy positivo. Podrías invertir el excedente.'
+      });
+    }
+
+    // 3. Healthy Balance
+    if (tips.length === 0) {
+      tips.push({
+        type: 'info',
+        icon: <CheckCircle2 size={18} />,
+        title: 'Todo bajo control',
+        text: 'Tus gastos están alineados con tus ingresos. ¡Sigue así!'
+      });
+    }
+
+    return tips.slice(0, 3);
+  };
+
+  const insights = generateInsights();
+
   // Modals state
   const [selectedMerchant, setSelectedMerchant] = useState(null);
   const [isIncomeModalOpen, setIsIncomeModalOpen] = useState(false);
@@ -186,8 +295,35 @@ export default function Analytics() {
     return mItems;
   };
 
+  if (!state.currentCiclo && !state.income) {
+    return (
+      <div className="glass-card" style={{ padding: '40px', textAlign: 'center' }}>
+        <p style={{ color: 'var(--text3)' }}>No hay datos para analizar todavía. Registra tus ingresos y gastos para ver estadísticas.</p>
+      </div>
+    );
+  }
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+      
+      {/* Intelligence Insights */}
+      <div className="glass-card insight-card-container">
+        <h3 className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <Sparkles size={18} style={{ color: 'var(--accent)' }} /> 
+          Insights de Inteligencia
+        </h3>
+        <div className="insights-list">
+          {insights.map((tip, idx) => (
+            <div key={idx} className={`insight-item ${tip.type}`}>
+              <div className="insight-icon">{tip.icon}</div>
+              <div className="insight-content">
+                <span className="insight-title">{tip.title}</span>
+                <span className="insight-text">{tip.text}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
       
       {/* KPIs */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px' }}>
@@ -247,8 +383,8 @@ export default function Analytics() {
       {/* Bar Chart */}
       <div className="glass-card chart-card">
         <h3 className="card-title">Gastos por Categoría</h3>
-        <div style={{ height: '220px', marginTop: '16px' }}>
-          <Bar data={barData} options={commonOptions} />
+        <div style={{ height: '240px', marginTop: '16px' }}>
+          <Bar data={barData} options={barOptions} />
         </div>
       </div>
 

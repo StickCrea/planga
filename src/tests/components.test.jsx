@@ -38,6 +38,7 @@ vi.mock('../context/FinanceContext', () => ({
     deleteDebt: vi.fn(),
     addIncome: vi.fn(),
     deleteIncome: vi.fn(),
+    showToast: vi.fn(),
   }),
 }));
 
@@ -246,7 +247,9 @@ describe('<ExpenseForm />', () => {
 
   it('renders date input with max=today', () => {
     render(<ExpenseForm onSave={vi.fn()} />);
-    const dateInput = screen.getByDisplayValue(new Date().toISOString().slice(0, 10));
+    const d = new Date();
+    const localToday = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    const dateInput = screen.getByDisplayValue(localToday);
     expect(dateInput).toBeInTheDocument();
   });
 });
