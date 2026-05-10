@@ -100,8 +100,8 @@ export function getCurrentMonthExpenses(state) {
 }
 
 export function getFutureCommitments(state) {
-  // Return all commitments for the cycle to avoid them disappearing mid-month
-  return state.commitments || [];
+  const today = new Date().getDate();
+  return (state.commitments || []).filter(c => c.day >= today);
 }
 
 export function getTotalSpent(state) {

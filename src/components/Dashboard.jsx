@@ -33,6 +33,14 @@ export default function Dashboard({ onSelectExpense }) {
 
   const recentExpenses = expenses.slice(0, 4);
 
+  if (!state.currentCiclo && !state.income) {
+    return (
+      <div className="glass-card" style={{ padding: '40px', textAlign: 'center', marginTop: '20px' }}>
+        <p style={{ color: 'var(--text3)' }}>No hay un ciclo activo. Ve a Ajustes para configurar tu presupuesto.</p>
+      </div>
+    );
+  }
+
   return (
     <>
       <div className={`status-banner status-${status.level}`}>
