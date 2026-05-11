@@ -12,6 +12,7 @@ import ExpenseDetailsModal from './components/ExpenseDetailsModal';
 import AuthScreen from './components/AuthScreen';
 import OnboardingScreen from './components/OnboardingScreen';
 import SidebarMenu from './components/SidebarMenu';
+import HelpScreen from './components/HelpScreen';
 import { useFinance } from './context/FinanceContext';
 import { getCycleInfo } from './utils/financeUtils';
 
@@ -73,6 +74,7 @@ function App() {
       case 'commitments': return <Commitments />;
       case 'add': return <ExpenseForm onSave={() => setCurrentScreen('dashboard')} />;
       case 'settings': return <SettingsScreen onSave={() => setCurrentScreen('dashboard')} />;
+      case 'help': return <HelpScreen />;
       default: return <Dashboard onSelectExpense={setSelectedExpense} />;
     }
   };

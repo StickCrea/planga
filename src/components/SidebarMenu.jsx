@@ -159,6 +159,12 @@ export default function SidebarMenu({ isOpen, onClose, onNavigate }) {
             Preferencias
           </p>
 
+          <button className="menu-item-btn" onClick={() => handleNav('help')}>
+            <BookOpen size={20} className="menu-icon" />
+            <span>Guía de Usuario</span>
+            <ChevronRight size={16} className="menu-chevron" />
+          </button>
+
           <button className="menu-item-btn" onClick={() => handleNav('settings')}>
             <Settings size={20} className="menu-icon" />
             <span>Configuración</span>
