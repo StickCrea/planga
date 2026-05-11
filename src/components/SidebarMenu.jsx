@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useFinance } from '../context/FinanceContext';
-import { User, Mail, Phone, Settings, LogOut, BarChart2, Globe, ListChecks, ChevronRight, Edit2, Check, X } from 'lucide-react';
+import { User, Mail, Phone, Settings, LogOut, BarChart2, Globe, ListChecks, ChevronRight, Edit2, Check, X, Database, BookOpen } from 'lucide-react';
 
 export default function SidebarMenu({ isOpen, onClose, onNavigate }) {
   const { user, signOut, updateUserProfile } = useFinance();
@@ -41,7 +41,7 @@ export default function SidebarMenu({ isOpen, onClose, onNavigate }) {
       />
       <div 
         style={{
-          position: 'fixed', top: 0, left: 0, bottom: 0, width: '85%', maxWidth: '320px',
+          position: 'fixed', top: 0, left: 0, bottom: 0, width: '80%', maxWidth: '340px',
           background: 'var(--bg)', borderRight: '1px solid var(--glass-border)',
           zIndex: 1000, display: 'flex', flexDirection: 'column',
           boxShadow: '4px 0 24px rgba(0,0,0,0.5)',
@@ -63,15 +63,7 @@ export default function SidebarMenu({ isOpen, onClose, onNavigate }) {
           </button>
           
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '16px' }}>
-            <div style={{
-              width: '68px', height: '68px', borderRadius: '20px', 
-              background: 'linear-gradient(135deg, var(--green), #059669)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: '2rem', fontWeight: 900, color: '#0A0F1E',
-              boxShadow: '0 8px 20px rgba(0, 230, 118, 0.3)',
-              flexShrink: 0,
-              border: '3px solid rgba(255,255,255,0.1)'
-            }}>
+            <div className="premium-avatar">
               {userInitial}
             </div>
             {!isEditing ? (
@@ -173,7 +165,11 @@ export default function SidebarMenu({ isOpen, onClose, onNavigate }) {
         </div>
 
         {/* Footer */}
-        <div style={{ padding: '24px 16px', borderTop: '1px solid var(--glass-border)' }}>
+        <div style={{ 
+          padding: '24px 16px 100px', /* Extra space for floating bottom nav */
+          borderTop: '1px solid var(--glass-border)',
+          background: 'var(--bg)'
+        }}>
           <button 
             onClick={() => { onClose(); signOut(); }}
             style={{
