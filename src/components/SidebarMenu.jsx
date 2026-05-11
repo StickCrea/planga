@@ -49,7 +49,12 @@ export default function SidebarMenu({ isOpen, onClose, onNavigate }) {
         }}
       >
         {/* Profile Header */}
-        <div style={{ padding: '32px 24px 24px', background: 'var(--bg2)', borderBottom: '1px solid var(--glass-border)', position: 'relative' }}>
+        <div style={{ 
+          padding: '40px 24px 24px', 
+          background: 'linear-gradient(to bottom, rgba(255,255,255,0.05), transparent)', 
+          borderBottom: '1px solid var(--glass-border)', 
+          position: 'relative' 
+        }}>
           <button 
             onClick={onClose}
             style={{ position: 'absolute', top: '16px', right: '16px', background: 'transparent', border: 'none', color: 'var(--text3)', cursor: 'pointer' }}
@@ -59,11 +64,13 @@ export default function SidebarMenu({ isOpen, onClose, onNavigate }) {
           
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '16px' }}>
             <div style={{
-              width: '64px', height: '64px', borderRadius: '50%', background: 'var(--accent)',
+              width: '68px', height: '68px', borderRadius: '20px', 
+              background: 'linear-gradient(135deg, var(--green), #059669)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: '1.8rem', fontWeight: 800, color: 'white',
-              boxShadow: '0 4px 12px rgba(99, 102, 241, 0.3)',
-              flexShrink: 0
+              fontSize: '2rem', fontWeight: 900, color: '#0A0F1E',
+              boxShadow: '0 8px 20px rgba(0, 230, 118, 0.3)',
+              flexShrink: 0,
+              border: '3px solid rgba(255,255,255,0.1)'
             }}>
               {userInitial}
             </div>

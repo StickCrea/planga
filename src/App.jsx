@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Home, PieChart, Wallet, Plus, Settings, Loader2, CheckCircle, AlertCircle, Info } from 'lucide-react';
+import { Home, PieChart, Wallet, Plus, Settings, Loader2, CheckCircle, AlertCircle, Info, User } from 'lucide-react';
 import Dashboard from './components/Dashboard';
 import Summary from './components/Summary';
 import Analytics from './components/Analytics';
@@ -201,7 +201,7 @@ function App() {
           <Wallet size={22} /><span>Cartera</span>
         </button>
         <button className={`nav-btn ${isSidebarOpen ? 'active' : ''}`} onClick={() => setIsSidebarOpen(true)}>
-          <Settings size={22} /><span>Menú</span>
+          <User size={22} /><span>Perfil</span>
         </button>
       </nav>
     </div>
