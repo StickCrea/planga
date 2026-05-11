@@ -25,6 +25,7 @@ function App() {
 
   // Always go to current month when pressing Inicio
   const goHome = () => {
+    setIsSidebarOpen(false);
     updateSettings({ selectedMonth: state.currentCiclo?.nombre || null });
     setCurrentScreen('dashboard');
   };
@@ -184,14 +185,14 @@ function App() {
         <button className={`nav-btn ${currentScreen === 'dashboard' ? 'active' : ''}`} onClick={goHome}>
           <Home size={22} /><span>Inicio</span>
         </button>
-        <button className={`nav-btn ${currentScreen === 'summary' ? 'active' : ''}`} onClick={() => setCurrentScreen('summary')}>
+        <button className={`nav-btn ${currentScreen === 'summary' ? 'active' : ''}`} onClick={() => { setIsSidebarOpen(false); setCurrentScreen('summary'); }}>
           <PieChart size={22} /><span>Movimientos</span>
         </button>
         
         <div className="fab-center-container">
           <button 
             className={`fab-center ${currentScreen === 'add' ? 'active' : ''}`} 
-            onClick={() => setCurrentScreen('add')}
+            onClick={() => { setIsSidebarOpen(false); setCurrentScreen('add'); }}
             aria-label="Agregar gasto"
           >
             <Plus size={28} />
@@ -199,10 +200,10 @@ function App() {
           </button>
         </div>
 
-        <button className={`nav-btn ${currentScreen === 'portfolio' ? 'active' : ''}`} onClick={() => setCurrentScreen('portfolio')}>
+        <button className={`nav-btn ${currentScreen === 'portfolio' ? 'active' : ''}`} onClick={() => { setIsSidebarOpen(false); setCurrentScreen('portfolio'); }}>
           <Wallet size={22} /><span>Cartera</span>
         </button>
-        <button className={`nav-btn ${isSidebarOpen ? 'active' : ''}`} onClick={() => setIsSidebarOpen(true)}>
+        <button className={`nav-btn ${isSidebarOpen ? 'active' : ''}`} onClick={() => setIsSidebarOpen(!isSidebarOpen)}>
           <User size={22} /><span>Perfil</span>
         </button>
       </nav>

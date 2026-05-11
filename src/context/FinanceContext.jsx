@@ -27,6 +27,14 @@ export function FinanceProvider({ children }) {
   });
   const [dataLoading, setDataLoading] = useState(false);
   const [toasts, setToasts] = useState([]);
+  const [lastLoadTime, setLastLoadTime] = useState(0);
+
+  // ─── LocalStorage Persistence ───
+  useEffect(() => {
+    if (user && !dataLoading) {
+      localStorage.setItem(`finly_state_${user.id}`, JSON.stringify(state));
+    }
+  }, [state, user, dataLoading]);
 
   const showToast = useCallback((message, type = 'success') => {
     const id = Date.now();
@@ -60,6 +68,15 @@ export function FinanceProvider({ children }) {
       if (session?.user) {
         setUser(session.user);
         resetTimer();
+        
+        // Instant bootstrap from cache
+        const cached = localStorage.getItem(`finly_state_${session.user.id}`);
+        if (cached) {
+          try {
+            const parsed = JSON.parse(cached);
+            setState(parsed);
+          } catch (e) { console.error('Cache parse error', e); }
+        }
       }
       setAuthLoading(false);
     });
@@ -126,9 +143,15 @@ export function FinanceProvider({ children }) {
     }
   }, [user]);
 
-  const loadAllData = async () => {
-    if (dataLoading) return; // Prevent double loads
+  const loadAllData = async (force = false) => {
+    if (dataLoading) return;
+    
+    // Throttle loads (max once every 5 seconds unless forced)
+    const now = Date.now();
+    if (!force && (now - lastLoadTime < 5000)) return;
+    
     setDataLoading(true);
+    setLastLoadTime(now);
     console.log('FinanceContext: Starting loadAllData...');
     
     // Safety timeout: ensure loading finishes eventually
@@ -416,18 +439,20 @@ export function FinanceProvider({ children }) {
     let response = await supabase.from('gastos').insert(insertPayload).select().single();
 
     // Fallback if the user's DB doesn't have the new columns OR if the ENUM values still don't match
-    if (response.error && (response.error.message?.includes('does not exist') || response.error.message?.includes('enum'))) {
+    if (response.error && (response.error.message?.includes('does not exist') || response.error.message?.includes('enum') || response.error.status === 400)) {
+      console.warn('addExpense: Retrying with minimal payload due to error:', response.error.message);
       delete insertPayload.medio_pago;
       delete insertPayload.entidad_banco;
+      delete insertPayload.origen;
       response = await supabase.from('gastos').insert(insertPayload).select().single();
     }
 
     const { data: gasto, error } = response;
 
     if (error) { 
-      console.error('addExpense error:', error); 
+      console.error('addExpense final error:', error); 
       showToast(`Error al guardar gasto: ${error.message || error.code}`, 'error');
-      // Revert optimistic update
+      // Revert optimistic update by reloading data
       await loadCurrentCycleAndExpenses();
       return; 
     }
