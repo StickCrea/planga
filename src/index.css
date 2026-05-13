@@ -664,7 +664,7 @@ body {
   background: rgba(0,0,0,0.6);
   backdrop-filter: blur(4px);
   display: flex; align-items: flex-end; justify-content: center;
-  z-index: 200;
+  z-index: 3000;
   animation: fadeIn .2s ease;
 }
 .modal {

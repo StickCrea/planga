@@ -320,7 +320,7 @@ export function FinanceProvider({ children }) {
     const startStr = cycleInfo.startDate.toISOString().slice(0, 10);
     const endStr = cycleInfo.endDate.toISOString().slice(0, 10);
 
-    // Look for existing ciclo (use order to avoid error if duplicates exist due to previous bug)
+    // Look for existing ciclo
     const { data: existingList } = await supabase
       .from('ciclos')
       .select('*')
@@ -332,14 +332,16 @@ export function FinanceProvider({ children }) {
 
     if (existingList && existingList.length > 0) return existingList[0];
 
-    // Get default income from the most recent cycle
+    // Get the most recent cycle to copy income and calculate rollover
     const { data: lastCiclo } = await supabase
       .from('ciclos')
-      .select('ingreso')
+      .select('*')
       .eq('user_id', user.id)
       .order('created_at', { ascending: false })
       .limit(1);
-    const defaultIncome = (lastCiclo && lastCiclo.length > 0) ? lastCiclo[0].ingreso : 0;
+    
+    const prevCiclo = (lastCiclo && lastCiclo.length > 0) ? lastCiclo[0] : null;
+    const defaultIncome = prevCiclo ? prevCiclo.ingreso : 0;
 
     // Create new ciclo
     const { data: newCiclo, error } = await supabase
@@ -356,6 +358,60 @@ export function FinanceProvider({ children }) {
       .single();
 
     if (error) throw error;
+
+    // --- Arrastre de Saldo (Rollover) ---
+    if (prevCiclo) {
+      try {
+        // 1. Gastos del mes anterior
+        const { data: prevGastos } = await supabase
+          .from('gastos')
+          .select('total')
+          .eq('ciclo_id', prevCiclo.id);
+        const totalGastos = (prevGastos || []).reduce((sum, g) => sum + (g.total || 0), 0);
+
+        // 2. Ingresos extra del mes anterior (por fecha)
+        const { data: prevIncomes } = await supabase
+          .from('ingresos_extra')
+          .select('monto')
+          .eq('user_id', user.id)
+          .gte('fecha', prevCiclo.fecha_inicio)
+          .lte('fecha', prevCiclo.fecha_fin);
+        const totalIncomes = (prevIncomes || []).reduce((sum, i) => sum + (i.monto || 0), 0);
+
+        // 3. Compromisos mensuales
+        const { data: compromisos } = await supabase
+          .from('compromisos')
+          .select('monto')
+          .eq('user_id', user.id);
+        const totalCommitments = (compromisos || []).reduce((sum, c) => sum + (c.monto || 0), 0);
+
+        // Calcular balance final
+        const balance = prevCiclo.ingreso + totalIncomes - totalGastos - totalCommitments;
+
+        if (balance > 0) {
+          // Sobró dinero -> Ingreso para el nuevo ciclo
+          await supabase.from('ingresos_extra').insert({
+            user_id: user.id,
+            nombre: 'Saldo mes anterior',
+            monto: balance,
+            fecha: newCiclo.fecha_inicio
+          });
+        } else if (balance < 0) {
+          // Faltó dinero -> Gasto en contra en el nuevo ciclo
+          await supabase.from('gastos').insert({
+            user_id: user.id,
+            ciclo_id: newCiclo.id,
+            categoria: 'otro',
+            comercio: 'Déficit mes anterior',
+            total: Math.abs(balance),
+            fecha_gasto: newCiclo.fecha_inicio
+          });
+        }
+      } catch (err) {
+        console.error('Error al calcular arrastre de saldo:', err);
+      }
+    }
+
     return newCiclo;
   };
 
