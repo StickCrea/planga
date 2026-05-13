@@ -109,9 +109,9 @@ export default function Analytics() {
       y: {
         beginAtZero: true,
         min: 0,
-        grid: { color: 'rgba(148,163,184,0.1)' },
+        grid: { color: 'rgba(255, 255, 255, 0.05)' },
         ticks: { 
-          color: '#64748b',
+          color: '#cbd5e1', // Explicit hex for Canvas instead of var()
           callback: (value) => {
             if (value >= 1000000) return '$' + (value/1000000).toFixed(1) + 'M';
             if (value >= 1000) return '$' + (value/1000).toFixed(0) + 'K';
@@ -119,7 +119,7 @@ export default function Analytics() {
           }
         }
       },
-      x: { grid: { display: false }, ticks: { color: '#64748b', font: { size: 10 } } }
+      x: { grid: { display: false }, ticks: { color: '#cbd5e1', font: { size: 10 } } }
     }
   };
 
@@ -138,7 +138,7 @@ export default function Analytics() {
     },
     plugins: {
       ...commonOptions.plugins,
-      legend: { display: true, position: 'top', labels: { color: 'var(--text3)', font: { size: 10 } } },
+      legend: { display: true, position: 'top', labels: { color: '#e2e8f0', font: { size: 10 } } },
       tooltip: {
         callbacks: {
           label: (ctx) => {

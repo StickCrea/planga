@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '../lib/supabase';
 import { getCycleInfo } from '../utils/financeUtils';
 
@@ -12,6 +12,8 @@ export function FinanceProvider({ children }) {
   const [user, setUser] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
   const [needsOnboarding, setNeedsOnboarding] = useState(false);
+  const lastUserIdRef = useRef(null);
+  const lastRealtimeUserRef = useRef(null);
   const [state, setState] = useState({
     income: 0,
     cycleDay: null,
@@ -64,22 +66,45 @@ export function FinanceProvider({ children }) {
     const events = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart'];
     events.forEach(event => document.addEventListener(event, resetTimer));
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user) {
-        setUser(session.user);
-        resetTimer();
+    const fetchSession = async () => {
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
+        if (error) console.error('Supabase session error:', error);
         
-        // Instant bootstrap from cache
-        const cached = localStorage.getItem(`finly_state_${session.user.id}`);
-        if (cached) {
-          try {
-            const parsed = JSON.parse(cached);
-            setState(parsed);
-          } catch (e) { console.error('Cache parse error', e); }
+        if (session?.user) {
+          setUser(session.user);
+          resetTimer();
+          
+          // Instant bootstrap from cache
+          const cached = localStorage.getItem(`finly_state_${session.user.id}`);
+          if (cached) {
+            try {
+              const parsed = JSON.parse(cached);
+              setState(parsed);
+            } catch (e) { console.error('Cache parse error', e); }
+          }
         }
+      } catch (err) {
+        console.error('Session fetch exception:', err);
+      } finally {
+        setAuthLoading(false);
       }
-      setAuthLoading(false);
-    });
+    };
+
+    fetchSession();
+
+    // Handle mobile backgrounding (returning from camera/gallery)
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        // App came back to foreground, ensure session is active
+        supabase.auth.getSession().then(({ data: { session } }) => {
+          if (session?.user) {
+            setUser(session.user);
+          }
+        }).catch(() => {});
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
 
     const { data: { subscription: authSub } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
@@ -89,14 +114,15 @@ export function FinanceProvider({ children }) {
     return () => {
       authSub.unsubscribe();
       events.forEach(event => document.removeEventListener(event, resetTimer));
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
       if (inactivityTimer) clearTimeout(inactivityTimer);
     };
   }, []);
 
   // ─── Supabase Realtime Listeners ───
   useEffect(() => {
-    let channels = [];
-    if (user) {
+    if (user && lastRealtimeUserRef.current !== user.id) {
+      lastRealtimeUserRef.current = user.id;
       console.log('FinanceContext: Setting up Realtime channels for user', user.id);
       
       const gastosChannel = supabase.channel(`gastos-${user.id}`)
@@ -117,19 +143,24 @@ export function FinanceProvider({ children }) {
         })
         .subscribe();
 
-      channels = [gastosChannel, budgetsChannel, incomesChannel];
+      return () => {
+        supabase.removeChannel(gastosChannel);
+        supabase.removeChannel(budgetsChannel);
+        supabase.removeChannel(incomesChannel);
+      };
     }
-
-    return () => {
-      channels.forEach(ch => supabase.removeChannel(ch));
-    };
   }, [user]);
 
   // ─── Load data when user logs in ───
   useEffect(() => {
     if (user) {
-      loadAllData();
+      if (lastUserIdRef.current !== user.id) {
+        lastUserIdRef.current = user.id;
+        loadAllData(true); // Force load on user change
+      }
     } else if (!authLoading) {
+      lastUserIdRef.current = null;
+      lastRealtimeUserRef.current = null;
       // Reset state on logout
       setState(prev => ({
         ...prev,
@@ -141,14 +172,14 @@ export function FinanceProvider({ children }) {
         currentCiclo: null,
       }));
     }
-  }, [user]);
+  }, [user, authLoading]);
 
   const loadAllData = async (force = false) => {
     if (dataLoading) return;
     
-    // Throttle loads (max once every 5 seconds unless forced)
     const now = Date.now();
-    if (!force && (now - lastLoadTime < 5000)) return;
+    // Throttle: avoid loading more than once every 10 seconds
+    if (!force && (now - lastLoadTime < 10000)) return;
     
     setDataLoading(true);
     setLastLoadTime(now);
