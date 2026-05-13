@@ -669,6 +669,7 @@ body {
 }
 .modal {
   width: 100%; max-width: 430px;
+  max-height: 90vh; overflow-y: auto;
   border-radius: var(--radius) var(--radius) 0 0;
   padding: 24px 20px calc(20px + var(--safe-bottom));
   animation: slideUp .3s ease;

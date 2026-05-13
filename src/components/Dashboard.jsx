@@ -54,15 +54,17 @@ export default function Dashboard({ onSelectExpense }) {
         
         <div className="card-row">
           <div className="card-stat">
-            <span className="stat-label">Días</span>
+            <span className="stat-label">Días Restantes</span>
             <span className="stat-value">{daysLeft}</span>
+            <span style={{ fontSize: '0.65rem', color: 'var(--text3)', marginTop: '2px' }}>Para fin de mes</span>
           </div>
           <div className="card-divider"></div>
           <div className="card-stat">
-            <span className="stat-label">Hoy</span>
+            <span className="stat-label">Presupuesto Diario</span>
             <span className="stat-value stat-highlight" style={{ color: `var(--${status.level})` }}>
               {fmt(dailyBudget)}
             </span>
+            <span style={{ fontSize: '0.65rem', color: 'var(--text3)', marginTop: '2px' }}>Recomendado para hoy</span>
           </div>
         </div>
       </div>
@@ -82,18 +84,18 @@ export default function Dashboard({ onSelectExpense }) {
             <span className="ring-label">Gastado</span>
           </div>
         </div>
-        <div className="progress-stats">
-          <div className="pstat">
-            <span className="pstat-val">{fmt(totalSpent)}</span>
-            <span className="pstat-label">Gastos del mes</span>
+        <div className="progress-stats" style={{ display: 'flex', flexDirection: 'column', gap: '12px', justifyContent: 'center' }}>
+          <div className="pstat" style={{ background: 'rgba(255,255,255,0.03)', padding: '10px 15px', borderRadius: '12px', borderLeft: '3px solid var(--accent)' }}>
+            <span className="pstat-label" style={{ fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Gastos del Mes</span>
+            <span className="pstat-val" style={{ fontSize: '1.1rem' }}>{fmt(totalSpent)}</span>
           </div>
-          <div className="pstat">
-            <span className="pstat-val">{fmt(dailyAvg)}</span>
-            <span className="pstat-label">Promedio diario</span>
+          <div className="pstat" style={{ background: 'rgba(255,255,255,0.03)', padding: '10px 15px', borderRadius: '12px', borderLeft: '3px solid var(--yellow)' }}>
+            <span className="pstat-label" style={{ fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Promedio Diario</span>
+            <span className="pstat-val" style={{ fontSize: '1.1rem' }}>{fmt(dailyAvg)}</span>
           </div>
-          <div className="pstat">
-            <span className="pstat-val">{fmt(commitmentsTotal)}</span>
-            <span className="pstat-label">Compromisos</span>
+          <div className="pstat" style={{ background: 'rgba(255,255,255,0.03)', padding: '10px 15px', borderRadius: '12px', borderLeft: '3px solid var(--blue)' }}>
+            <span className="pstat-label" style={{ fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Compromisos</span>
+            <span className="pstat-val" style={{ fontSize: '1.1rem' }}>{fmt(commitmentsTotal)}</span>
           </div>
         </div>
       </div>
