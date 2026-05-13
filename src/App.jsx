@@ -148,37 +148,38 @@ function App() {
 
       <div className="main-content">
         <main id={`screen-${currentScreen}`} className="screen active" style={{ paddingBottom: '80px' }}>
-          <header className="screen-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '15px 0', width: '100%' }}>
+          <header className="screen-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '15px 0', width: '100%', gap: '8px' }}>
             {/* Left: Spacer/Logo container to maintain flex balance */}
-            <div style={{ flex: 1, display: 'flex', alignItems: 'center' }}>
+            <div style={{ flex: 1, display: 'flex', alignItems: 'center', minWidth: 0 }}>
               <div className="logo" translate="no" style={{ fontSize: '1.5rem', margin: 0 }}>Finly<span className="logo-dot">.</span></div>
             </div>
             
             {/* Center: Date */}
             <div style={{ 
-              fontSize: '0.8rem', fontWeight: 700, color: 'var(--text2)', 
-              background: 'rgba(255,255,255,0.03)', padding: '6px 14px', borderRadius: '16px', border: '1px solid var(--glass-border)',
-              textAlign: 'center', whiteSpace: 'nowrap'
+              fontSize: 'clamp(0.7rem, 2.5vw, 0.8rem)', fontWeight: 700, color: 'var(--text2)', 
+              background: 'rgba(255,255,255,0.03)', padding: '6px 12px', borderRadius: '16px', border: '1px solid var(--glass-border)',
+              textAlign: 'center', whiteSpace: 'nowrap', flexShrink: 0
             }}>
               {getMonthDisplay()}
             </div>
 
             {/* Right: Avatar */}
-            <div style={{ flex: 1, display: 'flex', justifyContent: 'flex-end' }}>
+            <div style={{ flex: 1, display: 'flex', justifyContent: 'flex-end', minWidth: 0 }}>
               <button 
                 onClick={() => setIsSidebarOpen(true)}
                 style={{ 
-                  display: 'flex', alignItems: 'center', gap: '10px', 
+                  display: 'flex', alignItems: 'center', gap: '8px', 
                   background: 'rgba(255,255,255,0.05)', border: '1px solid var(--glass-border)',
-                  padding: '4px 14px 4px 4px', borderRadius: '24px', cursor: 'pointer', transition: 'all 0.2s' 
+                  padding: '4px 10px 4px 4px', borderRadius: '24px', cursor: 'pointer', transition: 'all 0.2s',
+                  maxWidth: '100%'
                 }}
                 onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.1)'}
                 onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
               >
-                <div style={{ width: '30px', height: '30px', borderRadius: '50%', background: 'var(--accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#0f172a', fontSize: '14px', fontWeight: '900' }}>
+                <div style={{ width: '30px', height: '30px', borderRadius: '50%', background: 'var(--accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#0f172a', fontSize: '14px', fontWeight: '900', flexShrink: 0 }}>
                   {(user?.user_metadata?.nombre || user?.email || '?').charAt(0).toUpperCase()}
                 </div>
-                <span style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--text)', whiteSpace: 'nowrap', letterSpacing: '0.3px' }}>
+                <span style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--text)', whiteSpace: 'nowrap', letterSpacing: '0.3px', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                   {user?.user_metadata?.nombre ? user.user_metadata.nombre.split(' ')[0] : 'Perfil'}
                 </span>
               </button>
