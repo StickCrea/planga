@@ -85,6 +85,31 @@ TOTAL PAGAR  21.400`;
   it('does not crash on very short text', () => {
     expect(() => extractDetailedData('abc')).not.toThrow();
   });
+
+  it('correctly classifies Arroz Diana as an item instead of metadata', () => {
+    const text = 'Supermercado\nArroz Diana  5.000\nTOTAL 5.000';
+    const data = extractDetailedData(text);
+    const hasArrozDiana = data.items.some(item => item.desc.toLowerCase().includes('diana'));
+    expect(hasArrozDiana).toBe(true);
+  });
+
+  it('extracts total correctly when SUBTOTAL keyword is present before TOTAL', () => {
+    const text = 'SUBTOTAL: 45.000\nTOTAL: 49.500';
+    const data = extractDetailedData(text);
+    expect(data.total).toBe(49500);
+  });
+
+  it('extracts date written in Spanish format', () => {
+    const text = 'Fecha de emision: 23 de mayo de 2026\nTOTAL 5.000';
+    const data = extractDetailedData(text);
+    expect(data.date).toBe('2026-05-23');
+  });
+
+  it('correctly extracts total with intermediate words and decimal cents', () => {
+    const text = 'Vendedor: MUY Restrepo\nTotal Recaudado:.........$24.500,00\nMedio de pago: Integraciones....$24.500,00';
+    const data = extractDetailedData(text);
+    expect(data.total).toBe(24500);
+  });
 });
 
 // ─── extractPaymentInfo ──────────────────────────────────────

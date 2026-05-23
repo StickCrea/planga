@@ -90,11 +90,11 @@ function parseLines(lines) {
   const itemRegex = /(.+?)\s+([\d.,]{3,})\s*[A-Z0-9]?$/i;
   
   const metaKeywords = [
-    'nit', 'tel', 'resolucion', 'dian', 'trx', 'apro', 'cambio', 
-    'vuelto', 'exento', 'base', 'impuesto', 'articulos', 'atendido',
-    'factura', 'electronica', 'vigencia', 'cliente', 'tarj', 'pago',
+    'nit', 'tel', 'telefono', 'resolucion', 'dian', 'trx', 'apro', 'aprobado', 'cambio', 
+    'vuelto', 'exento', 'base', 'impuesto', 'articulos', 'articulo', 'atendido',
+    'factura', 'electronica', 'vigencia', 'cliente', 'tarj', 'tarjeta', 'pago',
     'total', 'pagar', 'monto', 'suma', 'entregados', 'recibo',
-    'efectivo', 'items', 'iva', 'generacion', 'emision'
+    'efectivo', 'items', 'item', 'iva', 'generacion', 'emision'
   ];
 
   lines.forEach(line => {
@@ -112,7 +112,17 @@ function parseLines(lines) {
       const can = quantMatch ? quantMatch[1] : "1";
       const hasQuantityPattern = quantMatch !== null;
       
-      const isMeta = (metaKeywords.some(key => lower.includes(key)) || desc.length < 3 || isAddress) && !hasQuantityPattern;
+      // Robust word boundaries matching to prevent false positives like "Diana" matching "dian"
+      const isMeta = (metaKeywords.some(key => {
+        if (key === 'tarj') {
+          return /\btarj(eta)?\b/i.test(lower);
+        }
+        if (key === 'tel') {
+          return /\btel(efono)?\b/i.test(lower);
+        }
+        const regex = new RegExp(`\\b${key}\\b`, 'i');
+        return regex.test(lower);
+      }) || desc.length < 3 || isAddress) && !hasQuantityPattern;
 
       if (isMeta) {
         metadata.push({ label: desc, value: priceStr });
@@ -131,7 +141,11 @@ function parseLines(lines) {
         }
       }
     } else {
-      if (metaKeywords.some(key => lower.includes(key)) && line.length > 5) {
+      const isMetaLine = metaKeywords.some(key => {
+        const regex = new RegExp(`\\b${key}\\b`, 'i');
+        return regex.test(lower);
+      });
+      if (isMetaLine && line.length > 5) {
         metadata.push({ label: line, value: '' });
       }
     }
@@ -141,19 +155,71 @@ function parseLines(lines) {
 }
 
 function extractMerchant(lines) {
-  for (let i = 0; i < Math.min(lines.length, 5); i++) {
-    const l = lines[i];
-    if (l.includes('NIT') || l.includes('SAS') || l.includes('S.A')) {
-      let merchant = l.split('NIT')[0].replace(/[^a-zA-Z0-9\s]/g, '').trim();
-      const lower = merchant.toLowerCase();
-      if (lower === 'di' || lower === 'di sas' || lower.includes('d1')) merchant = 'D1';
-      return merchant;
+  if (lines.length === 0) return 'Comercio desconocido';
+
+  const fullText = lines.join('\n').toLowerCase();
+  
+  // 1. Check for a known merchant from MERCHANT_MAP in the whole text
+  for (const merchantKey of Object.keys(MERCHANT_MAP)) {
+    if (fullText.includes(merchantKey)) {
+      return merchantKey.charAt(0).toUpperCase() + merchantKey.slice(1);
     }
   }
+  
+  // 2. Look for typical NIT / SAS / S.A. in the first 5 lines
+  for (let i = 0; i < Math.min(lines.length, 5); i++) {
+    const l = lines[i];
+    const upper = l.toUpperCase();
+    if (upper.includes('NIT') || upper.includes('SAS') || upper.includes('S.A.') || upper.includes('S.A')) {
+      let part = l;
+      if (upper.includes('NIT')) {
+        part = l.split(/nit/i)[0];
+      }
+      let merchant = part.replace(/[^a-zA-Z0-9\s]/g, '').trim();
+      const lower = merchant.toLowerCase();
+      if (lower === 'di' || lower === 'di sas' || lower.includes('d1')) return 'D1';
+      if (merchant.length > 2) return merchant;
+    }
+  }
+  
+  // 3. Fallback: First line that is not a welcoming header or metadata noise
+  const noiseHeaders = [
+    'bienvenido', 'bienvenidos', 'factura', 'simplificada', 'electronica', 
+    'venta', 'ticket', 'recibo', 'caja', 'cajero', 'original', 'copia'
+  ];
+  for (let i = 0; i < Math.min(lines.length, 4); i++) {
+    const line = lines[i];
+    if (!line) continue;
+    const lower = line.toLowerCase();
+    const hasNoise = noiseHeaders.some(noise => lower.includes(noise));
+    if (!hasNoise && line.replace(/[^a-zA-Z]/g, '').length >= 3) {
+      return line.substring(0, 30).trim();
+    }
+  }
+  
   return lines[0] ? lines[0].substring(0, 30).trim() : 'Comercio desconocido';
 }
 
 function extractDate(text) {
+  // Support Spanish month names like "23 de mayo de 2026" or "15 dic 2025"
+  const monthsEs = {
+    enero: '01', feb: '02', febrero: '02', marzo: '03', abr: '04', abril: '04', 
+    mayo: '05', jun: '06', junio: '06', jul: '07', julio: '07', ago: '08', agosto: '08', 
+    sep: '09', septiembre: '09', oct: '10', octubre: '10', nov: '11', noviembre: '11', 
+    dic: '12', diciembre: '12'
+  };
+  
+  const spanishDateRegex = /(\d{1,2})\s+(?:de\s+)?(enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|octubre|noviembre|diciembre|feb|abr|jun|jul|ago|sep|oct|nov|dic)\s+(?:de\s+)?(\d{4})/i;
+  const esMatch = text.match(spanishDateRegex);
+  if (esMatch) {
+    const day = esMatch[1].padStart(2, '0');
+    const monthName = esMatch[2].toLowerCase();
+    const month = monthsEs[monthName];
+    const year = esMatch[3];
+    return `${year}-${month}-${day}`;
+  }
+
+  // Standard numeric formats (YYYY-MM-DD or DD-MM-YYYY)
   const dateRegex = /(\d{4})[/-](\d{2})[/-](\d{2})|(\d{2})[/-](\d{2})[/-](\d{4})/;
   const match = text.match(dateRegex);
   
@@ -191,8 +257,25 @@ function extractTotal(text, lines) {
   let foundAmounts = [];
 
   for (const kw of keywords) {
-    const regex = new RegExp(`${kw}\\s*[:$]*\\s*([0-9.,\\sOoIl]{3,})`, 'i');
+    // Ensure word boundary check to avoid matching parts of other words (e.g. subtotal matching total)
+    // and allow non-digit characters in between the keyword and the total number (e.g. Total Recaudado)
+    const regex = new RegExp(`\\b${kw}\\b[^0-9\\n]*\\$?[:\\s]*([0-9.,\\sOoIl]{3,})`, 'i');
     for (const line of lines) {
+      const lowerLine = line.toLowerCase();
+      // Skip subtotal lines if looking for TOTAL or other general keywords
+      if (kw === 'TOTAL' && (lowerLine.includes('subtotal') || lowerLine.includes('sub-total') || lowerLine.includes('sub total'))) {
+        continue;
+      }
+      // Skip base/impuesto/iva/quantity/order lines when looking for final total
+      if (['TOTAL', 'PAGAR', 'VALOR', 'MONTO'].includes(kw) && 
+          (lowerLine.includes('iva') || lowerLine.includes('base') || lowerLine.includes('impuesto') || 
+           lowerLine.includes('retefuente') || lowerLine.includes('descuento') || 
+           lowerLine.includes('articulos') || lowerLine.includes('items') || 
+           lowerLine.includes('productos') || lowerLine.includes('unidades') || 
+           lowerLine.includes('cantidad') || lowerLine.includes('orden'))) {
+        continue;
+      }
+
       const match = line.match(regex);
       if (match) {
         let numStr = match[1].trim();
@@ -203,6 +286,9 @@ function extractTotal(text, lines) {
         // Remove all spaces
         numStr = numStr.replace(/\s+/g, '');
         
+        // Strip trailing 2-digit decimals (cents like .00 or ,00 or ,19)
+        numStr = numStr.replace(/[.,]\d{2}\b/g, '');
+
         // Handle Colombian format: 58.880 -> 58880
         // If it has a dot or comma, and there are 3 digits after it, it's likely a thousands separator
         if (/[.,]\d{3}(?!\d)/.test(numStr)) {
