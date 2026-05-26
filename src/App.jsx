@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Home, PieChart, Wallet, Plus, Settings, Loader2, CheckCircle, AlertCircle, Info, User } from 'lucide-react';
+import { Home, PieChart, Wallet, Plus, Settings, Loader2, CheckCircle, AlertCircle, Info, User, Calendar } from 'lucide-react';
 import Dashboard from './components/Dashboard';
 import Summary from './components/Summary';
 import Analytics from './components/Analytics';
@@ -80,15 +80,20 @@ function App() {
     }
   };
 
-  const getMonthDisplay = () => {
+  const getMonthDisplay = (short = false) => {
     const mk = state.selectedMonth || state.currentCiclo?.nombre;
     
     // If viewing the current cycle (or if no specific past cycle is selected)
     if (!state.selectedMonth || state.selectedMonth === state.currentCiclo?.nombre) {
       if (state.currentCiclo) {
-        return `Ciclo: ${formatDateRange(state.currentCiclo.fecha_inicio, state.currentCiclo.fecha_fin)}`;
+        return `Ciclo: ${formatDateRange(state.currentCiclo.fecha_inicio, state.currentCiclo.fecha_fin, short)}`;
       }
-      return new Date().toLocaleDateString('es-CO', { day: 'numeric', month: 'long', year: 'numeric' }).replace(/^\w/, c => c.toUpperCase());
+      // Calculate current cycle locally as a fallback if state.currentCiclo is not loaded yet
+      const cd = state.cycleDay || 25;
+      const fallbackCycle = getCycleInfo(new Date(), cd);
+      const startStr = fallbackCycle.startDate.toISOString().slice(0, 10);
+      const endStr = fallbackCycle.endDate.toISOString().slice(0, 10);
+      return `Ciclo: ${formatDateRange(startStr, endStr, short)}`;
     }
 
     // If viewing a past history month
@@ -98,7 +103,7 @@ function App() {
       const cycleInfo = getCycleInfo(representativeDate, state.cycleDay);
       const startStr = cycleInfo.startDate.toISOString().slice(0, 10);
       const endStr = cycleInfo.endDate.toISOString().slice(0, 10);
-      return `Historial: ${formatDateRange(startStr, endStr)}`;
+      return `Historial: ${formatDateRange(startStr, endStr, short)}`;
     }
     
     return 'Cargando...';
@@ -151,39 +156,67 @@ function App() {
       <DesktopSidebar />
 
       <div className="main-content">
-        <main id={`screen-${currentScreen}`} className="screen active" style={{ paddingBottom: '80px' }}>
+        <main id={`screen-${currentScreen}`} className="screen active">
           <header className="screen-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '15px 0', width: '100%', gap: '8px' }}>
             {/* Left: Spacer/Logo container to maintain flex balance */}
             <div style={{ flex: 1, display: 'flex', alignItems: 'center', minWidth: 0 }}>
               <div className="logo" translate="no" style={{ fontSize: '1.5rem', margin: 0 }}>Finly<span className="logo-dot">.</span></div>
             </div>
             
-            {/* Center: Date */}
+            {/* Center: Active Billing Cycle Pill with Calendar Icon */}
             <div style={{ 
-              fontSize: 'clamp(0.7rem, 2.5vw, 0.8rem)', fontWeight: 700, color: 'var(--text2)', 
-              background: 'rgba(255,255,255,0.03)', padding: '6px 12px', borderRadius: '16px', border: '1px solid var(--glass-border)',
-              textAlign: 'center', whiteSpace: 'nowrap', flexShrink: 0
-            }}>
-              {getMonthDisplay()}
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              background: 'rgba(0, 230, 118, 0.08)', 
+              padding: '8px 14px', 
+              borderRadius: '20px', 
+              border: '1px solid rgba(0, 230, 118, 0.3)',
+              boxShadow: '0 0 12px rgba(0, 230, 118, 0.12)',
+              textAlign: 'center', 
+              whiteSpace: 'nowrap', 
+              flexShrink: 0,
+              letterSpacing: '0.3px'
+            }} className="header-date-pill">
+              <Calendar size={14} style={{ color: 'var(--green)', flexShrink: 0 }} />
+              <span className="date-text-full" style={{ fontSize: 'clamp(0.72rem, 2.5vw, 0.85rem)', fontWeight: 800, color: 'var(--green)' }}>
+                {getMonthDisplay(false)}
+              </span>
+              <span className="date-text-short" style={{ fontSize: '0.72rem', fontWeight: 800, color: 'var(--green)' }}>
+                {getMonthDisplay(true)}
+              </span>
             </div>
 
-            {/* Right: Avatar */}
+            {/* Right: Avatar with squircle gradient profile */}
             <div style={{ flex: 1, display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '8px', minWidth: 0 }}>
               <button 
                 onClick={() => setIsSidebarOpen(true)}
                 style={{ 
                   display: 'flex', alignItems: 'center', gap: '8px', 
-                  background: 'rgba(255,255,255,0.05)', border: '1px solid var(--glass-border)',
+                  background: 'rgba(0, 230, 118, 0.03)', border: '1px solid rgba(0, 230, 118, 0.15)',
                   padding: '4px 10px 4px 4px', borderRadius: '24px', cursor: 'pointer', transition: 'all 0.2s',
-                  maxWidth: '100%'
+                  maxWidth: '100%',
+                  boxShadow: '0 0 10px rgba(0, 230, 118, 0.04)'
                 }}
-                onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.1)'}
-                onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
+                onMouseEnter={e => {
+                  e.currentTarget.style.background = 'rgba(0, 230, 118, 0.08)';
+                  e.currentTarget.style.borderColor = 'rgba(0, 230, 118, 0.3)';
+                }}
+                onMouseLeave={e => {
+                  e.currentTarget.style.background = 'rgba(0, 230, 118, 0.03)';
+                  e.currentTarget.style.borderColor = 'rgba(0, 230, 118, 0.15)';
+                }}
               >
-                <div style={{ width: '30px', height: '30px', borderRadius: '50%', background: 'var(--accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#0f172a', fontSize: '14px', fontWeight: '900', flexShrink: 0 }}>
+                <div style={{ 
+                  width: '30px', height: '30px', borderRadius: '50%', 
+                  background: 'linear-gradient(135deg, #00E676, #059669)', 
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', 
+                  color: '#0A0F1E', fontSize: '13px', fontWeight: '900', flexShrink: 0,
+                  boxShadow: '0 2px 6px rgba(0, 230, 118, 0.3)'
+                }}>
                   {(user?.user_metadata?.nombre || user?.email || '?').charAt(0).toUpperCase()}
                 </div>
-                <span style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--text)', whiteSpace: 'nowrap', letterSpacing: '0.3px', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                <span style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--text)', whiteSpace: 'nowrap', letterSpacing: '0.3px', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                   {user?.user_metadata?.nombre ? user.user_metadata.nombre.split(' ')[0] : 'Perfil'}
                 </span>
               </button>

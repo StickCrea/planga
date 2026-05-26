@@ -49,7 +49,7 @@ body {
   display: none;
   flex-direction: column;
   gap: 14px;
-  padding: 16px 16px calc(var(--nav-h) + var(--safe-bottom) + 20px);
+  padding: 16px 16px calc(var(--nav-h) + var(--safe-bottom) + 70px); /* Generous padding to clear floating bottom nav on mobile */
   animation: fadeIn .25s ease;
 }
 .screen.active { display: flex; }
@@ -1233,4 +1233,37 @@ body {
 .net-worth-card {
   background: linear-gradient(135deg, var(--glass), rgba(30, 41, 59, 0.8));
   border: 1px solid var(--accent-glow);
+}
+
+/* ===== RESPONSIVE HEADER DATE PILL & COMPONENTS ===== */
+.header-date-pill .date-text-full {
+  display: inline;
+}
+.header-date-pill .date-text-short {
+  display: none;
+}
+
+@media (max-width: 480px) {
+  .header-date-pill {
+    padding: 6px 12px !important;
+  }
+  .header-date-pill .date-text-full {
+    display: none !important;
+  }
+  .header-date-pill .date-text-short {
+    display: inline !important;
+  }
+}
+
+@media (max-width: 375px) {
+  .screen-header .logo {
+    font-size: 1.2rem !important;
+  }
+  .screen-header button {
+    padding: 4px !important;
+    border-radius: 50% !important;
+  }
+  .screen-header button span {
+    display: none !important; /* Hide user name text on ultra narrow viewports to give maximum space */
+  }
 }

@@ -191,7 +191,7 @@ export function parseColombianInput(val) {
   return isNaN(num) ? 0 : num;
 }
 
-export function formatDateRange(startStr, endStr) {
+export function formatDateRange(startStr, endStr, short = false) {
   if (!startStr || !endStr) return '';
   const parseDate = (str) => {
     const [y, m, d] = str.split('-').map(Number);
@@ -200,8 +200,21 @@ export function formatDateRange(startStr, endStr) {
   const start = parseDate(startStr);
   const end = parseDate(endStr);
   const startDay = start.getDate();
-  const startMonth = start.toLocaleDateString('es-CO', { month: 'long' });
   const endDay = end.getDate();
+  
+  if (short) {
+    const startMonth = start.toLocaleDateString('es-CO', { month: 'short' }).replace('.', '');
+    const endMonth = end.toLocaleDateString('es-CO', { month: 'short' }).replace('.', '');
+    const startMonthCap = startMonth.charAt(0).toUpperCase() + startMonth.slice(1);
+    const endMonthCap = endMonth.charAt(0).toUpperCase() + endMonth.slice(1);
+    
+    if (startMonth === endMonth) {
+      return `${startDay}-${endDay} ${startMonthCap}`;
+    }
+    return `${startDay} ${startMonthCap} - ${endDay} ${endMonthCap}`;
+  }
+  
+  const startMonth = start.toLocaleDateString('es-CO', { month: 'long' });
   const endMonth = end.toLocaleDateString('es-CO', { month: 'long' });
   const endYear = end.getFullYear();
   
