@@ -15,6 +15,8 @@ import {
   getStatus,
   CATEGORY_ICONS,
   CATEGORY_COLORS,
+  formatColombianInput,
+  parseColombianInput,
 } from '../utils/financeUtils';
 
 // ─── helpers ───────────────────────────────────────────────
@@ -336,5 +338,52 @@ describe('CATEGORY_COLORS', () => {
     Object.values(CATEGORY_COLORS).forEach(color => {
       expect(color).toMatch(/^#[0-9a-fA-F]{6}$/);
     });
+  });
+});
+
+describe('formatColombianInput()', () => {
+  it('formats whole numbers', () => {
+    expect(formatColombianInput('1200000')).toBe('1.200.000');
+    expect(formatColombianInput('500')).toBe('500');
+    expect(formatColombianInput(0)).toBe('0');
+  });
+
+  it('formats decimals with commas', () => {
+    expect(formatColombianInput('1200000,50')).toBe('1.200.000,50');
+    expect(formatColombianInput('0,25')).toBe('0,25');
+  });
+
+  it('handles multiple commas and keeps only first', () => {
+    expect(formatColombianInput('1,2,3')).toBe('1,23');
+  });
+
+  it('adds zero prefix when starting with comma', () => {
+    expect(formatColombianInput(',5')).toBe('0,5');
+  });
+
+  it('cleans non-numeric and non-comma characters', () => {
+    expect(formatColombianInput('abc1.200.000xyz')).toBe('1.200.000');
+  });
+
+  it('handles null/undefined gracefully', () => {
+    expect(formatColombianInput(null)).toBe('');
+    expect(formatColombianInput(undefined)).toBe('');
+  });
+});
+
+describe('parseColombianInput()', () => {
+  it('parses formatted whole numbers', () => {
+    expect(parseColombianInput('1.200.000')).toBe(1200000);
+    expect(parseColombianInput('500')).toBe(500);
+  });
+
+  it('parses formatted decimal numbers', () => {
+    expect(parseColombianInput('1.200.000,50')).toBe(1200000.50);
+    expect(parseColombianInput('0,25')).toBe(0.25);
+  });
+
+  it('handles invalid numbers', () => {
+    expect(parseColombianInput(null)).toBe(0);
+    expect(parseColombianInput('abc')).toBe(0);
   });
 });

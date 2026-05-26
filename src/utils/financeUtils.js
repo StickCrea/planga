@@ -101,7 +101,8 @@ export function getCurrentMonthExpenses(state) {
 
 export function getFutureCommitments(state) {
   const today = new Date().getDate();
-  return (state.commitments || []).filter(c => c.day >= today);
+  const paidIds = state.paidCommitmentIds?.[getMonthKey(state)] || [];
+  return (state.commitments || []).filter(c => c.day >= today && !paidIds.includes(c.id));
 }
 
 export function getTotalSpent(state) {
@@ -138,4 +139,74 @@ export function getStatus(state) {
   if (todaySpent > budget * 0.8) return { level: 'yellow', icon: '⚠️', text: 'Cuidado, te acercas al límite de hoy.' };
   if (todaySpent > 0) return { level: 'green', icon: '✅', text: 'Vas bien, sigue así.' };
   return { level: 'green', icon: '💪', text: 'Nuevo día. Controla cada peso.' };
+}
+
+export function formatColombianInput(val) {
+  if (val === undefined || val === null) return '';
+  let str = val.toString();
+  
+  // Clean all except digits and comma
+  str = str.replace(/[^\d,]/g, '');
+  
+  if (str.startsWith(',')) {
+    str = '0' + str;
+  }
+  
+  // Handle multiple commas by taking only the first one
+  const parts = str.split(',');
+  if (parts.length > 2) {
+    str = parts[0] + ',' + parts.slice(1).join('');
+  }
+  
+  const finalParts = str.split(',');
+  let integerPart = finalParts[0];
+  let decimalPart = finalParts[1];
+  
+  // Format integer part with thousands separators (periods)
+  if (integerPart.length > 1 && integerPart.startsWith('0')) {
+    integerPart = integerPart.replace(/^0+/, '');
+    if (integerPart === '') integerPart = '0';
+  }
+  
+  integerPart = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  
+  if (decimalPart !== undefined) {
+    // Keep at most 2 decimal digits
+    decimalPart = decimalPart.slice(0, 2);
+    return integerPart + ',' + decimalPart;
+  }
+  
+  return integerPart;
+}
+
+export function parseColombianInput(val) {
+  if (!val) return 0;
+  let str = val.toString();
+  // Remove thousands separators (periods)
+  str = str.replace(/\./g, '');
+  // Replace decimal separator (comma) with a point
+  str = str.replace(/,/g, '.');
+  
+  const num = parseFloat(str);
+  return isNaN(num) ? 0 : num;
+}
+
+export function formatDateRange(startStr, endStr) {
+  if (!startStr || !endStr) return '';
+  const parseDate = (str) => {
+    const [y, m, d] = str.split('-').map(Number);
+    return new Date(y, m - 1, d);
+  };
+  const start = parseDate(startStr);
+  const end = parseDate(endStr);
+  const startDay = start.getDate();
+  const startMonth = start.toLocaleDateString('es-CO', { month: 'long' });
+  const endDay = end.getDate();
+  const endMonth = end.toLocaleDateString('es-CO', { month: 'long' });
+  const endYear = end.getFullYear();
+  
+  if (startMonth === endMonth) {
+    return `${startDay} al ${endDay} de ${startMonth} de ${endYear}`;
+  }
+  return `${startDay} de ${startMonth} al ${endDay} de ${endMonth} de ${endYear}`;
 }

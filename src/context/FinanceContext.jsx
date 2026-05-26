@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '../lib/supabase';
-import { getCycleInfo } from '../utils/financeUtils';
+import { getCycleInfo, getMonthKey } from '../utils/financeUtils';
 
 const FinanceContext = createContext();
 
@@ -26,6 +26,7 @@ export function FinanceProvider({ children }) {
     incomes: [],
     selectedMonth: null,
     currentCiclo: null,
+    paidCommitmentIds: {},
   });
   const [dataLoading, setDataLoading] = useState(false);
   const [toasts, setToasts] = useState([]);
@@ -678,6 +679,80 @@ export function FinanceProvider({ children }) {
     setState(prev => ({ ...prev, incomes: (prev.incomes || []).filter(i => i.id !== id) }));
   };
 
+  const updateAssetValue = async (type, id, newValue) => {
+    if (!user) return;
+    const { error } = await supabase
+      .from('activos')
+      .update({ valor: newValue })
+      .eq('id', id);
+
+    if (error) {
+      console.error('updateAssetValue error:', error);
+      showToast('Error al actualizar el activo', 'error');
+      return;
+    }
+
+    setState(prev => ({
+      ...prev,
+      [type]: prev[type].map(a => a.id === id ? { ...a, amount: newValue } : a)
+    }));
+    showToast('Monto actualizado con éxito');
+  };
+
+  const updateDebtPayment = async (id, newPaid) => {
+    if (!user) return;
+    const { error } = await supabase
+      .from('deudas')
+      .update({ monto_pagado: newPaid })
+      .eq('id', id);
+
+    if (error) {
+      console.error('updateDebtPayment error:', error);
+      showToast('Error al registrar abono', 'error');
+      return;
+    }
+
+    setState(prev => ({
+      ...prev,
+      debts: prev.debts.map(d => d.id === id ? { ...d, paid: newPaid } : d)
+    }));
+    showToast('Abono registrado con éxito');
+  };
+
+  const markCommitmentAsPaid = async (commitment) => {
+    if (!user) return;
+    const currentMk = getMonthKey(state);
+    
+    // 1. Add to paidCommitmentIds in state
+    setState(prev => {
+      const currentPaid = prev.paidCommitmentIds?.[currentMk] || [];
+      if (currentPaid.includes(commitment.id)) return prev; // Already paid
+      return {
+        ...prev,
+        paidCommitmentIds: {
+          ...prev.paidCommitmentIds,
+          [currentMk]: [...currentPaid, commitment.id]
+        }
+      };
+    });
+
+    // 2. Automatically create a real expense in gastos
+    const expense = {
+      id: 'e' + Date.now(),
+      amount: commitment.amount,
+      category: 'suscripciones', // Fixed expenses category fallback
+      date: new Date().toISOString().slice(0, 10),
+      month: currentMk,
+      timestamp: new Date().toISOString(),
+      merchant: commitment.name,
+      paymentMethod: 'efectivo',
+      items: [],
+      metadata: []
+    };
+
+    await addExpense(expense);
+  };
+
   // ─── Settings ───
   const updateSettings = async (updates) => {
     if (updates.selectedMonth !== undefined) {
@@ -758,6 +833,9 @@ export function FinanceProvider({ children }) {
       deleteDebt,
       addIncome,
       deleteIncome,
+      updateAssetValue,
+      updateDebtPayment,
+      markCommitmentAsPaid,
       updateUserProfile,
       toasts,
       showToast,

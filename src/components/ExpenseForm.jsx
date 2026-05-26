@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useFinance } from '../context/FinanceContext';
-import { getCycleInfo, CATEGORY_ICONS } from '../utils/financeUtils';
+import { getCycleInfo, CATEGORY_ICONS, formatColombianInput, parseColombianInput } from '../utils/financeUtils';
 import OCRScanner from './OCRScanner';
 import { CreditCard, Banknote } from 'lucide-react';
 
@@ -27,7 +27,7 @@ export default function ExpenseForm({ onSave }) {
   const [paymentType, setPaymentType] = useState('debito'); // debito, credito
 
   const handleOcrComplete = (data) => {
-    if (data.total) setAmount(data.total.toString());
+    if (data.total) setAmount(formatColombianInput(data.total));
     if (data.category) setCategory(data.category);
     if (data.date) setDate(data.date);
     if (data.merchant) setMerchant(data.merchant);
@@ -43,7 +43,8 @@ export default function ExpenseForm({ onSave }) {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!amount || Number(amount) <= 0) {
+    const parsedAmount = parseColombianInput(amount);
+    if (!amount || parsedAmount <= 0) {
       showToast('Por favor ingresa un monto válido mayor a 0', 'error');
       return;
     }
@@ -53,7 +54,7 @@ export default function ExpenseForm({ onSave }) {
     
     const expense = {
       id: 'e' + Date.now(),
-      amount: Number(amount),
+      amount: parsedAmount,
       category,
       date: expenseDate.toISOString().slice(0, 10),
       month: cycleInfo.monthKey,
@@ -83,24 +84,34 @@ export default function ExpenseForm({ onSave }) {
             <div className="amount-input-wrap">
               <span className="currency-prefix">$</span>
               <input 
-                type="number" className="amount-input" 
+                type="text" 
+                className="amount-input" 
                 placeholder="0" value={amount} 
-                onChange={e => setAmount(e.target.value)}
+                onChange={e => setAmount(formatColombianInput(e.target.value))}
               />
             </div>
+            <p style={{ fontSize: '0.68rem', color: 'var(--text3)', marginTop: '4px', textAlign: 'center' }}>
+              Monto en pesos colombianos que se descontará de tu presupuesto disponible.
+            </p>
           </div>
 
-          <div className="form-group">
+          <div className="form-group" style={{ marginTop: '12px' }}>
             <label>Fecha</label>
             <input 
               type="date" className="input" 
               value={date} onChange={e => setDate(e.target.value)}
               max={new Date().toISOString().slice(0, 10)}
             />
+            <p style={{ fontSize: '0.68rem', color: 'var(--text3)', marginTop: '4px' }}>
+              Fecha de la compra. Determina el ciclo presupuestal en el que se registra el gasto.
+            </p>
           </div>
 
-          <div>
+          <div style={{ marginTop: '12px' }}>
             <label className="cat-label">Categoría</label>
+            <p style={{ fontSize: '0.68rem', color: 'var(--text3)', marginTop: '-4px', marginBottom: '8px' }}>
+              Clasifica el consumo para contrastarlo contra tu presupuesto límite de categoría.
+            </p>
             <div className="category-grid">
               {Object.entries(CATEGORY_ICONS).map(([cat, icon]) => (
                 <button 
@@ -115,8 +126,11 @@ export default function ExpenseForm({ onSave }) {
             </div>
           </div>
 
-          <div style={{ marginTop: '12px' }}>
+          <div style={{ marginTop: '16px' }}>
             <label className="cat-label">Medio de Pago</label>
+            <p style={{ fontSize: '0.68rem', color: 'var(--text3)', marginTop: '-4px', marginBottom: '8px' }}>
+              Selecciona cómo pagaste para rastrear si afecta efectivo líquido o tus pasivos.
+            </p>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
               <button 
                 type="button" 
@@ -153,29 +167,48 @@ export default function ExpenseForm({ onSave }) {
                   <option value="Nequi">Nequi</option>
                   <option value="Otro">Otro</option>
                 </select>
+                <span style={{ fontSize: '0.65rem', color: 'var(--text3)', display: 'block', marginTop: '2px' }}>
+                  El banco emisor de la tarjeta con la que pagaste.
+                </span>
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4px' }}>
-                <button 
-                  type="button" 
-                  className="btn-secondary"
-                  style={paymentType === 'debito' ? { background: 'var(--accent)', color: 'white', borderColor: 'var(--accent)' } : {}}
-                  onClick={() => setPaymentType('debito')}
-                >
-                  Débito
-                </button>
-                <button 
-                  type="button" 
-                  className="btn-secondary"
-                  style={paymentType === 'credito' ? { background: 'var(--accent)', color: 'white', borderColor: 'var(--accent)' } : {}}
-                  onClick={() => setPaymentType('credito')}
-                >
-                  Crédito
-                </button>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                <div>
+                  <button 
+                    type="button" 
+                    className="btn-secondary"
+                    style={{ 
+                      width: '100%', 
+                      ...(paymentType === 'debito' ? { background: 'var(--accent)', color: 'white', borderColor: 'var(--accent)' } : {})
+                    }}
+                    onClick={() => setPaymentType('debito')}
+                  >
+                    Débito
+                  </button>
+                  <span style={{ fontSize: '0.58rem', color: 'var(--text3)', display: 'block', marginTop: '2px', textAlign: 'center' }}>
+                    Descuenta de tus activos
+                  </span>
+                </div>
+                <div>
+                  <button 
+                    type="button" 
+                    className="btn-secondary"
+                    style={{ 
+                      width: '100%', 
+                      ...(paymentType === 'credito' ? { background: 'var(--accent)', color: 'white', borderColor: 'var(--accent)' } : {})
+                    }}
+                    onClick={() => setPaymentType('credito')}
+                  >
+                    Crédito
+                  </button>
+                  <span style={{ fontSize: '0.58rem', color: 'var(--text3)', display: 'block', marginTop: '2px', textAlign: 'center' }}>
+                    Aumenta tus pasivos
+                  </span>
+                </div>
               </div>
             </div>
           )}
 
-          <button type="submit" className="btn-primary" style={{ marginTop: '16px' }}>
+          <button type="submit" className="btn-primary" style={{ marginTop: '20px' }}>
             Registrar Gasto
           </button>
         </form>

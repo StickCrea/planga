@@ -201,7 +201,7 @@ function extractMerchant(lines) {
 }
 
 function extractDate(text) {
-  // Support Spanish month names like "23 de mayo de 2026" or "15 dic 2025"
+  // Support Spanish month names like "23 de mayo de 2026" or "15 dic 25"
   const monthsEs = {
     enero: '01', feb: '02', febrero: '02', marzo: '03', abr: '04', abril: '04', 
     mayo: '05', jun: '06', junio: '06', jul: '07', julio: '07', ago: '08', agosto: '08', 
@@ -209,46 +209,66 @@ function extractDate(text) {
     dic: '12', diciembre: '12'
   };
   
-  const spanishDateRegex = /(\d{1,2})\s+(?:de\s+)?(enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|octubre|noviembre|diciembre|feb|abr|jun|jul|ago|sep|oct|nov|dic)\s+(?:de\s+)?(\d{4})/i;
+  const spanishDateRegex = /(\d{1,2})\s+(?:de\s+)?(enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|octubre|noviembre|diciembre|feb|abr|jun|jul|ago|sep|oct|nov|dic)\s+(?:de\s+)?(\d{2,4})/i;
   const esMatch = text.match(spanishDateRegex);
   if (esMatch) {
     const day = esMatch[1].padStart(2, '0');
     const monthName = esMatch[2].toLowerCase();
     const month = monthsEs[monthName];
-    const year = esMatch[3];
+    let year = esMatch[3];
+    if (year.length === 2) {
+      year = '20' + year;
+    }
     return `${year}-${month}-${day}`;
   }
 
-  // Standard numeric formats (YYYY-MM-DD or DD-MM-YYYY)
-  const dateRegex = /(\d{4})[/-](\d{2})[/-](\d{2})|(\d{2})[/-](\d{2})[/-](\d{4})/;
-  const match = text.match(dateRegex);
-  
-  let dateStr = new Date().toISOString().slice(0, 10);
+  // 1. Check for DD/MM/YYYY or DD-MM-YYYY or DD.MM.YYYY first (4-digit year)
+  const date4YrRegex = /\b(\d{1,2})[/-](\d{1,2})[/-](\d{4})\b/;
+  const match4 = text.match(date4YrRegex);
+  if (match4) {
+    const day = match4[1].padStart(2, '0');
+    const month = match4[2].padStart(2, '0');
+    const year = match4[3];
+    return `${year}-${month}-${day}`;
+  }
 
-  if (match) {
-    if (match[1]) {
-      dateStr = `${match[1]}-${match[2]}-${match[3]}`;
-    } else if (match[4]) {
-      dateStr = `${match[6]}-${match[5]}-${match[4]}`;
-    }
-  } else {
-    const genMatch = text.match(/(?:Generacion|Fecha|Emision)[:\s]*([\d/-]{8,})/i);
-    if (genMatch) {
-      const parts = genMatch[1].split(/[/-]/);
-      if (parts.length === 3) {
-        if (parts[0].length === 4) dateStr = parts.join('-');
-        else dateStr = `${parts[2]}-${parts[1]}-${parts[0]}`;
+  // 2. Check for YYYY/MM/DD or YYYY-MM-DD
+  const dateYrFirstRegex = /\b(\d{4})[/-](\d{1,2})[/-](\d{1,2})\b/;
+  const matchYrFirst = text.match(dateYrFirstRegex);
+  if (matchYrFirst) {
+    const year = matchYrFirst[1];
+    const month = matchYrFirst[2].padStart(2, '0');
+    const day = matchYrFirst[3].padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
+
+  // 3. Check for DD/MM/YY or DD-MM-YY (2-digit year)
+  const date2YrRegex = /\b(\d{1,2})[/-](\d{1,2})[/-](\d{2})\b/;
+  const match2 = text.match(date2YrRegex);
+  if (match2) {
+    const day = match2[1].padStart(2, '0');
+    const month = match2[2].padStart(2, '0');
+    let year = match2[3];
+    year = '20' + year; // Assume 20xx
+    return `${year}-${month}-${day}`;
+  }
+
+  // Check generic date phrases
+  const genMatch = text.match(/(?:Generacion|Fecha|Emision)[:\s]*([\d/-]{6,10})/i);
+  if (genMatch) {
+    const parts = genMatch[1].split(/[/-]/);
+    if (parts.length === 3) {
+      if (parts[0].length === 4) {
+        return `${parts[0]}-${parts[1].padStart(2, '0')}-${parts[2].padStart(2, '0')}`;
+      } else {
+        let year = parts[2];
+        if (year.length === 2) year = '20' + year;
+        return `${year}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
       }
     }
   }
-  
-  try {
-    const d = new Date(dateStr + 'T12:00:00');
-    if (isNaN(d.getTime())) return new Date().toISOString().slice(0, 10);
-    return d.toISOString().slice(0, 10);
-  } catch(e) {
-    return new Date().toISOString().slice(0, 10);
-  }
+
+  return new Date().toISOString().slice(0, 10);
 }
 
 function extractTotal(text, lines) {

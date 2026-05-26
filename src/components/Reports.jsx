@@ -1,6 +1,6 @@
 import React from 'react';
 import { useFinance } from '../context/FinanceContext';
-import { fmt, getMonthKey } from '../utils/financeUtils';
+import { fmt, getMonthKey, getCycleInfo, formatDateRange } from '../utils/financeUtils';
 
 export default function Reports({ onMonthSelect }) {
   const { state } = useFinance();
@@ -101,6 +101,13 @@ export default function Reports({ onMonthSelect }) {
             const d = new Date(year, month - 1);
             let label = d.toLocaleDateString('es-CO', { month: 'long', year: 'numeric' });
             label = label.charAt(0).toUpperCase() + label.slice(1);
+            
+            const representativeDate = new Date(year, month - 1, 15);
+            const cycleInfo = getCycleInfo(representativeDate, state.cycleDay);
+            const startStr = cycleInfo.startDate.toISOString().slice(0, 10);
+            const endStr = cycleInfo.endDate.toISOString().slice(0, 10);
+            const dateRangeLabel = formatDateRange(startStr, endStr);
+            
             const balance = allMonths[m].income - allMonths[m].spent;
 
             return (
@@ -108,7 +115,8 @@ export default function Reports({ onMonthSelect }) {
                 <div className="expense-icon" style={{ background: 'var(--bg3)' }}>📅</div>
                 <div className="expense-info">
                   <span className="expense-cat">{label}</span>
-                  <span className="expense-time">Balance: {fmt(balance)}</span>
+                  <span className="expense-time" style={{ fontSize: '0.68rem', color: 'var(--text3)', display: 'block', margin: '2px 0' }}>{dateRangeLabel}</span>
+                  <span className="expense-time" style={{ display: 'block' }}>Balance: {fmt(balance)}</span>
                 </div>
                 <span className="expense-amount" style={{ color: 'var(--text)' }}>{fmt(allMonths[m].spent)}</span>
               </li>

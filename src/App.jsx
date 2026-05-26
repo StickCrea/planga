@@ -14,7 +14,7 @@ import OnboardingScreen from './components/OnboardingScreen';
 import SidebarMenu from './components/SidebarMenu';
 import HelpScreen from './components/HelpScreen';
 import { useFinance } from './context/FinanceContext';
-import { getCycleInfo } from './utils/financeUtils';
+import { getCycleInfo, formatDateRange } from './utils/financeUtils';
 
 function App() {
   const [currentScreen, setCurrentScreen] = useState('dashboard');
@@ -82,19 +82,23 @@ function App() {
 
   const getMonthDisplay = () => {
     const mk = state.selectedMonth || state.currentCiclo?.nombre;
-    const today = new Date();
     
     // If viewing the current cycle (or if no specific past cycle is selected)
     if (!state.selectedMonth || state.selectedMonth === state.currentCiclo?.nombre) {
-      return today.toLocaleDateString('es-CO', { day: 'numeric', month: 'long', year: 'numeric' }).replace(/^\w/, c => c.toUpperCase());
+      if (state.currentCiclo) {
+        return `Ciclo: ${formatDateRange(state.currentCiclo.fecha_inicio, state.currentCiclo.fecha_fin)}`;
+      }
+      return new Date().toLocaleDateString('es-CO', { day: 'numeric', month: 'long', year: 'numeric' }).replace(/^\w/, c => c.toUpperCase());
     }
 
     // If viewing a past history month
     if (mk) {
       const [year, month] = mk.split('-').map(Number);
-      const d = new Date(year, month - 1);
-      const label = d.toLocaleDateString('es-CO', { month: 'long', year: 'numeric' });
-      return `Historial: ${label.charAt(0).toUpperCase() + label.slice(1)}`;
+      const representativeDate = new Date(year, month - 1, 15);
+      const cycleInfo = getCycleInfo(representativeDate, state.cycleDay);
+      const startStr = cycleInfo.startDate.toISOString().slice(0, 10);
+      const endStr = cycleInfo.endDate.toISOString().slice(0, 10);
+      return `Historial: ${formatDateRange(startStr, endStr)}`;
     }
     
     return 'Cargando...';
@@ -164,7 +168,7 @@ function App() {
             </div>
 
             {/* Right: Avatar */}
-            <div style={{ flex: 1, display: 'flex', justifyContent: 'flex-end', minWidth: 0 }}>
+            <div style={{ flex: 1, display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '8px', minWidth: 0 }}>
               <button 
                 onClick={() => setIsSidebarOpen(true)}
                 style={{ 

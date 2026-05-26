@@ -21,6 +21,8 @@ export default function Summary({ onSelectExpense }) {
   const idealSpent = (state.income - totalCommitments) / getDaysInMonth(state) * daysElapsed;
   const ratio = idealSpent > 0 ? Math.min(totalSpent / idealSpent * 100, 150) : 0;
 
+  const mask = (val) => fmt(val);
+
   const catTotals = {};
   expenses.forEach(e => { catTotals[e.category] = (catTotals[e.category] || 0) + e.amount; });
   const maxCat = Math.max(...Object.values(catTotals), 1);
@@ -29,14 +31,19 @@ export default function Summary({ onSelectExpense }) {
     <>
       <div className="glass-card">
         <h2 className="card-title">Resumen del Mes</h2>
+        <p style={{ fontSize: '0.72rem', color: 'var(--text3)', marginTop: '-12px', marginBottom: '14px', lineHeight: '1.4' }}>
+          Consumo total acumulado y tu promedio de gasto diario registrado durante el periodo actual.
+        </p>
         <div className="summary-stats-row" style={{ marginTop: '16px', marginBottom: '16px' }}>
           <div className="summary-stat-card">
             <span className="summary-stat-label">Gasto Total</span>
-            <span className="summary-stat-val">{fmt(totalSpent)}</span>
+            <span className="summary-stat-val">{mask(totalSpent)}</span>
+            <span style={{ fontSize: '0.62rem', color: 'var(--text3)', marginTop: '2px', display: 'block' }}>Suma de consumos en el ciclo</span>
           </div>
           <div className="summary-stat-card">
             <span className="summary-stat-label">Promedio Diario</span>
-            <span className="summary-stat-val">{fmt(dailyAvg)}</span>
+            <span className="summary-stat-val">{mask(dailyAvg)}</span>
+            <span style={{ fontSize: '0.62rem', color: 'var(--text3)', marginTop: '2px', display: 'block' }}>Gasto medio por día transcurrido</span>
           </div>
         </div>
 
@@ -54,11 +61,17 @@ export default function Summary({ onSelectExpense }) {
               }}
             ></div>
           </div>
+          <p style={{ fontSize: '0.68rem', color: 'var(--text3)', marginTop: '6px', lineHeight: '1.4' }}>
+            El **Ritmo Ideal** representa el ritmo teórico de gasto diario uniforme para no terminar el ciclo de pago en déficit.
+          </p>
         </div>
       </div>
 
       <div className="glass-card">
-        <h3 className="card-title" style={{ marginBottom: '16px' }}>Por Categoría</h3>
+        <h3 className="card-title">Por Categoría</h3>
+        <p style={{ fontSize: '0.72rem', color: 'var(--text3)', marginTop: '-12px', marginBottom: '14px', lineHeight: '1.4' }}>
+          Distribución de tus gastos agrupados de mayor a menor consumo.
+        </p>
         <div className="category-breakdown">
           {Object.keys(catTotals).length === 0 ? (
             <p className="empty-state">Sin datos todavía.</p>
@@ -80,7 +93,7 @@ export default function Summary({ onSelectExpense }) {
                       ></div>
                     </div>
                   </div>
-                  <span className="cat-row-amount">{fmt(total)}</span>
+                  <span className="cat-row-amount">{mask(total)}</span>
                 </div>
               ))
           )}
@@ -88,7 +101,10 @@ export default function Summary({ onSelectExpense }) {
       </div>
 
       <div className="glass-card" style={{ marginTop: '16px' }}>
-        <h3 className="card-title" style={{ marginBottom: '16px' }}>Todos los Gastos del Mes</h3>
+        <h3 className="card-title">Todos los Gastos del Mes</h3>
+        <p style={{ fontSize: '0.72rem', color: 'var(--text3)', marginTop: '-12px', marginBottom: '14px', lineHeight: '1.4' }}>
+          Historial completo de consumos registrados durante este ciclo de pago, ordenado por fecha de manera descendente.
+        </p>
         <ul className="expense-list-full">
           {expenses.length === 0 ? (
             <li className="empty-state">Sin gastos registrados.</li>
@@ -99,7 +115,9 @@ export default function Summary({ onSelectExpense }) {
               
               const invoiceDate = new Date(e.date + 'T12:00:00');
               const dateDisplay = invoiceDate.toLocaleDateString('es-CO', { day: 'numeric', month: 'short' });
-              const timeDisplay = new Date(e.timestamp).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' });
+              const timeDisplay = e.timestamp && !isNaN(new Date(e.timestamp).getTime())
+                ? new Date(e.timestamp).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })
+                : new Date().toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' });
 
               return (
                 <li key={e.id} className="expense-item" style={{ cursor: 'pointer' }} onClick={() => onSelectExpense && onSelectExpense(e)}>
@@ -108,7 +126,7 @@ export default function Summary({ onSelectExpense }) {
                     <span className="expense-cat">{label}</span>
                     <span className="expense-time">{dateDisplay} · {timeDisplay}</span>
                   </div>
-                  <span className="expense-amount">-{fmt(e.amount)}</span>
+                  <span className="expense-amount">-{mask(e.amount)}</span>
                 </li>
               );
             })

@@ -96,9 +96,10 @@ export default function OCRScanner({ onScanComplete }) {
       rawBase64 = imgBase64.split(';base64,')[1];
     }
     
+    const todayStr = new Date().toISOString().slice(0, 10);
     const prompt = `Analiza esta factura e identifica:
 1. Nombre del comercio o tienda (merchant).
-2. Fecha de la compra (date en formato YYYY-MM-DD). Si no hay fecha visible, usa la fecha de hoy.
+2. Fecha de la compra (date en formato YYYY-MM-DD). Si no hay fecha visible, usa la fecha de hoy: ${todayStr}. Si dice "ayer", calcula el día anterior a ${todayStr}.
 3. Total final de la compra (total como número entero, sin centavos ni decimales de centavos. Redondea al entero más cercano).
 4. Lista detallada de productos comprados (items), donde cada artículo debe ser un objeto con:
    - "can": cantidad como número o string (ej. "1", "2").
