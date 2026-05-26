@@ -225,7 +225,7 @@ describe('getTotalCommitments()', () => {
 
 // ─── getAvailableMoney ────────────────────────────────────────
 describe('getAvailableMoney()', () => {
-  it('subtracts spent + future commitments from income', () => {
+  it('does not subtract unpaid commitments from available money', () => {
     const today = new Date().getDate();
     const state = makeState({
       income: 3_000_000,
@@ -234,7 +234,7 @@ describe('getAvailableMoney()', () => {
       commitments: [{ id: 'c1', name: 'A', amount: 300_000, day: today }],
     });
     const avail = getAvailableMoney(state);
-    expect(avail).toBe(3_000_000 - 500_000 - 300_000);
+    expect(avail).toBe(3_000_000 - 500_000);
   });
 
   it('can be negative when overspent', () => {

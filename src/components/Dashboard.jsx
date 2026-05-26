@@ -49,7 +49,7 @@ export default function Dashboard({ onSelectExpense }) {
   const daysElapsed = Math.max(Math.ceil((today - cycleStart) / (1000 * 60 * 60 * 24)) + 1, 1);
   const dailyAvg = daysElapsed > 0 ? totalSpent / daysElapsed : 0;
   
-  const spentPercent = state.income > 0 ? Math.min((totalSpent + commitmentsTotal) / state.income * 100, 100) : 0;
+  const spentPercent = state.income > 0 ? Math.min(totalSpent / state.income * 100, 100) : 0;
   
   const circumference = 2 * Math.PI * 48;
   const offset = circumference - (spentPercent / 100) * circumference;
@@ -215,7 +215,7 @@ export default function Dashboard({ onSelectExpense }) {
         <h2 className="card-label">Dinero Disponible</h2>
         <div className="money-big">{mask(available)}</div>
         <p style={{ fontSize: '0.68rem', color: 'var(--text3)', marginTop: '-8px', marginBottom: '12px' }}>
-          Tu saldo libre (Ingreso Base - Gastos - Compromisos futuros)
+          Tu saldo disponible (Ingreso Base + Ingresos Extra - Gastos Registrados)
         </p>
         
         <div className="card-row">

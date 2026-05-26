@@ -61,7 +61,7 @@ export default function Commitments() {
         <h2 className="card-label">Total Compromisos Mes</h2>
         <div className="money-big" style={{ color: 'var(--red)' }}>{fmt(totalCommitments)}</div>
         <p style={{ fontSize: '0.75rem', color: 'var(--text3)', marginTop: '8px', lineHeight: '1.4' }}>
-          Estos gastos fijos se descuentan automáticamente de tu presupuesto disponible desde el inicio del mes.
+          Estos gastos fijos no se descuentan por adelantado. Solo se restan de tu dinero disponible del ciclo actual cuando los marcas como pagados.
         </p>
       </div>
 
@@ -72,7 +72,7 @@ export default function Commitments() {
           <h4 style={{ fontSize: '0.85rem', fontWeight: 700 }}>¿Qué son los Compromisos Fijos?</h4>
           <p style={{ fontSize: '0.76rem', color: 'var(--text3)', lineHeight: '1.4' }}>
             Son aquellos gastos obligatorios fijos recurrentes (como el arriendo, el plan del celular o servicios). 
-            Finly reserva esta cantidad desde el primer día de tu ciclo de pago para asegurar que no te la gastes en ocio por error.
+            A diferencia de las deudas, solo se descuentan de tu saldo disponible cuando confirmas su pago presionando "Pagar".
           </p>
         </div>
       </div>

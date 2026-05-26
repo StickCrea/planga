@@ -299,14 +299,32 @@ export function FinanceProvider({ children }) {
     const { data, error } = await supabase.from('ingresos_extra').select('*').eq('user_id', user.id);
     if (error) { console.error('loadIncomes error:', error); return; }
 
+    const cycleDay = state.cycleDay || 25;
     let list = [];
     if (data && data.length > 0) {
-      list = data.map(d => ({ id: d.id, name: d.nombre, amount: d.monto, date: d.fecha }));
+      list = data.map(d => {
+        const incomeDate = d.fecha ? new Date(d.fecha.substring(0, 10) + 'T12:00:00') : new Date();
+        const cycleInfo = getCycleInfo(incomeDate, cycleDay);
+        return {
+          id: d.id,
+          name: d.nombre,
+          amount: d.monto,
+          date: d.fecha ? d.fecha.substring(0, 10) : getLocalDateString(new Date()),
+          month: cycleInfo.monthKey
+        };
+      });
     } else {
       // Migration
       const local = JSON.parse(localStorage.getItem(`${LOCAL_INCOMES_KEY}_${user.id}`) || localStorage.getItem(LOCAL_INCOMES_KEY) || '[]');
       if (local.length > 0) {
-        list = local;
+        list = local.map(i => {
+          const incomeDate = i.date ? new Date(i.date.substring(0, 10) + 'T12:00:00') : new Date();
+          const cycleInfo = getCycleInfo(incomeDate, cycleDay);
+          return {
+            ...i,
+            month: cycleInfo.monthKey
+          };
+        });
         await supabase.from('ingresos_extra').insert(local.map(i => ({
           user_id: user.id, nombre: i.name, monto: i.amount, fecha: i.date || new Date().toISOString()
         })));
@@ -380,15 +398,8 @@ export function FinanceProvider({ children }) {
           .lte('fecha', prevCiclo.fecha_fin);
         const totalIncomes = (prevIncomes || []).reduce((sum, i) => sum + (i.monto || 0), 0);
 
-        // 3. Compromisos mensuales
-        const { data: compromisos } = await supabase
-          .from('compromisos')
-          .select('monto')
-          .eq('user_id', user.id);
-        const totalCommitments = (compromisos || []).reduce((sum, c) => sum + (c.monto || 0), 0);
-
-        // Calcular balance final
-        const balance = prevCiclo.ingreso + totalIncomes - totalGastos - totalCommitments;
+        // Calcular balance final (los compromisos pagados ya están incluidos en totalGastos)
+        const balance = prevCiclo.ingreso + totalIncomes - totalGastos;
 
         if (balance > 0) {
           // Sobró dinero -> Ingreso para el nuevo ciclo
@@ -668,9 +679,19 @@ export function FinanceProvider({ children }) {
 
     if (error) { console.error('addIncome error:', error); return; }
 
+    const cycleDay = state.cycleDay || 25;
+    const incomeDate = data.fecha ? new Date(data.fecha.substring(0, 10) + 'T12:00:00') : new Date();
+    const cycleInfo = getCycleInfo(incomeDate, cycleDay);
+
     setState(prev => ({
       ...prev,
-      incomes: [...(prev.incomes || []), { id: data.id, name: data.nombre, amount: data.monto, date: data.fecha }]
+      incomes: [...(prev.incomes || []), { 
+        id: data.id, 
+        name: data.nombre, 
+        amount: data.monto, 
+        date: data.fecha ? data.fecha.substring(0, 10) : getLocalDateString(new Date()), 
+        month: cycleInfo.monthKey 
+      }]
     }));
   };
 

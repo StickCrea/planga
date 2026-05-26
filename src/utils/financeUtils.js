@@ -156,7 +156,13 @@ export function getTotalCommitments(state) {
 }
 
 export function getAvailableMoney(state) {
-  return state.income - getTotalSpent(state) - getTotalCommitments(state);
+  const mk = getMonthKey(state);
+  const cycleIncomes = (state.incomes || []).filter(i => i.month === mk);
+  const extraIncomeTotal = cycleIncomes.reduce((s, i) => s + i.amount, 0);
+
+  // Unpaid commitments are NOT discounted in advance like a debt.
+  // They are only discounted from the available money of the present cycle when they are marked as paid (registered as an expense).
+  return state.income + extraIncomeTotal - getTotalSpent(state);
 }
 
 export function getDailyBudget(state) {

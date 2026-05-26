@@ -44,7 +44,7 @@ export default function Analytics() {
 
   const totalExpenses = getTotalSpent(state);
   const totalCommitments = state.commitments.reduce((s,c) => s + c.amount, 0);
-  const available = getAvailableMoney(state) + extraIncomeTotal;
+  const available = getAvailableMoney(state);
   const totalIncome = state.income + extraIncomeTotal;
 
   // --- Donut Chart Data ---
