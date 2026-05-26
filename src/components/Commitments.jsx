@@ -8,6 +8,7 @@ export default function Commitments() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [formData, setFormData] = useState({ name: '', amount: '', day: '' });
+  const [confirmModal, setConfirmModal] = useState({ isOpen: false, commitment: null });
 
   const totalCommitments = state.commitments.reduce((s, c) => s + c.amount, 0);
 
@@ -122,11 +123,7 @@ export default function Commitments() {
                       
                       {!isPaid ? (
                         <button 
-                          onClick={() => {
-                            if (window.confirm(`¿Marcar "${c.name}" como pagado? Se registrará automáticamente como un gasto real de ${fmt(c.amount)} en tu saldo.`)) {
-                              markCommitmentAsPaid(c);
-                            }
-                          }}
+                          onClick={() => setConfirmModal({ isOpen: true, commitment: c })}
                           style={{ 
                             background: 'rgba(255, 255, 255, 0.05)', 
                             border: '1px solid var(--glass-border)', 
@@ -205,6 +202,44 @@ export default function Commitments() {
               </div>
               <button type="submit" className="btn-primary" style={{ marginTop: '16px', width: '100%' }}>{editingId ? 'Actualizar Compromiso' : 'Guardar Compromiso'}</button>
             </form>
+          </div>
+        </div>
+      )}
+
+      {confirmModal.isOpen && (
+        <div className="modal-overlay active" onClick={() => setConfirmModal({ isOpen: false, commitment: null })} style={{ display: 'flex' }}>
+          <div className="modal glass-card" style={{ maxWidth: '380px', textAlign: 'center', padding: '24px' }}>
+            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '14px' }}>
+              <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: 'rgba(0, 230, 118, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--green)' }}>
+                <CheckCircle2 size={24} />
+              </div>
+            </div>
+            <h3 className="modal-title" style={{ marginBottom: '10px', fontSize: '1.15rem' }}>¿Marcar como pagado?</h3>
+            <p style={{ fontSize: '0.82rem', color: 'var(--text2)', lineHeight: '1.5', marginBottom: '20px' }}>
+              ¿Deseas marcar <strong>{confirmModal.commitment?.name}</strong> como pagado? 
+              Se registrará automáticamente como un gasto real de <strong style={{ color: 'var(--red)' }}>{fmt(confirmModal.commitment?.amount)}</strong> en este ciclo.
+            </p>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+              <button 
+                type="button"
+                className="btn-secondary" 
+                onClick={() => setConfirmModal({ isOpen: false, commitment: null })}
+                style={{ padding: '10px', fontSize: '0.85rem' }}
+              >
+                Cancelar
+              </button>
+              <button 
+                type="button"
+                className="btn-primary" 
+                onClick={() => {
+                  markCommitmentAsPaid(confirmModal.commitment);
+                  setConfirmModal({ isOpen: false, commitment: null });
+                }}
+                style={{ padding: '10px', fontSize: '0.85rem', boxShadow: 'none' }}
+              >
+                Confirmar Pago
+              </button>
+            </div>
           </div>
         </div>
       )}

@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '../lib/supabase';
-import { getCycleInfo, getMonthKey } from '../utils/financeUtils';
+import { getCycleInfo, getMonthKey, getLocalDateString } from '../utils/financeUtils';
 
 const FinanceContext = createContext();
 
@@ -318,16 +318,17 @@ export function FinanceProvider({ children }) {
   const findOrCreateCiclo = async (cycleDay) => {
     const today = new Date();
     const cycleInfo = getCycleInfo(today, cycleDay);
-    const startStr = cycleInfo.startDate.toISOString().slice(0, 10);
-    const endStr = cycleInfo.endDate.toISOString().slice(0, 10);
+    const startStr = getLocalDateString(cycleInfo.startDate);
+    const endStr = getLocalDateString(cycleInfo.endDate);
+    const todayStr = getLocalDateString(today);
 
     // Look for existing ciclo
     const { data: existingList } = await supabase
       .from('ciclos')
       .select('*')
       .eq('user_id', user.id)
-      .lte('fecha_inicio', today.toISOString().slice(0, 10))
-      .gte('fecha_fin', today.toISOString().slice(0, 10))
+      .lte('fecha_inicio', todayStr)
+      .gte('fecha_fin', todayStr)
       .order('created_at', { ascending: false })
       .limit(1);
 
@@ -464,7 +465,7 @@ export function FinanceProvider({ children }) {
       id: g.id,
       amount: g.total || 0,
       category: g.categoria || 'otro',
-      date: g.fecha_gasto ? g.fecha_gasto.substring(0, 10) : new Date().toISOString().slice(0, 10),
+      date: g.fecha_gasto ? g.fecha_gasto.substring(0, 10) : getLocalDateString(new Date()),
       month: cycleInfo.monthKey,
       timestamp: g.created_at,
       merchant: g.comercio || null,
@@ -741,7 +742,7 @@ export function FinanceProvider({ children }) {
       id: 'e' + Date.now(),
       amount: commitment.amount,
       category: 'suscripciones', // Fixed expenses category fallback
-      date: new Date().toISOString().slice(0, 10),
+      date: getLocalDateString(new Date()),
       month: currentMk,
       timestamp: new Date().toISOString(),
       merchant: commitment.name,
