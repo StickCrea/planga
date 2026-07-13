@@ -2,6 +2,7 @@ import { useRef, useState, useEffect } from 'react';
 import Tesseract from 'tesseract.js';
 import { Camera, FileText, RotateCw, Loader2, Sparkles } from 'lucide-react';
 import { prepareImage, extractDetailedData, extractPaymentInfo } from '../utils/ocrUtils';
+import { readQRFromDataUrl, parseDianQR, mergeInvoiceData } from '../utils/qrUtils';
 import { useFinance } from '../context/FinanceContext';
 
 // Dynamic loader for PDF.js to keep initial bundle light
@@ -238,8 +239,14 @@ Devuelve ÚNICAMENTE un objeto JSON válido con la siguiente estructura exacta, 
       });
 
       const text = result.data.text;
-      const ocrData = extractDetailedData(text);
+      let ocrData = extractDetailedData(text);
       const paymentInfo = extractPaymentInfo(text);
+
+      // Electronic invoices (DIAN) embed a QR with the exact total/date - read
+      // it and let it override the OCR guesses when present.
+      const qrRaw = await readQRFromDataUrl(imgSource);
+      const { data: merged, usedQR } = mergeInvoiceData(ocrData, parseDianQR(qrRaw));
+      ocrData = merged;
 
       setDebugData(ocrData);
 
@@ -247,7 +254,7 @@ Devuelve ÚNICAMENTE un objeto JSON válido con la siguiente estructura exacta, 
         onScanComplete({ ...ocrData, paymentInfo });
       }
 
-      showToast('Factura analizada (lector local)', 'success');
+      showToast(usedQR ? 'Factura electrónica leída desde QR' : 'Factura analizada (lector local)', 'success');
 
     } catch {
       showToast('Error al analizar la imagen. Intenta de nuevo.', 'error');
@@ -300,8 +307,13 @@ Devuelve ÚNICAMENTE un objeto JSON válido con la siguiente estructura exacta, 
       });
 
       const text = result.data.text;
-      const ocrData = extractDetailedData(text);
+      let ocrData = extractDetailedData(text);
       const paymentInfo = extractPaymentInfo(text);
+
+      // Read the DIAN QR from the rendered PDF page too.
+      const qrRaw = await readQRFromDataUrl(imgSource);
+      const { data: merged, usedQR } = mergeInvoiceData(ocrData, parseDianQR(qrRaw));
+      ocrData = merged;
 
       setDebugData(ocrData);
 
@@ -309,7 +321,7 @@ Devuelve ÚNICAMENTE un objeto JSON válido con la siguiente estructura exacta, 
         onScanComplete({ ...ocrData, paymentInfo });
       }
 
-      showToast('Factura PDF analizada (lector local)', 'success');
+      showToast(usedQR ? 'Factura electrónica (PDF) leída desde QR' : 'Factura PDF analizada (lector local)', 'success');
 
     } catch {
       showToast('Error al procesar el archivo PDF.', 'error');
