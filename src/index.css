@@ -3,17 +3,29 @@
 
 :root {
   --bg: #0A0F1E;
+  --bg2: #1C243A;
+  --bg3: rgba(255, 255, 255, 0.06);
   --bg-card: rgba(21, 27, 45, 0.7);
   --bg-input: #1C243A;
   --text: #FFFFFF;
+  --text1: #FFFFFF;
   --text2: #A0AEC0;
   --text3: #718096;
   --accent: #00E676;
+  --accent-light: rgba(0, 230, 118, 0.12);
   --accent-grad: linear-gradient(135deg, #00E676, #059669);
   --accent-glow: 0 8px 20px rgba(0, 230, 118, 0.3);
   --green: #00E676;
   --red: #FF5252;
   --yellow: #FFD740;
+  --blue: #60A5FA;
+  /* Spacing scale - used in place of one-off pixel values in inline styles */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
   --border: rgba(255, 255, 255, 0.08);
   --glass-border: rgba(255, 255, 255, 0.1);
   --shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
@@ -968,6 +980,10 @@ body {
     border-right: 1px solid var(--glass-border);
     transform: none;
     background: rgba(15, 23, 42, 0.96);
+    /* Persistent chrome, not a floating overlay here - must sit below the
+       SidebarMenu overlay (z-index 999/1000) and modals, unlike the
+       z-index:2000 floating pill it is on phones. */
+    z-index: 100;
   }
 
   .nav-btn {
@@ -1043,6 +1059,12 @@ body {
     gap: 16px;
     align-content: start;
   }
+  /* Grid items default to min-width:auto, so a child that can't shrink below
+     its content (a Chart.js canvas, a nowrap stat) forces its 1fr column -
+     and the whole grid/.screen/.main-content - wider than the viewport. */
+  #screen-dashboard.active > * {
+    min-width: 0;
+  }
   #screen-dashboard .screen-header {
     grid-column: 1 / -1;
   }
@@ -1074,6 +1096,7 @@ body {
     gap: 16px;
     align-content: start;
   }
+  #screen-summary.active > * { min-width: 0; }
   #screen-summary .screen-header { grid-column: 1 / -1; }
   #screen-summary .summary-stats-row { grid-column: 1 / -1; }
 
@@ -1084,6 +1107,7 @@ body {
     gap: 16px;
     align-content: start;
   }
+  #screen-analytics.active > * { min-width: 0; }
   #screen-analytics .screen-header { grid-column: 1 / -1; }
   #screen-analytics .kpi-row { grid-column: 1 / -1; }
 
@@ -1108,7 +1132,7 @@ body {
 
   /* Add logo area in sidebar */
   .bottom-nav::before {
-    content: 'Planga.';
+    content: 'Finly.';
     display: block;
     font-size: 1.5rem;
     font-weight: 800;
@@ -1247,6 +1271,14 @@ body {
   .header-date-pill {
     padding: 6px 12px !important;
   }
+}
+
+/* The full cycle-date text ("Ciclo: 25 de junio al 25 de agosto de 2026") is
+   long and non-wrapping (flexShrink:0 in App.jsx), which forces the header -
+   and with it .screen/.main-content - wider than the viewport in the tablet
+   range (768-1023px, where .screen already loses ~250px to the sidebar
+   padding). Switch to the short date text there too, not just on phones. */
+@media (max-width: 1023px) {
   .header-date-pill .date-text-full {
     display: none !important;
   }

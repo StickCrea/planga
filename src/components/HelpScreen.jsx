@@ -1,5 +1,4 @@
-import React from 'react';
-import { BookOpen, Camera, Shield, Zap, TrendingUp, Wallet, CheckCircle2 } from 'lucide-react';
+import { Camera, Shield, Zap, TrendingUp, Wallet, CheckCircle2 } from 'lucide-react';
 
 export default function HelpScreen() {
   const guides = [

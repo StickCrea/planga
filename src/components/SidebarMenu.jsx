@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useFinance } from '../context/FinanceContext';
-import { User, Mail, Phone, Settings, LogOut, BarChart2, Globe, ListChecks, ChevronRight, Edit2, Check, X, Database, BookOpen } from 'lucide-react';
+import { Mail, Phone, Settings, LogOut, BarChart2, Globe, ListChecks, ChevronRight, Edit2, Check, X, BookOpen } from 'lucide-react';
 
 export default function SidebarMenu({ isOpen, onClose, onNavigate }) {
   const { user, signOut, updateUserProfile } = useFinance();

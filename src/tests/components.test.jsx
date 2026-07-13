@@ -1,6 +1,5 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
-import React from 'react';
 
 // ─── Mock FinanceContext ──────────────────────────────────────
 const mockState = {
@@ -143,11 +142,11 @@ describe('<Commitments />', () => {
     expect(screen.getByText('Nuevo Compromiso Fijo')).toBeInTheDocument();
   });
 
-  it('closes modal when ✕ is clicked', () => {
+  it('closes modal when close button is clicked', () => {
     render(<Commitments />);
     const buttons = screen.getAllByRole('button');
     fireEvent.click(buttons[0]);
-    const closeBtn = screen.getByText('✕');
+    const closeBtn = screen.getByRole('button', { name: 'Cerrar' });
     fireEvent.click(closeBtn);
     expect(screen.queryByText('Nuevo Compromiso Fijo')).not.toBeInTheDocument();
   });

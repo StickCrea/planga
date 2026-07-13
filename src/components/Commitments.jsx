@@ -1,7 +1,10 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useFinance } from '../context/FinanceContext';
 import { fmt, formatColombianInput, parseColombianInput } from '../utils/financeUtils';
-import { Trash2, Plus, Edit2, Info, CheckCircle2, Circle } from 'lucide-react';
+import { Trash2, Plus, Edit2, Info } from 'lucide-react';
+import Modal from './ui/Modal';
+import ConfirmDialog from './ui/ConfirmDialog';
+import EmptyState from './ui/EmptyState';
 
 export default function Commitments() {
   const { state, addCommitment, updateCommitment, deleteCommitment, markCommitmentAsPaid, showToast } = useFinance();
@@ -90,7 +93,7 @@ export default function Commitments() {
           const paidIds = state.paidCommitmentIds?.[currentMk] || [];
           
           if (state.commitments.length === 0) {
-            return <p className="empty-state">No hay compromisos configurados.</p>;
+            return <EmptyState message="No hay compromisos configurados." />;
           }
           
           return (
@@ -167,82 +170,54 @@ export default function Commitments() {
         })()}
       </div>
 
-      {isModalOpen && (
-        <div className="modal-overlay active" onClick={(e) => e.target === e.currentTarget && setIsModalOpen(false)} style={{ display: 'flex' }}>
-          <div className="modal glass-card">
-            <div className="modal-header">
-              <span className="modal-title">{editingId ? 'Editar Compromiso' : 'Nuevo Compromiso Fijo'}</span>
-              <button className="icon-btn-sm" onClick={() => setIsModalOpen(false)}>✕</button>
-            </div>
-            <form onSubmit={handleSubmit}>
-              <div className="form-group">
-                <label>Nombre del compromiso</label>
-                <input 
-                  type="text" className="input" required 
-                  placeholder="Ej: Arriendo, Internet, Plan Móvil"
-                  value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})}
-                />
-                <span style={{ fontSize: '0.68rem', color: 'var(--text3)', display: 'block', marginTop: '4px' }}>El nombre para identificar este gasto obligatorio.</span>
-              </div>
-              <div className="form-group" style={{ marginTop: '12px' }}>
-                <label>Monto a pagar (COP)</label>
-                <input 
-                  type="text" className="input" required placeholder="0"
-                  value={formData.amount} onChange={e => setFormData({...formData, amount: formatColombianInput(e.target.value)})}
-                />
-                <span style={{ fontSize: '0.68rem', color: 'var(--text3)', display: 'block', marginTop: '4px' }}>El valor mensual recurrente en pesos colombianos.</span>
-              </div>
-              <div className="form-group" style={{ marginTop: '12px' }}>
-                <label>Día de Cobro (1 al 31)</label>
-                <input 
-                  type="number" className="input" required min="1" max="31" placeholder="Ej: 15"
-                  value={formData.day} onChange={e => setFormData({...formData, day: e.target.value})}
-                />
-                <span style={{ fontSize: '0.68rem', color: 'var(--text3)', display: 'block', marginTop: '4px' }}>El día de tu ciclo de pago en que se descuenta este cobro.</span>
-              </div>
-              <button type="submit" className="btn-primary" style={{ marginTop: '16px', width: '100%' }}>{editingId ? 'Actualizar Compromiso' : 'Guardar Compromiso'}</button>
-            </form>
+      <Modal open={isModalOpen} onClose={() => setIsModalOpen(false)} title={editingId ? 'Editar Compromiso' : 'Nuevo Compromiso Fijo'}>
+        <form onSubmit={handleSubmit}>
+          <div className="form-group">
+            <label>Nombre del compromiso</label>
+            <input
+              type="text" className="input" required
+              placeholder="Ej: Arriendo, Internet, Plan Móvil"
+              value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})}
+            />
+            <span style={{ fontSize: '0.68rem', color: 'var(--text3)', display: 'block', marginTop: '4px' }}>El nombre para identificar este gasto obligatorio.</span>
           </div>
-        </div>
-      )}
+          <div className="form-group" style={{ marginTop: '12px' }}>
+            <label>Monto a pagar (COP)</label>
+            <input
+              type="text" className="input" required placeholder="0"
+              value={formData.amount} onChange={e => setFormData({...formData, amount: formatColombianInput(e.target.value)})}
+            />
+            <span style={{ fontSize: '0.68rem', color: 'var(--text3)', display: 'block', marginTop: '4px' }}>El valor mensual recurrente en pesos colombianos.</span>
+          </div>
+          <div className="form-group" style={{ marginTop: '12px' }}>
+            <label>Día de Cobro (1 al 31)</label>
+            <input
+              type="number" className="input" required min="1" max="31" placeholder="Ej: 15"
+              value={formData.day} onChange={e => setFormData({...formData, day: e.target.value})}
+            />
+            <span style={{ fontSize: '0.68rem', color: 'var(--text3)', display: 'block', marginTop: '4px' }}>El día de tu ciclo de pago en que se descuenta este cobro.</span>
+          </div>
+          <button type="submit" className="btn-primary" style={{ marginTop: '16px', width: '100%' }}>{editingId ? 'Actualizar Compromiso' : 'Guardar Compromiso'}</button>
+        </form>
+      </Modal>
 
-      {confirmModal.isOpen && (
-        <div className="modal-overlay active" onClick={() => setConfirmModal({ isOpen: false, commitment: null })} style={{ display: 'flex' }}>
-          <div className="modal glass-card" style={{ maxWidth: '380px', textAlign: 'center', padding: '24px' }}>
-            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '14px' }}>
-              <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: 'rgba(0, 230, 118, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--green)' }}>
-                <CheckCircle2 size={24} />
-              </div>
-            </div>
-            <h3 className="modal-title" style={{ marginBottom: '10px', fontSize: '1.15rem' }}>¿Marcar como pagado?</h3>
-            <p style={{ fontSize: '0.82rem', color: 'var(--text2)', lineHeight: '1.5', marginBottom: '20px' }}>
-              ¿Deseas marcar <strong>{confirmModal.commitment?.name}</strong> como pagado? 
-              Se registrará automáticamente como un gasto real de <strong style={{ color: 'var(--red)' }}>{fmt(confirmModal.commitment?.amount)}</strong> en este ciclo.
-            </p>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-              <button 
-                type="button"
-                className="btn-secondary" 
-                onClick={() => setConfirmModal({ isOpen: false, commitment: null })}
-                style={{ padding: '10px', fontSize: '0.85rem' }}
-              >
-                Cancelar
-              </button>
-              <button 
-                type="button"
-                className="btn-primary" 
-                onClick={() => {
-                  markCommitmentAsPaid(confirmModal.commitment);
-                  setConfirmModal({ isOpen: false, commitment: null });
-                }}
-                style={{ padding: '10px', fontSize: '0.85rem', boxShadow: 'none' }}
-              >
-                Confirmar Pago
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <ConfirmDialog
+        open={confirmModal.isOpen}
+        onClose={() => setConfirmModal({ isOpen: false, commitment: null })}
+        onConfirm={() => {
+          markCommitmentAsPaid(confirmModal.commitment);
+          setConfirmModal({ isOpen: false, commitment: null });
+        }}
+        tone="accent"
+        title="¿Marcar como pagado?"
+        message={
+          <>
+            ¿Deseas marcar <strong>{confirmModal.commitment?.name}</strong> como pagado?
+            Se registrará automáticamente como un gasto real de <strong style={{ color: 'var(--red)' }}>{fmt(confirmModal.commitment?.amount)}</strong> en este ciclo.
+          </>
+        }
+        confirmLabel="Confirmar Pago"
+      />
     </div>
   );
 }

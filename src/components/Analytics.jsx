@@ -1,11 +1,13 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useFinance } from '../context/FinanceContext';
 import { 
   getCurrentMonthExpenses, getTotalSpent, getAvailableMoney, 
   fmt, CATEGORY_ICONS, CATEGORY_COLORS, getDaysInMonth, getMonthKey,
   formatColombianInput, parseColombianInput
 } from '../utils/financeUtils';
-import { Trash2, AlertCircle, TrendingUp, CheckCircle2, Lightbulb, Sparkles, Plus, Calendar, Landmark } from 'lucide-react';
+import { Trash2, AlertCircle, TrendingUp, CheckCircle2, Lightbulb, Sparkles, Calendar, Landmark } from 'lucide-react';
+import Modal from './ui/Modal';
+import EmptyState from './ui/EmptyState';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -422,7 +424,7 @@ export default function Analytics() {
         <p style={{ fontSize: '0.75rem', color: 'var(--text3)', marginBottom: '16px' }}>Selecciona un comercio para auditar compras</p>
         
         {sortedMerchants.length === 0 ? (
-          <p className="empty-state">Sin transacciones registradas.</p>
+          <EmptyState message="Sin transacciones registradas." />
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
             {sortedMerchants.map(([name, total]) => (
@@ -470,7 +472,7 @@ export default function Analytics() {
         </p>
 
         {monthIncomes.length === 0 ? (
-          <p className="empty-state">Sin ingresos adicionales registrados.</p>
+          <EmptyState message="Sin ingresos adicionales registrados." />
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
             {monthIncomes.map(inc => (
@@ -489,71 +491,55 @@ export default function Analytics() {
       </div>
 
       {/* Merchant Details Modal */}
-      {selectedMerchant && (
-        <div className="modal-overlay active" onClick={(e) => e.target === e.currentTarget && setSelectedMerchant(null)} style={{ display: 'flex' }}>
-          <div className="modal glass-card" style={{ maxHeight: '80vh', overflowY: 'auto' }}>
-            <div className="modal-header">
-              <span className="modal-title">{selectedMerchant}</span>
-              <button className="icon-btn-sm" onClick={() => setSelectedMerchant(null)}>✕</button>
-            </div>
-            <p style={{ fontSize: '0.8rem', color: 'var(--text3)', marginBottom: '16px' }}>Productos comprados en este comercio durante el mes:</p>
-            
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              {getMerchantItems(selectedMerchant).length === 0 ? (
-                <p className="empty-state">No se registraron productos individuales.</p>
-              ) : (
-                getMerchantItems(selectedMerchant).map((item, idx) => (
-                  <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', padding: '10px', borderBottom: '1px solid var(--glass-border)', fontSize: '0.85rem' }}>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                      <span style={{ fontWeight: 600 }}>{item.can}x {item.desc}</span>
-                      <span style={{ fontSize: '0.7rem', color: 'var(--text3)', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                        <Calendar size={12} /> {item.date}
-                      </span>
-                    </div>
-                    <span style={{ fontWeight: 700, color: 'var(--text)' }}>{fmt(item.price)}</span>
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
+      <Modal open={!!selectedMerchant} onClose={() => setSelectedMerchant(null)} title={selectedMerchant}>
+        <p style={{ fontSize: '0.8rem', color: 'var(--text3)', marginBottom: '16px' }}>Productos comprados en este comercio durante el mes:</p>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          {selectedMerchant && getMerchantItems(selectedMerchant).length === 0 ? (
+            <EmptyState message="No se registraron productos individuales." />
+          ) : (
+            selectedMerchant && getMerchantItems(selectedMerchant).map((item, idx) => (
+              <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', padding: '10px', borderBottom: '1px solid var(--glass-border)', fontSize: '0.85rem' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                  <span style={{ fontWeight: 600 }}>{item.can}x {item.desc}</span>
+                  <span style={{ fontSize: '0.7rem', color: 'var(--text3)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <Calendar size={12} /> {item.date}
+                  </span>
+                </div>
+                <span style={{ fontWeight: 700, color: 'var(--text)' }}>{fmt(item.price)}</span>
+              </div>
+            ))
+          )}
         </div>
-      )}
+      </Modal>
 
       {/* New Income Modal */}
-      {isIncomeModalOpen && (
-        <div className="modal-overlay active" onClick={(e) => e.target === e.currentTarget && setIsIncomeModalOpen(false)} style={{ display: 'flex' }}>
-          <div className="modal glass-card">
-            <div className="modal-header">
-              <span className="modal-title">Nuevo Ingreso Extra</span>
-              <button className="icon-btn-sm" onClick={() => setIsIncomeModalOpen(false)}>✕</button>
-            </div>
-            <form onSubmit={handleIncomeSubmit}>
-              <div className="form-group">
-                <label>Descripción (Ej: Bono, Proyecto)</label>
-                <input 
-                  type="text" className="input" required 
-                  placeholder="Ej. Proyecto Freelance"
-                  value={incomeForm.name} onChange={e => setIncomeForm({...incomeForm, name: e.target.value})}
-                />
-                <span style={{ fontSize: '0.68rem', color: 'var(--text3)', display: 'block', marginTop: '4px' }}>
-                  El origen o concepto de este dinero adicional (ej. comisión de ventas, regalo, trabajo extra).
-                </span>
-              </div>
-              <div className="form-group" style={{ marginTop: '12px' }}>
-                <label>Monto (COP)</label>
-                <input 
-                  type="text" className="input" required placeholder="0"
-                  value={incomeForm.amount} onChange={e => setIncomeForm({...incomeForm, amount: formatColombianInput(e.target.value)})}
-                />
-                <span style={{ fontSize: '0.68rem', color: 'var(--text3)', display: 'block', marginTop: '4px' }}>
-                  Monto recibido. Se agregará directamente como saldo disponible para tus gastos del ciclo actual.
-                </span>
-              </div>
-              <button type="submit" className="btn-primary" style={{ marginTop: '20px', width: '100%' }}>Agregar Ingreso</button>
-            </form>
+      <Modal open={isIncomeModalOpen} onClose={() => setIsIncomeModalOpen(false)} title="Nuevo Ingreso Extra">
+        <form onSubmit={handleIncomeSubmit}>
+          <div className="form-group">
+            <label>Descripción (Ej: Bono, Proyecto)</label>
+            <input
+              type="text" className="input" required
+              placeholder="Ej. Proyecto Freelance"
+              value={incomeForm.name} onChange={e => setIncomeForm({...incomeForm, name: e.target.value})}
+            />
+            <span style={{ fontSize: '0.68rem', color: 'var(--text3)', display: 'block', marginTop: '4px' }}>
+              El origen o concepto de este dinero adicional (ej. comisión de ventas, regalo, trabajo extra).
+            </span>
           </div>
-        </div>
-      )}
+          <div className="form-group" style={{ marginTop: '12px' }}>
+            <label>Monto (COP)</label>
+            <input
+              type="text" className="input" required placeholder="0"
+              value={incomeForm.amount} onChange={e => setIncomeForm({...incomeForm, amount: formatColombianInput(e.target.value)})}
+            />
+            <span style={{ fontSize: '0.68rem', color: 'var(--text3)', display: 'block', marginTop: '4px' }}>
+              Monto recibido. Se agregará directamente como saldo disponible para tus gastos del ciclo actual.
+            </span>
+          </div>
+          <button type="submit" className="btn-primary" style={{ marginTop: '20px', width: '100%' }}>Agregar Ingreso</button>
+        </form>
+      </Modal>
 
     </div>
   );

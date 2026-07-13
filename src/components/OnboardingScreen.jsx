@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { fmt, getCycleInfo } from '../utils/financeUtils';
 
@@ -70,7 +70,6 @@ export default function OnboardingScreen({ user, onComplete }) {
 
       onComplete();
     } catch (err) {
-      console.error('Onboarding error:', err);
       setError('Error guardando tu configuración: ' + (err.message || 'Intenta de nuevo.'));
     } finally {
       setSaving(false);
@@ -93,7 +92,7 @@ export default function OnboardingScreen({ user, onComplete }) {
         {/* Header */}
         <div style={{ textAlign: 'center', marginBottom: '28px' }}>
           <h1 style={{ fontSize: '2.2rem', fontWeight: 900, marginBottom: '4px' }}>
-            Planga<span style={{ color: 'var(--green)' }}>.</span>
+            Finly<span style={{ color: 'var(--green)' }}>.</span>
           </h1>
           <p style={{ color: 'var(--text3)', fontSize: '0.88rem' }}>Configuración inicial — solo se hace una vez</p>
         </div>
@@ -117,7 +116,7 @@ export default function OnboardingScreen({ user, onComplete }) {
           {/* Step 0: Nombre y moneda */}
           {step === 0 && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              <h2 style={{ fontSize: '1.25rem', fontWeight: 800 }}>¡Bienvenido/a a Planga!</h2>
+              <h2 style={{ fontSize: '1.25rem', fontWeight: 800 }}>¡Bienvenido/a a Finly!</h2>
               <p style={{ color: 'var(--text2)', fontSize: '0.85rem' }}>
                 Esta información es completamente privada. Solo tú la verás. Cada usuario tiene su propia configuración.
               </p>
@@ -176,7 +175,7 @@ export default function OnboardingScreen({ user, onComplete }) {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
               <h2 style={{ fontSize: '1.25rem', fontWeight: 800 }}>¿Cuándo te pagan?</h2>
               <div style={{ padding: '10px 12px', background: 'rgba(59,130,246,0.08)', borderRadius: '8px', border: '1px solid rgba(59,130,246,0.2)', fontSize: '0.8rem', color: 'var(--text2)' }}>
-                💡 El <strong>día de ciclo</strong> es el día del mes en que recibes tu ingreso (quincena, nomina). Por ejemplo: si te pagan el día 25, escribe 25. Planga organizará tus gastos a partir de ese día cada mes.
+                💡 El <strong>día de ciclo</strong> es el día del mes en que recibes tu ingreso (quincena, nomina). Por ejemplo: si te pagan el día 25, escribe 25. Finly organizará tus gastos a partir de ese día cada mes.
               </div>
               <div className="form-group">
                 <label>Día del mes (1 al 31)</label>
@@ -201,7 +200,7 @@ export default function OnboardingScreen({ user, onComplete }) {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
               <h2 style={{ fontSize: '1.25rem', fontWeight: 800 }}>Gastos fijos mensuales</h2>
               <div style={{ padding: '10px 12px', background: 'rgba(59,130,246,0.08)', borderRadius: '8px', border: '1px solid rgba(59,130,246,0.2)', fontSize: '0.8rem', color: 'var(--text2)' }}>
-                💡 Son los pagos que haces sí o sí cada mes: arriendo, internet, cuota del gym, etc. Planga los descuenta automáticamente de tu presupuesto disponible. Puedes saltarte este paso y agregarlos después en la pestaña "Compromisos".
+                💡 Son los pagos que haces sí o sí cada mes: arriendo, internet, cuota del gym, etc. Finly los descuenta automáticamente de tu presupuesto disponible. Puedes saltarte este paso y agregarlos después en la pestaña "Compromisos".
               </div>
 
               {commitments.length === 0 && (
@@ -281,7 +280,7 @@ export default function OnboardingScreen({ user, onComplete }) {
                 style={{ flex: 2 }}
                 disabled={saving}
               >
-                {saving ? 'Guardando...' : '¡Comenzar con Planga! 🚀'}
+                {saving ? 'Guardando...' : '¡Comenzar con Finly! 🚀'}
               </button>
             )}
           </div>

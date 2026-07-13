@@ -1,10 +1,11 @@
-import React from 'react';
 import { useFinance } from '../context/FinanceContext';
-import { 
-  getAvailableMoney, getDaysRemaining, getDailyBudget, 
-  getTotalSpent, getStatus, getCurrentMonthExpenses, 
-  getTotalCommitments, fmt, CATEGORY_ICONS 
+import {
+  getAvailableMoney, getDaysRemaining, getDailyBudget,
+  getTotalSpent, getStatus, getCurrentMonthExpenses,
+  getTotalCommitments, fmt, CATEGORY_ICONS
 } from '../utils/financeUtils';
+import { TrendingDown, Activity, Repeat } from 'lucide-react';
+import EmptyState from './ui/EmptyState';
 import { Line } from 'react-chartjs-2';
 import {
   Chart as ChartJS,
@@ -107,8 +108,8 @@ export default function Dashboard({ onSelectExpense }) {
         {
           label: 'Gasto Real Acumulado',
           data: realData,
-          borderColor: '#10b981',
-          backgroundColor: 'rgba(16, 185, 129, 0.08)',
+          borderColor: 'rgb(0, 230, 118)',
+          backgroundColor: 'rgba(0, 230, 118, 0.08)',
           fill: true,
           tension: 0.3,
           pointRadius: 2,
@@ -250,25 +251,34 @@ export default function Dashboard({ onSelectExpense }) {
             <span className="ring-label">Gastado</span>
           </div>
         </div>
-        <div className="progress-stats" style={{ display: 'flex', flexDirection: 'column', gap: '12px', justifyContent: 'center' }}>
-          <div className="pstat" style={{ background: 'rgba(255,255,255,0.03)', padding: '10px 15px', borderRadius: '12px', borderLeft: '3px solid var(--accent)' }}>
-            <span className="pstat-label" style={{ fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Gastos del Mes</span>
-            <span className="pstat-val" style={{ fontSize: '1.1rem' }}>{mask(totalSpent)}</span>
+        <div className="progress-stats" style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)', justifyContent: 'center' }}>
+          <div className="pstat" style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)', background: 'var(--bg3)', padding: 'var(--space-2) var(--space-4)', borderRadius: 'var(--radius-sm)', borderLeft: '3px solid var(--accent)' }}>
+            <TrendingDown size={16} style={{ color: 'var(--accent)', flexShrink: 0 }} />
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
+              <span className="pstat-label" style={{ fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Gastos del Mes</span>
+              <span className="pstat-val" style={{ fontSize: '1.1rem' }}>{mask(totalSpent)}</span>
+            </div>
           </div>
-          <div className="pstat" style={{ background: 'rgba(255,255,255,0.03)', padding: '10px 15px', borderRadius: '12px', borderLeft: '3px solid var(--yellow)' }}>
-            <span className="pstat-label" style={{ fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Promedio Diario</span>
-            <span className="pstat-val" style={{ fontSize: '1.1rem' }}>{mask(dailyAvg)}</span>
+          <div className="pstat" style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)', background: 'var(--bg3)', padding: 'var(--space-2) var(--space-4)', borderRadius: 'var(--radius-sm)', borderLeft: '3px solid var(--yellow)' }}>
+            <Activity size={16} style={{ color: 'var(--yellow)', flexShrink: 0 }} />
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
+              <span className="pstat-label" style={{ fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Promedio Diario</span>
+              <span className="pstat-val" style={{ fontSize: '1.1rem' }}>{mask(dailyAvg)}</span>
+            </div>
           </div>
-          <div className="pstat" style={{ background: 'rgba(255,255,255,0.03)', padding: '10px 15px', borderRadius: '12px', borderLeft: '3px solid var(--blue)' }}>
-            <span className="pstat-label" style={{ fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Compromisos</span>
-            <span className="pstat-val" style={{ fontSize: '1.1rem' }}>{mask(commitmentsTotal)}</span>
-            <span style={{ fontSize: '0.58rem', color: 'var(--text3)', marginTop: '2px' }}>Pagos fijos reservados</span>
+          <div className="pstat" style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)', background: 'var(--bg3)', padding: 'var(--space-2) var(--space-4)', borderRadius: 'var(--radius-sm)', borderLeft: '3px solid var(--blue)' }}>
+            <Repeat size={16} style={{ color: 'var(--blue)', flexShrink: 0 }} />
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
+              <span className="pstat-label" style={{ fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Compromisos</span>
+              <span className="pstat-val" style={{ fontSize: '1.1rem' }}>{mask(commitmentsTotal)}</span>
+              <span style={{ fontSize: '0.58rem', color: 'var(--text3)' }}>Pagos fijos reservados</span>
+            </div>
           </div>
         </div>
       </div>
 
       <div className="glass-card">
-        <h3 className="card-title" style={{ marginBottom: '15px' }}>Tendencia de Gastos</h3>
+        <h3 className="card-title" style={{ marginBottom: 'var(--space-4)' }}>Tendencia de Gastos</h3>
         <div style={{ height: '180px', position: 'relative' }}>
           <Line data={generateChartData()} options={chartOptions} />
         </div>
@@ -280,7 +290,7 @@ export default function Dashboard({ onSelectExpense }) {
         </div>
         <ul className="expense-list-mini">
           {recentExpenses.length === 0 ? (
-            <li className="empty-state">Sin gastos recientes.</li>
+            <li><EmptyState message="Sin gastos recientes." /></li>
           ) : (
             recentExpenses.map(e => {
               const icon = CATEGORY_ICONS[e.category] || '📦';

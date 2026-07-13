@@ -12,6 +12,7 @@ export function FinanceProvider({ children }) {
   const [user, setUser] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
   const [needsOnboarding, setNeedsOnboarding] = useState(false);
+  const [passwordRecovery, setPasswordRecovery] = useState(false);
   const lastUserIdRef = useRef(null);
   const lastRealtimeUserRef = useRef(null);
   const [state, setState] = useState({
@@ -108,6 +109,14 @@ export function FinanceProvider({ children }) {
     document.addEventListener('visibilitychange', handleVisibilityChange);
 
     const { data: { subscription: authSub } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (_event === 'PASSWORD_RECOVERY') {
+        // The recovery link itself grants a valid session (same as real
+        // Supabase) - set the user so completing the reset lands them in the
+        // app instead of bouncing back to a login screen.
+        setUser(session?.user ?? null);
+        setPasswordRecovery(true);
+        return;
+      }
       setUser(session?.user ?? null);
       if (session?.user) resetTimer();
     });
@@ -124,8 +133,7 @@ export function FinanceProvider({ children }) {
   useEffect(() => {
     if (user && lastRealtimeUserRef.current !== user.id) {
       lastRealtimeUserRef.current = user.id;
-      console.log('FinanceContext: Setting up Realtime channels for user', user.id);
-      
+
       const gastosChannel = supabase.channel(`gastos-${user.id}`)
         .on('postgres_changes', { event: '*', schema: 'public', table: 'gastos', filter: `user_id=eq.${user.id}` }, () => {
           loadCurrentCycleAndExpenses();
@@ -184,24 +192,20 @@ export function FinanceProvider({ children }) {
     
     setDataLoading(true);
     setLastLoadTime(now);
-    console.log('FinanceContext: Starting loadAllData...');
-    
+
     // Safety timeout: ensure loading finishes eventually
     const safetyTimeout = setTimeout(() => {
-      console.warn('FinanceContext: Data loading timed out (8s safety triggered)');
       setDataLoading(false);
     }, 8000);
 
     try {
       const profileOk = await loadProfile();
       if (!profileOk) {
-        console.log('FinanceContext: Profile check failed or onboarding needed');
         clearTimeout(safetyTimeout);
         setDataLoading(false);
         return;
       }
 
-      console.log('FinanceContext: Profile OK, loading sub-modules...');
       await Promise.all([
         loadAssetsAndDebts(),
         loadBudgets(),
@@ -209,7 +213,6 @@ export function FinanceProvider({ children }) {
         loadIncomesFromDB(),
         loadCurrentCycleAndExpenses()
       ]);
-      console.log('FinanceContext: All data loaded successfully');
     } catch (err) {
       console.error('FinanceContext: Error loading data:', err);
     } finally {
@@ -540,7 +543,6 @@ export function FinanceProvider({ children }) {
 
     // Fallback if the user's DB doesn't have the new columns OR if the ENUM values still don't match
     if (response.error && (response.error.message?.includes('does not exist') || response.error.message?.includes('enum') || response.error.status === 400)) {
-      console.warn('addExpense: Retrying with minimal payload due to error:', response.error.message);
       delete insertPayload.medio_pago;
       delete insertPayload.entidad_banco;
       delete insertPayload.origen;
@@ -549,8 +551,7 @@ export function FinanceProvider({ children }) {
 
     const { data: gasto, error } = response;
 
-    if (error) { 
-      console.error('addExpense final error:', error); 
+    if (error) {
       showToast(`Error al guardar gasto: ${error.message || error.code}`, 'error');
       // Revert optimistic update by reloading data
       await loadCurrentCycleAndExpenses();
@@ -583,163 +584,89 @@ export function FinanceProvider({ children }) {
     setState(prev => ({ ...prev, expenses: prev.expenses.filter(e => e.id !== id) }));
   };
 
-  // ─── CRUD: Assets ───
-  const addAsset = async (type, asset) => {
+  // ─── CRUD: Assets, Debts, Commitments, Income ───
+  // These four entities share the same shape (insert row → map to app model →
+  // append to a state array; delete by id → filter it out). Instead of four
+  // hand-written copies, one config dictionary drives generic create/remove
+  // functions, and each public add*/delete* below is a one-line binding to it.
+  const CREATE_CONFIG = {
+    asset: {
+      table: 'activos',
+      toRow: (payload) => ({ nombre: payload.name, valor: payload.amount, tipo: payload.assetType === 'savings' ? 'ahorro' : 'inversion' }),
+      fromRow: (row) => ({ id: row.id, name: row.nombre, amount: row.valor }),
+    },
+    debt: {
+      table: 'deudas',
+      toRow: (payload) => ({ nombre: payload.name, monto_total: payload.total, monto_pagado: payload.paid }),
+      fromRow: (row) => ({ id: row.id, name: row.nombre, total: row.monto_total, paid: row.monto_pagado }),
+    },
+    commitment: {
+      table: 'compromisos',
+      toRow: (payload) => ({ nombre: payload.name, monto: payload.amount, dia_pago: payload.day }),
+      fromRow: (row) => ({ id: row.id, name: row.nombre, amount: row.monto, day: row.dia_pago }),
+    },
+    income: {
+      table: 'ingresos_extra',
+      toRow: (payload) => ({ nombre: payload.name, monto: payload.amount, fecha: payload.date || new Date().toISOString() }),
+      fromRow: (row, cycleDay) => {
+        const incomeDate = row.fecha ? new Date(row.fecha.substring(0, 10) + 'T12:00:00') : new Date();
+        const cycleInfo = getCycleInfo(incomeDate, cycleDay);
+        return {
+          id: row.id,
+          name: row.nombre,
+          amount: row.monto,
+          date: row.fecha ? row.fecha.substring(0, 10) : getLocalDateString(new Date()),
+          month: cycleInfo.monthKey,
+        };
+      },
+    },
+  };
+
+  const createEntity = async (entityKey, payload, stateKey) => {
     if (!user) return;
-    const tipo = type === 'savings' ? 'ahorro' : 'inversion';
-    const { data, error } = await supabase
-      .from('activos')
-      .insert({ user_id: user.id, nombre: asset.name, valor: asset.amount, tipo })
-      .select().single();
-
-    if (error) { console.error('addAsset error:', error); return; }
-
-    const newAsset = { id: data.id, name: data.nombre, amount: data.valor };
-    setState(prev => ({
-      ...prev,
-      [type]: [...prev[type], newAsset]
-    }));
+    const cfg = CREATE_CONFIG[entityKey];
+    const { data, error } = await supabase.from(cfg.table).insert({ user_id: user.id, ...cfg.toRow(payload) }).select().single();
+    if (error) { console.error(`add${entityKey} error:`, error); return; }
+    const mapped = cfg.fromRow(data, state.cycleDay || 25);
+    setState(prev => ({ ...prev, [stateKey]: [...(prev[stateKey] || []), mapped] }));
   };
 
-  const deleteAsset = async (type, id) => {
-    await supabase.from('activos').delete().eq('id', id);
-    setState(prev => ({ ...prev, [type]: prev[type].filter(a => a.id !== id) }));
-  };
-
-  // ─── CRUD: Debts ───
-  const addDebt = async (debt) => {
+  const removeEntity = async (entityKey, id, stateKey) => {
     if (!user) return;
-    const { data, error } = await supabase
-      .from('deudas')
-      .insert({ user_id: user.id, nombre: debt.name, monto_total: debt.total, monto_pagado: debt.paid })
-      .select().single();
-
-    if (error) { console.error('addDebt error:', error); return; }
-
-    setState(prev => ({
-      ...prev,
-      debts: [...prev.debts, { id: data.id, name: data.nombre, total: data.monto_total, paid: data.monto_pagado }]
-    }));
+    await supabase.from(CREATE_CONFIG[entityKey].table).delete().eq('id', id);
+    setState(prev => ({ ...prev, [stateKey]: prev[stateKey].filter(item => item.id !== id) }));
   };
 
-  const deleteDebt = async (id) => {
-    await supabase.from('deudas').delete().eq('id', id);
-    setState(prev => ({ ...prev, debts: prev.debts.filter(d => d.id !== id) }));
+  const UPDATE_CONFIG = {
+    commitment: { table: 'compromisos', toRow: (v) => ({ nombre: v.name, monto: v.amount, dia_pago: v.day }), applyLocal: (_item, v) => v },
+    asset: { table: 'activos', toRow: (v) => ({ valor: v }), applyLocal: (item, v) => ({ ...item, amount: v }) },
+    debt: { table: 'deudas', toRow: (v) => ({ monto_pagado: v }), applyLocal: (item, v) => ({ ...item, paid: v }) },
   };
 
-  // ─── Commitments (DB) ───
-  const addCommitment = async (commitment) => {
+  const updateEntity = async (entityKey, id, value, stateKey, options = {}) => {
     if (!user) return;
-    const { data, error } = await supabase.from('compromisos').insert({
-      user_id: user.id,
-      nombre: commitment.name,
-      monto: commitment.amount,
-      dia_pago: commitment.day
-    }).select().single();
-
-    if (error) { console.error('addCommitment error:', error); return; }
-
-    setState(prev => ({
-      ...prev,
-      commitments: [...prev.commitments, { id: data.id, name: data.nombre, amount: data.monto, day: data.dia_pago }]
-    }));
-  };
-
-  const updateCommitment = async (updated) => {
-    if (!user) return;
-    const { error } = await supabase.from('compromisos').update({
-      nombre: updated.name,
-      monto: updated.amount,
-      dia_pago: updated.day
-    }).eq('id', updated.id);
-
-    if (error) { console.error('updateCommitment error:', error); return; }
-
-    setState(prev => ({
-      ...prev,
-      commitments: prev.commitments.map(c => c.id === updated.id ? updated : c)
-    }));
-  };
-
-  const deleteCommitment = async (id) => {
-    if (!user) return;
-    await supabase.from('compromisos').delete().eq('id', id);
-    setState(prev => ({ ...prev, commitments: prev.commitments.filter(c => c.id !== id) }));
-  };
-
-  // ─── Income (DB) ───
-  const addIncome = async (income) => {
-    if (!user) return;
-    const { data, error } = await supabase.from('ingresos_extra').insert({
-      user_id: user.id,
-      nombre: income.name,
-      monto: income.amount,
-      fecha: income.date || new Date().toISOString()
-    }).select().single();
-
-    if (error) { console.error('addIncome error:', error); return; }
-
-    const cycleDay = state.cycleDay || 25;
-    const incomeDate = data.fecha ? new Date(data.fecha.substring(0, 10) + 'T12:00:00') : new Date();
-    const cycleInfo = getCycleInfo(incomeDate, cycleDay);
-
-    setState(prev => ({
-      ...prev,
-      incomes: [...(prev.incomes || []), { 
-        id: data.id, 
-        name: data.nombre, 
-        amount: data.monto, 
-        date: data.fecha ? data.fecha.substring(0, 10) : getLocalDateString(new Date()), 
-        month: cycleInfo.monthKey 
-      }]
-    }));
-  };
-
-  const deleteIncome = async (id) => {
-    if (!user) return;
-    await supabase.from('ingresos_extra').delete().eq('id', id);
-    setState(prev => ({ ...prev, incomes: (prev.incomes || []).filter(i => i.id !== id) }));
-  };
-
-  const updateAssetValue = async (type, id, newValue) => {
-    if (!user) return;
-    const { error } = await supabase
-      .from('activos')
-      .update({ valor: newValue })
-      .eq('id', id);
-
+    const cfg = UPDATE_CONFIG[entityKey];
+    const { error } = await supabase.from(cfg.table).update(cfg.toRow(value)).eq('id', id);
     if (error) {
-      console.error('updateAssetValue error:', error);
-      showToast('Error al actualizar el activo', 'error');
+      if (options.errorMessage) showToast(options.errorMessage, 'error');
+      else console.error(`update${entityKey} error:`, error);
       return;
     }
-
-    setState(prev => ({
-      ...prev,
-      [type]: prev[type].map(a => a.id === id ? { ...a, amount: newValue } : a)
-    }));
-    showToast('Monto actualizado con éxito');
+    setState(prev => ({ ...prev, [stateKey]: prev[stateKey].map(item => item.id === id ? cfg.applyLocal(item, value) : item) }));
+    if (options.successMessage) showToast(options.successMessage);
   };
 
-  const updateDebtPayment = async (id, newPaid) => {
-    if (!user) return;
-    const { error } = await supabase
-      .from('deudas')
-      .update({ monto_pagado: newPaid })
-      .eq('id', id);
-
-    if (error) {
-      console.error('updateDebtPayment error:', error);
-      showToast('Error al registrar abono', 'error');
-      return;
-    }
-
-    setState(prev => ({
-      ...prev,
-      debts: prev.debts.map(d => d.id === id ? { ...d, paid: newPaid } : d)
-    }));
-    showToast('Abono registrado con éxito');
-  };
+  const addAsset = (type, asset) => createEntity('asset', { ...asset, assetType: type }, type);
+  const deleteAsset = (type, id) => removeEntity('asset', id, type);
+  const addDebt = (debt) => createEntity('debt', debt, 'debts');
+  const deleteDebt = (id) => removeEntity('debt', id, 'debts');
+  const addCommitment = (commitment) => createEntity('commitment', commitment, 'commitments');
+  const updateCommitment = (updated) => updateEntity('commitment', updated.id, updated, 'commitments');
+  const deleteCommitment = (id) => removeEntity('commitment', id, 'commitments');
+  const addIncome = (income) => createEntity('income', income, 'incomes');
+  const deleteIncome = (id) => removeEntity('income', id, 'incomes');
+  const updateAssetValue = (type, id, newValue) => updateEntity('asset', id, newValue, type, { successMessage: 'Monto actualizado con éxito', errorMessage: 'Error al actualizar el activo' });
+  const updateDebtPayment = (id, newPaid) => updateEntity('debt', id, newPaid, 'debts', { successMessage: 'Abono registrado con éxito', errorMessage: 'Error al registrar abono' });
 
   const markCommitmentAsPaid = async (commitment) => {
     if (!user) return;
@@ -813,7 +740,6 @@ export function FinanceProvider({ children }) {
       data: metadataUpdates
     });
     if (error) {
-      console.error("Error updating user profile:", error);
       showToast("Error al actualizar perfil: " + error.message, 'error');
     } else {
       setUser(data.user);
@@ -825,6 +751,33 @@ export function FinanceProvider({ children }) {
   const signOut = async () => {
     await supabase.auth.signOut();
   };
+
+  // ─── Password recovery ───
+  // Two steps: request a code by email, then verify that code (OTP-style,
+  // supabase.auth.verifyOtp with type:'recovery') before the reset screen
+  // unlocks - a plain magic-link redirect alone had no verification step.
+  const requestPasswordReset = async (email) => {
+    const result = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: window.location.origin,
+    });
+    return { error: result.error, devCode: result.__localDevCode };
+  };
+
+  const verifyPasswordResetCode = async (email, code) => {
+    const { error } = await supabase.auth.verifyOtp({ email, token: code, type: 'recovery' });
+    return { error };
+  };
+
+  const completePasswordRecovery = async (newPassword) => {
+    const { error } = await supabase.auth.updateUser({ password: newPassword });
+    if (!error) {
+      setPasswordRecovery(false);
+      showToast('Contraseña actualizada correctamente');
+    }
+    return { error };
+  };
+
+  const cancelPasswordRecovery = () => setPasswordRecovery(false);
 
   // ─── Complete onboarding ───
   const completeOnboarding = () => {
@@ -840,6 +793,11 @@ export function FinanceProvider({ children }) {
       dataLoading,
       needsOnboarding,
       completeOnboarding,
+      passwordRecovery,
+      requestPasswordReset,
+      verifyPasswordResetCode,
+      completePasswordRecovery,
+      cancelPasswordRecovery,
       state,
       setState,
       signOut,

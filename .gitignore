@@ -12,6 +12,10 @@ dist
 dist-ssr
 *.local
 
+# Local agent tooling (not part of the app)
+.claude/
+graphify-out/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

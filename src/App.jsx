@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState } from 'react';
 import { Home, PieChart, Wallet, Plus, Settings, Loader2, CheckCircle, AlertCircle, Info, User, Calendar } from 'lucide-react';
 import Dashboard from './components/Dashboard';
 import Summary from './components/Summary';
@@ -10,6 +10,7 @@ import ExpenseForm from './components/ExpenseForm';
 import SettingsScreen from './components/SettingsScreen';
 import ExpenseDetailsModal from './components/ExpenseDetailsModal';
 import AuthScreen from './components/AuthScreen';
+import ResetPasswordScreen from './components/ResetPasswordScreen';
 import OnboardingScreen from './components/OnboardingScreen';
 import SidebarMenu from './components/SidebarMenu';
 import HelpScreen from './components/HelpScreen';
@@ -19,7 +20,7 @@ import { getCycleInfo, formatDateRange } from './utils/financeUtils';
 function App() {
   const [currentScreen, setCurrentScreen] = useState('dashboard');
   const [selectedExpense, setSelectedExpense] = useState(null);
-  const { state, user, authLoading, dataLoading, skipLoading, needsOnboarding, completeOnboarding, signOut, updateSettings, toasts } = useFinance();
+  const { state, user, authLoading, dataLoading, skipLoading, needsOnboarding, completeOnboarding, passwordRecovery, updateSettings, toasts } = useFinance();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
 
@@ -40,6 +41,8 @@ function App() {
       </div>
     );
   }
+
+  if (passwordRecovery) return <ResetPasswordScreen />;
 
   if (!user) return <AuthScreen />;
 

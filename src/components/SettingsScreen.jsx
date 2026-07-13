@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useFinance } from '../context/FinanceContext';
 import { CATEGORY_ICONS, formatColombianInput, parseColombianInput } from '../utils/financeUtils';
+import ConfirmDialog from './ui/ConfirmDialog';
 
 export default function SettingsScreen({ onSave }) {
   const { state, updateSettings, showToast } = useFinance();
-  
+
   const [income, setIncome] = useState(() => formatColombianInput(state.income));
   const [cycleDay, setCycleDay] = useState(state.cycleDay);
   const [categoryBudgets, setCategoryBudgets] = useState(() => {
@@ -14,6 +15,7 @@ export default function SettingsScreen({ onSave }) {
     });
     return init;
   });
+  const [confirmReset, setConfirmReset] = useState(false);
 
   const handleBudgetChange = (cat, value) => {
     setCategoryBudgets(prev => ({
@@ -23,25 +25,28 @@ export default function SettingsScreen({ onSave }) {
   };
 
   const handleResetData = () => {
-    if (window.confirm('¿Estás seguro de que deseas restablecer todos tus datos locales de prueba? Se borrarán tus gastos, ingresos, deudas y compromisos actuales.')) {
-      const keys = [
-        'mock_db_profiles',
-        'mock_db_ciclos',
-        'mock_db_gastos',
-        'mock_db_gasto_items',
-        'mock_db_presupuestos',
-        'mock_db_compromisos',
-        'mock_db_ingresos_extra',
-        'mock_db_activos',
-        'mock_db_deudas',
-        'planga_savings_goals'
-      ];
-      keys.forEach(k => localStorage.removeItem(k));
-      showToast('Datos de prueba restablecidos correctamente', 'success');
-      setTimeout(() => {
-        window.location.reload();
-      }, 1000);
-    }
+    setConfirmReset(true);
+  };
+
+  const confirmResetData = () => {
+    const keys = [
+      'mock_db_profiles',
+      'mock_db_ciclos',
+      'mock_db_gastos',
+      'mock_db_gasto_items',
+      'mock_db_presupuestos',
+      'mock_db_compromisos',
+      'mock_db_ingresos_extra',
+      'mock_db_activos',
+      'mock_db_deudas',
+      'planga_savings_goals'
+    ];
+    keys.forEach(k => localStorage.removeItem(k));
+    setConfirmReset(false);
+    showToast('Datos de prueba restablecidos correctamente', 'success');
+    setTimeout(() => {
+      window.location.reload();
+    }, 1000);
   };
 
   const handleSubmit = (e) => {
@@ -154,6 +159,16 @@ export default function SettingsScreen({ onSave }) {
           Restablecer Base de Datos Local
         </button>
       </div>
+
+      <ConfirmDialog
+        open={confirmReset}
+        onClose={() => setConfirmReset(false)}
+        onConfirm={confirmResetData}
+        tone="danger"
+        title="¿Restablecer datos locales?"
+        message="¿Estás seguro de que deseas restablecer todos tus datos locales de prueba? Se borrarán tus gastos, ingresos, deudas y compromisos actuales."
+        confirmLabel="Restablecer"
+      />
     </div>
   );
 }

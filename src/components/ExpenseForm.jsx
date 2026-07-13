@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useFinance } from '../context/FinanceContext';
 import { getCycleInfo, CATEGORY_ICONS, formatColombianInput, parseColombianInput } from '../utils/financeUtils';
 import OCRScanner from './OCRScanner';

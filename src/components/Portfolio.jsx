@@ -1,15 +1,19 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useFinance } from '../context/FinanceContext';
 import { fmt, formatColombianInput, parseColombianInput } from '../utils/financeUtils';
-import { Trash2, Target, Calendar, Plus, Trophy, Coins } from 'lucide-react';
+import { Trash2, Target, Calendar, Plus, Trophy } from 'lucide-react';
+import Modal from './ui/Modal';
+import ConfirmDialog from './ui/ConfirmDialog';
+import EmptyState from './ui/EmptyState';
 
 export default function Portfolio() {
   const { state, addAsset, deleteAsset, addDebt, deleteDebt, updateAssetValue, updateDebtPayment, showToast } = useFinance();
-  
+
   const [modalType, setModalType] = useState(null); // 'savings', 'investments', 'debts', 'goals'
   const [formData, setFormData] = useState({ name: '', amount: '', paid: '', deadline: '' });
   const [depositTarget, setDepositTarget] = useState(null); // { type, item }
   const [depositAmount, setDepositAmount] = useState('');
+  const [deleteGoalId, setDeleteGoalId] = useState(null);
 
   const [savingsGoals, setSavingsGoals] = useState(() => {
     const data = localStorage.getItem('planga_savings_goals');
@@ -132,11 +136,14 @@ export default function Portfolio() {
   };
 
   const handleDeleteGoal = (id) => {
-    if (window.confirm('¿Seguro que deseas eliminar esta meta de ahorro?')) {
-      const newGoals = savingsGoals.filter(g => g.id !== id);
-      saveGoals(newGoals);
-      showToast('Meta de ahorro eliminada');
-    }
+    const newGoals = savingsGoals.filter(g => g.id !== id);
+    saveGoals(newGoals);
+    showToast('Meta de ahorro eliminada');
+  };
+
+  const confirmDeleteGoal = () => {
+    handleDeleteGoal(deleteGoalId);
+    setDeleteGoalId(null);
   };
 
   return (
@@ -171,7 +178,7 @@ export default function Portfolio() {
           Dinero guardado con alta disponibilidad o liquidez (ej. cuentas de ahorros, efectivo) para emergencias o corto plazo.
         </p>
         {state.savings.length === 0 ? (
-          <p className="empty-state">No tienes ahorros registrados.</p>
+          <EmptyState message="No tienes ahorros registrados." />
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '8px' }}>
             {state.savings.map(s => (
@@ -205,7 +212,7 @@ export default function Portfolio() {
           Capital invertido en instrumentos que generan rentabilidad a mediano o largo plazo (ej. CDT, fondos, acciones, criptomonedas).
         </p>
         {state.investments.length === 0 ? (
-          <p className="empty-state">No tienes inversiones registradas.</p>
+          <EmptyState message="No tienes inversiones registradas." />
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '8px' }}>
             {state.investments.map(i => (
@@ -243,7 +250,7 @@ export default function Portfolio() {
           Objetivos financieros específicos con un monto objetivo y fecha límite. Te ayudan a proyectar tus sueños de manera organizada.
         </p>
         {savingsGoals.length === 0 ? (
-          <p className="empty-state">No tienes metas de ahorro registradas.</p>
+          <EmptyState message="No tienes metas de ahorro registradas." />
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginTop: '8px' }}>
             {savingsGoals.map(g => {
@@ -266,7 +273,7 @@ export default function Portfolio() {
                       >
                         <Plus size={16} />
                       </button>
-                      <button onClick={() => handleDeleteGoal(g.id)} style={{ background: 'none', border: 'none', color: 'var(--text3)', cursor: 'pointer', display: 'flex', padding: 4 }}>
+                      <button onClick={() => setDeleteGoalId(g.id)} style={{ background: 'none', border: 'none', color: 'var(--text3)', cursor: 'pointer', display: 'flex', padding: 4 }}>
                         <Trash2 size={15} />
                       </button>
                     </div>
@@ -303,7 +310,7 @@ export default function Portfolio() {
           Obligaciones financieras o saldos a deber. Al restarse de tus activos, reflejan tu patrimonio neto verdadero.
         </p>
         {state.debts.filter(d => d.paid < d.total).length === 0 ? (
-          <p className="empty-state">No tienes deudas activas pendientes.</p>
+          <EmptyState message="No tienes deudas activas pendientes." />
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '8px' }}>
             {state.debts.filter(d => d.paid < d.total).map(d => {
@@ -370,113 +377,115 @@ export default function Portfolio() {
         </div>
       )}
 
-      {modalType && (
-        <div className="modal-overlay active" onClick={(e) => e.target === e.currentTarget && handleCloseModal()} style={{ display: 'flex' }}>
-          <div className="modal glass-card">
-            <div className="modal-header">
-              <span className="modal-title">
-                {modalType === 'savings' ? 'Nuevo Ahorro' : modalType === 'investments' ? 'Nueva Inversión' : modalType === 'goals' ? 'Nueva Meta de Ahorro' : 'Nueva Deuda'}
-              </span>
-              <button className="icon-btn-sm" onClick={handleCloseModal}>✕</button>
-            </div>
-            <form onSubmit={handleSubmit}>
-              <div className="form-group">
-                <label>Nombre</label>
-                <input 
-                  type="text" className="input" required 
-                  placeholder={modalType === 'debts' ? 'Ej: Préstamo Banco' : modalType === 'goals' ? 'Ej: Viaje a Medellín' : modalType === 'savings' ? 'Ej: Cuenta de Ahorros Principal' : 'Ej: CDT Bancolombia'}
-                  value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})}
-                />
-                <span style={{ fontSize: '0.68rem', color: 'var(--text3)', display: 'block', marginTop: '4px' }}>
-                  {modalType === 'savings' && 'Nombre para identificar tu cuenta o alcancía física.'}
-                  {modalType === 'investments' && 'Nombre del fondo, CDT o activo invertido.'}
-                  {modalType === 'goals' && 'El propósito u objetivo de esta meta de ahorro.'}
-                  {modalType === 'debts' && 'Nombre de la entidad bancaria o persona acreedora.'}
-                </span>
-              </div>
-              <div className="form-group" style={{ marginTop: '12px' }}>
-                <label>{modalType === 'debts' ? 'Monto Total' : modalType === 'goals' ? 'Objetivo de Ahorro' : 'Monto Actual'}</label>
-                <input 
-                  type="text" 
-                  className="input" required placeholder="0"
-                  value={formData.amount} onChange={e => setFormData({...formData, amount: formatColombianInput(e.target.value)})}
-                />
-                <span style={{ fontSize: '0.68rem', color: 'var(--text3)', display: 'block', marginTop: '4px' }}>
-                  {modalType === 'savings' && 'Saldo disponible guardado actualmente en pesos colombianos.'}
-                  {modalType === 'investments' && 'Valoración total actual de tu portafolio invertido.'}
-                  {modalType === 'goals' && 'Monto total que necesitas reunir para cumplir la meta.'}
-                  {modalType === 'debts' && 'El monto total inicial de la deuda.'}
-                </span>
-              </div>
-              {(modalType === 'debts' || modalType === 'goals') && (
-                <div className="form-group" style={{ marginTop: '12px' }}>
-                  <label>{modalType === 'debts' ? 'Monto Ya Pagado' : 'Monto Ya Ahorrado'}</label>
-                  <input 
-                    type="text" 
-                    className="input" required placeholder="0"
-                    value={formData.paid} onChange={e => setFormData({...formData, paid: formatColombianInput(e.target.value)})}
-                  />
-                  <span style={{ fontSize: '0.68rem', color: 'var(--text3)', display: 'block', marginTop: '4px' }}>
-                    {modalType === 'debts' && 'Monto que ya has pagado o abonado de esta obligación.'}
-                    {modalType === 'goals' && 'Dinero inicial con el que ya arrancas esta meta (opcional).'}
-                  </span>
-                </div>
-              )}
-              {modalType === 'goals' && (
-                <div className="form-group" style={{ marginTop: '12px' }}>
-                  <label>Fecha Límite</label>
-                  <input 
-                    type="date" className="input" required
-                    value={formData.deadline} onChange={e => setFormData({...formData, deadline: e.target.value})}
-                    min={new Date().toISOString().slice(0, 10)}
-                  />
-                  <span style={{ fontSize: '0.68rem', color: 'var(--text3)', display: 'block', marginTop: '4px' }}>
-                    La fecha sugerida para completar el objetivo.
-                  </span>
-                </div>
-              )}
-              <button type="submit" className="btn-primary" style={{ marginTop: '20px', width: '100%' }}>Guardar</button>
-            </form>
+      <Modal
+        open={!!modalType}
+        onClose={handleCloseModal}
+        title={modalType === 'savings' ? 'Nuevo Ahorro' : modalType === 'investments' ? 'Nueva Inversión' : modalType === 'goals' ? 'Nueva Meta de Ahorro' : 'Nueva Deuda'}
+      >
+        <form onSubmit={handleSubmit}>
+          <div className="form-group">
+            <label>Nombre</label>
+            <input
+              type="text" className="input" required
+              placeholder={modalType === 'debts' ? 'Ej: Préstamo Banco' : modalType === 'goals' ? 'Ej: Viaje a Medellín' : modalType === 'savings' ? 'Ej: Cuenta de Ahorros Principal' : 'Ej: CDT Bancolombia'}
+              value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})}
+            />
+            <span style={{ fontSize: '0.68rem', color: 'var(--text3)', display: 'block', marginTop: '4px' }}>
+              {modalType === 'savings' && 'Nombre para identificar tu cuenta o alcancía física.'}
+              {modalType === 'investments' && 'Nombre del fondo, CDT o activo invertido.'}
+              {modalType === 'goals' && 'El propósito u objetivo de esta meta de ahorro.'}
+              {modalType === 'debts' && 'Nombre de la entidad bancaria o persona acreedora.'}
+            </span>
           </div>
-        </div>
-      )}
+          <div className="form-group" style={{ marginTop: '12px' }}>
+            <label>{modalType === 'debts' ? 'Monto Total' : modalType === 'goals' ? 'Objetivo de Ahorro' : 'Monto Actual'}</label>
+            <input
+              type="text"
+              className="input" required placeholder="0"
+              value={formData.amount} onChange={e => setFormData({...formData, amount: formatColombianInput(e.target.value)})}
+            />
+            <span style={{ fontSize: '0.68rem', color: 'var(--text3)', display: 'block', marginTop: '4px' }}>
+              {modalType === 'savings' && 'Saldo disponible guardado actualmente en pesos colombianos.'}
+              {modalType === 'investments' && 'Valoración total actual de tu portafolio invertido.'}
+              {modalType === 'goals' && 'Monto total que necesitas reunir para cumplir la meta.'}
+              {modalType === 'debts' && 'El monto total inicial de la deuda.'}
+            </span>
+          </div>
+          {(modalType === 'debts' || modalType === 'goals') && (
+            <div className="form-group" style={{ marginTop: '12px' }}>
+              <label>{modalType === 'debts' ? 'Monto Ya Pagado' : 'Monto Ya Ahorrado'}</label>
+              <input
+                type="text"
+                className="input" required placeholder="0"
+                value={formData.paid} onChange={e => setFormData({...formData, paid: formatColombianInput(e.target.value)})}
+              />
+              <span style={{ fontSize: '0.68rem', color: 'var(--text3)', display: 'block', marginTop: '4px' }}>
+                {modalType === 'debts' && 'Monto que ya has pagado o abonado de esta obligación.'}
+                {modalType === 'goals' && 'Dinero inicial con el que ya arrancas esta meta (opcional).'}
+              </span>
+            </div>
+          )}
+          {modalType === 'goals' && (
+            <div className="form-group" style={{ marginTop: '12px' }}>
+              <label>Fecha Límite</label>
+              <input
+                type="date" className="input" required
+                value={formData.deadline} onChange={e => setFormData({...formData, deadline: e.target.value})}
+                min={new Date().toISOString().slice(0, 10)}
+              />
+              <span style={{ fontSize: '0.68rem', color: 'var(--text3)', display: 'block', marginTop: '4px' }}>
+                La fecha sugerida para completar el objetivo.
+              </span>
+            </div>
+          )}
+          <button type="submit" className="btn-primary" style={{ marginTop: '20px', width: '100%' }}>Guardar</button>
+        </form>
+      </Modal>
 
-      {depositTarget && (
-        <div className="modal-overlay active" onClick={(e) => e.target === e.currentTarget && setDepositTarget(null)} style={{ display: 'flex' }}>
-          <div className="modal glass-card">
-            <div className="modal-header">
-              <span className="modal-title">
-                {depositTarget.type === 'savings' && `Añadir Dinero a Ahorro: ${depositTarget.item.name}`}
-                {depositTarget.type === 'investments' && `Añadir Dinero a Inversión: ${depositTarget.item.name}`}
-                {depositTarget.type === 'goals' && `Aportar a la Meta: ${depositTarget.item.name}`}
-                {depositTarget.type === 'debts' && `Registrar Abono a: ${depositTarget.item.name}`}
+      <Modal
+        open={!!depositTarget}
+        onClose={() => setDepositTarget(null)}
+        title={depositTarget && (
+          (depositTarget.type === 'savings' && `Añadir Dinero a Ahorro: ${depositTarget.item.name}`) ||
+          (depositTarget.type === 'investments' && `Añadir Dinero a Inversión: ${depositTarget.item.name}`) ||
+          (depositTarget.type === 'goals' && `Aportar a la Meta: ${depositTarget.item.name}`) ||
+          (depositTarget.type === 'debts' && `Registrar Abono a: ${depositTarget.item.name}`)
+        )}
+      >
+        {depositTarget && (
+          <form onSubmit={handleDepositSubmit}>
+            <div className="form-group">
+              <label>
+                {depositTarget.type === 'debts' ? 'Monto del Abono (COP)' : 'Monto a Agregar (COP)'}
+              </label>
+              <input
+                type="text"
+                className="input" required placeholder="0" autoFocus
+                value={depositAmount} onChange={e => setDepositAmount(formatColombianInput(e.target.value))}
+              />
+              <span style={{ fontSize: '0.68rem', color: 'var(--text3)', display: 'block', marginTop: '4px' }}>
+                {depositTarget.type === 'savings' && 'Ingresa la cantidad que vas a sumar a este fondo de ahorro.'}
+                {depositTarget.type === 'investments' && 'Ingresa la cantidad que vas a añadir a esta inversión.'}
+                {depositTarget.type === 'goals' && `¿Cuánto dinero vas a aportar hoy para tu meta? (Faltante para cumplir: ${mask(depositTarget.item.target - depositTarget.item.current)})`}
+                {depositTarget.type === 'debts' && `Registra el pago realizado. Reducirá el saldo de tu deuda en vivo (Pendiente: ${mask(depositTarget.item.total - depositTarget.item.paid)}).`}
               </span>
-              <button className="icon-btn-sm" onClick={() => setDepositTarget(null)}>✕</button>
             </div>
-            <form onSubmit={handleDepositSubmit}>
-              <div className="form-group">
-                <label>
-                  {depositTarget.type === 'debts' ? 'Monto del Abono (COP)' : 'Monto a Agregar (COP)'}
-                </label>
-                <input 
-                  type="text" 
-                  className="input" required placeholder="0" autoFocus
-                  value={depositAmount} onChange={e => setDepositAmount(formatColombianInput(e.target.value))}
-                />
-                <span style={{ fontSize: '0.68rem', color: 'var(--text3)', display: 'block', marginTop: '4px' }}>
-                  {depositTarget.type === 'savings' && 'Ingresa la cantidad que vas a sumar a este fondo de ahorro.'}
-                  {depositTarget.type === 'investments' && 'Ingresa la cantidad que vas a añadir a esta inversión.'}
-                  {depositTarget.type === 'goals' && `¿Cuánto dinero vas a aportar hoy para tu meta? (Faltante para cumplir: ${mask(depositTarget.item.target - depositTarget.item.current)})`}
-                  {depositTarget.type === 'debts' && `Registra el pago realizado. Reducirá el saldo de tu deuda en vivo (Pendiente: ${mask(depositTarget.item.total - depositTarget.item.paid)}).`}
-                </span>
-              </div>
-              <button type="submit" className="btn-primary" style={{ marginTop: '20px', width: '100%' }}>
-                {depositTarget.type === 'debts' ? 'Registrar Pago / Abono' : 'Depositar / Sumar Fondos'}
-              </button>
-            </form>
-          </div>
-        </div>
-      )}
+            <button type="submit" className="btn-primary" style={{ marginTop: '20px', width: '100%' }}>
+              {depositTarget.type === 'debts' ? 'Registrar Pago / Abono' : 'Depositar / Sumar Fondos'}
+            </button>
+          </form>
+        )}
+      </Modal>
+
+      <ConfirmDialog
+        open={!!deleteGoalId}
+        onClose={() => setDeleteGoalId(null)}
+        onConfirm={confirmDeleteGoal}
+        tone="danger"
+        title="¿Eliminar meta de ahorro?"
+        message="¿Seguro que deseas eliminar esta meta de ahorro?"
+        confirmLabel="Eliminar"
+      />
     </div>
   );
 }

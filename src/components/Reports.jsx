@@ -1,4 +1,3 @@
-import React from 'react';
 import { useFinance } from '../context/FinanceContext';
 import { fmt, getMonthKey, getCycleInfo, formatDateRange } from '../utils/financeUtils';
 
@@ -50,7 +49,7 @@ export default function Reports({ onMonthSelect }) {
     const link = document.createElement("a");
     const url = URL.createObjectURL(blob);
     link.setAttribute("href", url);
-    link.setAttribute("download", "gastos_planga.csv");
+    link.setAttribute("download", "gastos_finly.csv");
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);

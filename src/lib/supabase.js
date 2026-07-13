@@ -17,14 +17,14 @@ let supabaseClient;
 if (isConfigured) {
   try {
     supabaseClient = createClient(supabaseUrl, supabaseAnonKey);
-    console.log('Planga: Connected to Supabase Cloud.');
+    console.log('Finly: Connected to Supabase Cloud.');
   } catch (e) {
-    console.error('Planga: Failed to initialize Supabase client, falling back to Local Mode.', e);
+    console.error('Finly: Failed to initialize Supabase client, falling back to Local Mode.', e);
   }
 }
 
 if (!supabaseClient) {
-  console.warn('Planga: Supabase credentials are not configured. Running in Local Demo Mode with LocalStorage fallback.');
+  console.warn('Finly: Supabase credentials are not configured. Running in Local Demo Mode with LocalStorage fallback.');
   
   // --- LocalStorage Mock Database ---
   const getMockData = (table) => {
@@ -140,7 +140,7 @@ if (!supabaseClient) {
 
   const mockUser = {
     id: 'demo-user',
-    email: 'demo@planga.com',
+    email: 'demo@finly.com',
     user_metadata: { nombre: 'Stiven' }
   };
 
@@ -156,6 +156,30 @@ if (!supabaseClient) {
   if (localStorage.getItem('mock_logged_in') === null) {
     localStorage.setItem('mock_logged_in', 'true');
   }
+
+  // ─── Mock user registry (email/password) ───
+  // Local mode has no real backend, so "does this account exist" / "is this
+  // the right password" is simulated against a small localStorage registry
+  // instead of always succeeding. The pre-seeded demo account is registered
+  // here too, so signing out and back in with it still works.
+  const USERS_KEY = 'mock_users';
+  const getUsers = () => {
+    try {
+      return JSON.parse(localStorage.getItem(USERS_KEY)) || [];
+    } catch {
+      return [];
+    }
+  };
+  const saveUsers = (users) => localStorage.setItem(USERS_KEY, JSON.stringify(users));
+  if (getUsers().length === 0) {
+    saveUsers([{ email: 'demo@finly.com', password: 'finly123', nombre: 'Stiven' }]);
+  }
+  const findUser = (email) => getUsers().find(u => u.email.toLowerCase() === String(email || '').toLowerCase());
+
+  // One-time recovery code for the forgot-password flow (mirrors Supabase's
+  // email-OTP recovery: request a code, then verifyOtp() with it).
+  let recoveryCode = null;
+  let recoveryEmail = null;
 
   const mockAuth = {
     getSession: () => {
@@ -173,18 +197,32 @@ if (!supabaseClient) {
       }, 50);
       return { data: { subscription: { unsubscribe: () => {} } } };
     },
-    signInWithPassword: ({ email }) => {
+    signInWithPassword: ({ email, password }) => {
+      const account = findUser(email);
+      if (!account) {
+        return Promise.resolve({ data: { user: null, session: null }, error: { message: 'No existe una cuenta con este correo.' } });
+      }
+      if (account.password !== password) {
+        return Promise.resolve({ data: { user: null, session: null }, error: { message: 'Contraseña incorrecta.' } });
+      }
       localStorage.setItem('mock_logged_in', 'true');
-      mockUser.email = email;
+      mockUser.email = account.email;
+      mockUser.user_metadata.nombre = account.nombre || mockUser.user_metadata.nombre;
       if (authCallback) authCallback('SIGNED_IN', mockSession);
       return Promise.resolve({ data: { user: mockUser, session: mockSession }, error: null });
     },
-    signUp: ({ email, options }) => {
+    signUp: ({ email, password, options }) => {
+      if (findUser(email)) {
+        return Promise.resolve({ data: { user: null, session: null }, error: { message: 'Ya existe una cuenta registrada con este correo.' } });
+      }
+      const nombre = options?.data?.nombre || '';
+      const users = getUsers();
+      users.push({ email, password, nombre });
+      saveUsers(users);
+
       localStorage.setItem('mock_logged_in', 'true');
       mockUser.email = email;
-      if (options && options.data && options.data.nombre) {
-        mockUser.user_metadata.nombre = options.data.nombre;
-      }
+      if (nombre) mockUser.user_metadata.nombre = nombre;
       if (authCallback) authCallback('SIGNED_IN', mockSession);
       return Promise.resolve({ data: { user: mockUser, session: mockSession }, error: null });
     },
@@ -198,59 +236,174 @@ if (!supabaseClient) {
       if (authCallback) authCallback('SIGNED_OUT', null);
       return Promise.resolve({ error: null });
     },
-    updateUser: ({ data }) => {
+    updateUser: ({ data, password }) => {
       if (data) {
         mockUser.user_metadata = { ...mockUser.user_metadata, ...data };
       }
+      if (password) {
+        // Keep the registry's stored password in sync so a fresh login after
+        // a reset uses the new one instead of the original.
+        const users = getUsers();
+        const idx = users.findIndex(u => u.email.toLowerCase() === mockUser.email.toLowerCase());
+        if (idx !== -1) {
+          users[idx].password = password;
+          saveUsers(users);
+        }
+      }
       return Promise.resolve({ data: { user: mockUser }, error: null });
+    },
+    resetPasswordForEmail: (email) => {
+      if (!findUser(email)) {
+        // Real Supabase never reveals whether an email exists (avoids account
+        // enumeration), so this still resolves successfully with no code sent.
+        return Promise.resolve({ data: {}, error: null });
+      }
+      recoveryCode = String(Math.floor(100000 + Math.random() * 900000));
+      recoveryEmail = email;
+      return Promise.resolve({ data: {}, error: null, __localDevCode: recoveryCode });
+    },
+    verifyOtp: ({ email, token, type }) => {
+      if (type !== 'recovery') {
+        return Promise.resolve({ data: null, error: { message: 'Tipo de verificación no soportado.' } });
+      }
+      if (!recoveryCode || email !== recoveryEmail || token !== recoveryCode) {
+        return Promise.resolve({ data: null, error: { message: 'Código incorrecto o expirado.' } });
+      }
+      recoveryCode = null;
+      recoveryEmail = null;
+      // The recovery code doubles as proof of email ownership and grants a
+      // session, same as clicking a real recovery link would.
+      mockUser.email = email;
+      if (authCallback) authCallback('PASSWORD_RECOVERY', mockSession);
+      return Promise.resolve({ data: { session: mockSession, user: mockUser }, error: null });
     }
   };
 
+  // Chainable mock query builder. Real supabase-js keeps `.insert()/.update()/.delete()`
+  // chainable (so `.insert(x).select().single()` and `.update(x).eq(id)` work) and only
+  // performs the write once the chain is actually awaited. This mirrors that: filters
+  // (`eq`/`lte`/`gte`) narrow `data` first, the write itself is deferred into `runOp()`,
+  // and `update`/`delete` act on that narrowed `data` re-read against a fresh table copy
+  // so a filtered chain never touches unrelated rows.
   const makeMockQueryBuilder = (table) => {
     let data = getMockData(table);
-    
+    let pendingOp = null;
+    let countMode = false;
+    let executed = false;
+    let cachedResult = null;
+
+    const runOp = () => {
+      if (executed) return cachedResult;
+      executed = true;
+
+      if (!pendingOp) {
+        cachedResult = countMode
+          ? { count: data.length, data: [], error: null }
+          : { data, error: null };
+        return cachedResult;
+      }
+
+      const currentData = getMockData(table);
+
+      if (pendingOp.type === 'insert') {
+        const isArray = Array.isArray(pendingOp.payload);
+        const rows = isArray ? pendingOp.payload : [pendingOp.payload];
+        const newRows = rows.map(row => ({
+          id: row.id || `${table.substring(0, 3)}-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+          created_at: new Date().toISOString(),
+          ...row
+        }));
+        setMockData(table, [...newRows, ...currentData]);
+        cachedResult = { data: isArray ? newRows : newRows[0], error: null };
+        return cachedResult;
+      }
+
+      if (pendingOp.type === 'update') {
+        const targetIds = new Set(data.map(item => String(item.id)));
+        const updatedData = currentData.map(item =>
+          targetIds.has(String(item.id)) ? { ...item, ...pendingOp.payload } : item
+        );
+        setMockData(table, updatedData);
+        cachedResult = { data: updatedData.filter(item => targetIds.has(String(item.id))), error: null };
+        return cachedResult;
+      }
+
+      if (pendingOp.type === 'delete') {
+        const targetIds = new Set(data.map(item => String(item.id)));
+        setMockData(table, currentData.filter(item => !targetIds.has(String(item.id))));
+        cachedResult = { data: null, error: null };
+        return cachedResult;
+      }
+
+      if (pendingOp.type === 'upsert') {
+        const rows = Array.isArray(pendingOp.payload) ? pendingOp.payload : [pendingOp.payload];
+        const conflictCols = pendingOp.opts && pendingOp.opts.onConflict
+          ? pendingOp.opts.onConflict.split(',').map(s => s.trim())
+          : ['id'];
+        const updatedData = [...currentData];
+        rows.forEach(row => {
+          const idx = updatedData.findIndex(item =>
+            conflictCols.every(col => item[col] !== undefined && row[col] !== undefined && String(item[col]) === String(row[col]))
+          );
+          if (idx !== -1) {
+            updatedData[idx] = { ...updatedData[idx], ...row };
+          } else {
+            updatedData.push({ id: row.id || `up-${Date.now()}`, ...row });
+          }
+        });
+        setMockData(table, updatedData);
+        cachedResult = { data: pendingOp.payload, error: null };
+        return cachedResult;
+      }
+
+      cachedResult = { data: null, error: null };
+      return cachedResult;
+    };
+
     const builder = {
       select: (columns, options) => {
-        if (columns === 'id' && options && options.count === 'exact') {
-          const count = data.length;
-          const promise = Promise.resolve({ count, data: [], error: null });
-          promise.then = (onfulfilled) => Promise.resolve({ count, data: [], error: null }).then(onfulfilled);
-          return promise;
+        if (options && options.count === 'exact') {
+          countMode = true;
+          return builder;
+        }
+        // Resolve a `*, related_table(*)` embed by convention: table `gastos` embeds
+        // `gasto_items` matched on `gasto_items.gasto_id === gastos.id`.
+        const embedMatch = typeof columns === 'string' && columns.match(/,\s*([a-z_]+)\s*\(\*\)/i);
+        if (embedMatch) {
+          const relatedTable = embedMatch[1];
+          const fk = `${table.endsWith('s') ? table.slice(0, -1) : table}_id`;
+          const relatedData = getMockData(relatedTable);
+          data = data.map(row => ({
+            ...row,
+            [relatedTable]: relatedData.filter(r => String(r[fk]) === String(row.id))
+          }));
         }
         return builder;
       },
       eq: (column, value) => {
         data = data.filter(item => {
-          if (column === 'user_id') return true; 
-          if (column === 'id' || column === 'gasto_id') {
-            return String(item[column]) === String(value);
-          }
-          return true;
+          if (column === 'user_id') return true; // single-tenant mock: nothing else to scope by
+          return String(item[column]) === String(value);
         });
         return builder;
       },
       lte: (column, value) => {
-        data = data.filter(item => {
-          if (item[column]) return item[column] <= value;
-          return true;
-        });
+        data = data.filter(item => (item[column] !== undefined ? item[column] <= value : true));
         return builder;
       },
       gte: (column, value) => {
-        data = data.filter(item => {
-          if (item[column]) return item[column] >= value;
-          return true;
-        });
+        data = data.filter(item => (item[column] !== undefined ? item[column] >= value : true));
         return builder;
       },
-      single: () => {
-        const item = data[0] || null;
-        const error = item ? null : { code: 'PGRST116', message: 'Not found' };
-        const promise = Promise.resolve({ data: item, error });
-        promise.then = (onfulfilled) => Promise.resolve({ data: item, error }).then(onfulfilled);
-        return promise;
-      },
-      order: () => {
+      order: (column, options) => {
+        const ascending = !options || options.ascending !== false;
+        data = [...data].sort((a, b) => {
+          if (a[column] === b[column]) return 0;
+          if (a[column] === undefined) return 1;
+          if (b[column] === undefined) return -1;
+          if (ascending) return a[column] > b[column] ? 1 : -1;
+          return a[column] < b[column] ? 1 : -1;
+        });
         return builder;
       },
       limit: (value) => {
@@ -258,76 +411,33 @@ if (!supabaseClient) {
         return builder;
       },
       insert: (payload) => {
-        const isArray = Array.isArray(payload);
-        const rows = isArray ? payload : [payload];
-        
-        const newRows = rows.map(row => {
-          const newRow = { 
-            id: row.id || `${table.substring(0, 3)}-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
-            created_at: new Date().toISOString(),
-            ...row 
-          };
-          return newRow;
-        });
-        
-        const currentData = getMockData(table);
-        setMockData(table, [...newRows, ...currentData]);
-        
-        const resultData = isArray ? newRows : newRows[0];
-        const promise = Promise.resolve({ data: resultData, error: null });
-        promise.then = (onfulfilled) => Promise.resolve({ data: resultData, error: null }).then(onfulfilled);
-        return promise;
+        pendingOp = { type: 'insert', payload };
+        return builder;
       },
       update: (payload) => {
-        const currentData = getMockData(table);
-        const updatedData = currentData.map(item => {
-          const isMatch = data.some(d => String(d.id) === String(item.id));
-          if (isMatch) {
-            return { ...item, ...payload };
-          }
-          return item;
-        });
-        setMockData(table, updatedData);
-        
-        const promise = Promise.resolve({ data: payload, error: null });
-        promise.then = (onfulfilled) => Promise.resolve({ data: payload, error: null }).then(onfulfilled);
-        return promise;
+        pendingOp = { type: 'update', payload };
+        return builder;
       },
-      upsert: (payload) => {
-        const currentData = getMockData(table);
-        const rows = Array.isArray(payload) ? payload : [payload];
-        
-        let updatedData = [...currentData];
-        rows.forEach(row => {
-          const idx = updatedData.findIndex(item => item.categoria === row.categoria);
-          if (idx !== -1) {
-            updatedData[idx] = { ...updatedData[idx], ...row };
-          } else {
-            updatedData.push({ id: `up-${Date.now()}`, ...row });
-          }
-        });
-        setMockData(table, updatedData);
-        
-        const promise = Promise.resolve({ data: payload, error: null });
-        promise.then = (onfulfilled) => Promise.resolve({ data: payload, error: null }).then(onfulfilled);
-        return promise;
+      upsert: (payload, opts) => {
+        pendingOp = { type: 'upsert', payload, opts };
+        return builder;
       },
       delete: () => {
-        const currentData = getMockData(table);
-        const updatedData = currentData.filter(item => {
-          return !data.some(d => String(d.id) === String(item.id));
-        });
-        setMockData(table, updatedData);
-        
-        const promise = Promise.resolve({ data: null, error: null });
-        promise.then = (onfulfilled) => Promise.resolve({ data: null, error: null }).then(onfulfilled);
-        return promise;
+        pendingOp = { type: 'delete' };
+        return builder;
       },
-      then: (onfulfilled) => {
-        return Promise.resolve({ data, error: null }).then(onfulfilled);
+      single: () => {
+        const result = runOp();
+        const rows = Array.isArray(result.data) ? result.data : (result.data ? [result.data] : []);
+        const item = rows[0] || null;
+        const error = result.error || (item ? null : { code: 'PGRST116', message: 'Not found' });
+        return Promise.resolve({ data: item, error });
+      },
+      then: (onfulfilled, onrejected) => {
+        return Promise.resolve(runOp()).then(onfulfilled, onrejected);
       }
     };
-    
+
     return builder;
   };
 

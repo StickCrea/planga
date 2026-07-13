@@ -1,12 +1,16 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { Loader2 } from 'lucide-react';
+import { useFinance } from '../context/FinanceContext';
 
 export default function AuthScreen() {
-  const [mode, setMode] = useState('login'); // 'login' | 'register'
+  const { requestPasswordReset, verifyPasswordResetCode } = useFinance();
+  const [mode, setMode] = useState('login'); // 'login' | 'register' | 'forgot' | 'forgot-code'
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [nombre, setNombre] = useState('');
+  const [code, setCode] = useState('');
+  const [devCode, setDevCode] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
@@ -17,12 +21,34 @@ export default function AuthScreen() {
     setError('');
     setMessage('');
 
+    if (mode === 'forgot') {
+      const { error, devCode: hintCode } = await requestPasswordReset(email);
+      if (error) {
+        setError(error.message);
+      } else {
+        setMessage('Si existe una cuenta con ese correo, te enviamos un código de verificación de 6 dígitos.');
+        setDevCode(hintCode || '');
+        setCode('');
+        setMode('forgot-code');
+      }
+      setLoading(false);
+      return;
+    }
+
+    if (mode === 'forgot-code') {
+      const { error } = await verifyPasswordResetCode(email, code);
+      if (error) setError(error.message);
+      // On success, PASSWORD_RECOVERY fires and App.jsx swaps to ResetPasswordScreen.
+      setLoading(false);
+      return;
+    }
+
     if (mode === 'login') {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) setError(error.message);
     } else {
-      const { data, error } = await supabase.auth.signUp({ 
-        email, 
+      const { data, error } = await supabase.auth.signUp({
+        email,
         password,
         options: { data: { nombre } }
       });
@@ -73,7 +99,29 @@ export default function AuthScreen() {
         </div>
 
         <div className="glass-card" style={{ overflow: 'hidden' }}>
+          {mode === 'forgot' && (
+            <div style={{ marginBottom: '20px' }}>
+              <h2 style={{ fontSize: '1.1rem', fontWeight: 800, margin: 0 }}>Recuperar contraseña</h2>
+              <p style={{ color: 'var(--text3)', fontSize: '0.82rem', marginTop: '4px' }}>
+                Ingresa tu correo y te enviaremos un código de verificación.
+              </p>
+            </div>
+          )}
+          {mode === 'forgot-code' && (
+            <div style={{ marginBottom: '20px' }}>
+              <h2 style={{ fontSize: '1.1rem', fontWeight: 800, margin: 0 }}>Verifica tu código</h2>
+              <p style={{ color: 'var(--text3)', fontSize: '0.82rem', marginTop: '4px' }}>
+                Ingresa el código de 6 dígitos que enviamos a <strong>{email}</strong>.
+              </p>
+              {devCode && (
+                <p style={{ fontSize: '0.76rem', color: 'var(--yellow)', marginTop: '8px', background: 'rgba(255,215,64,0.08)', border: '1px solid rgba(255,215,64,0.25)', borderRadius: '8px', padding: '8px 10px' }}>
+                  Modo local (sin envío de correo real): tu código es <strong>{devCode}</strong>.
+                </p>
+              )}
+            </div>
+          )}
           {/* Tabs */}
+          {mode !== 'forgot' && mode !== 'forgot-code' && (
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', background: 'var(--bg3)', borderRadius: '10px', padding: '4px', marginBottom: '24px', position: 'relative' }}>
             {/* Animated Slider */}
             <div style={{
@@ -129,6 +177,7 @@ export default function AuthScreen() {
               }}
             >Registrarse</button>
           </div>
+          )}
 
           <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px', animation: 'fadeIn 0.4s ease-out' }} key={mode}>
             {mode === 'register' && (
@@ -141,23 +190,49 @@ export default function AuthScreen() {
                 />
               </div>
             )}
-            <div className="form-group">
-              <label htmlFor="email">Correo electrónico</label>
-              <input
-                id="email" name={`email_${mode}`} autoComplete={mode === 'login' ? 'email' : 'off'}
-                type="email" className="input" required placeholder="tu@correo.com"
-                value={email} onChange={e => setEmail(e.target.value)}
-              />
-            </div>
-            <div className="form-group">
-              <label htmlFor="password">Contraseña</label>
-              <input
-                id="password" name={`password_${mode}`} autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
-                type="password" className="input" required placeholder="Mínimo 6 caracteres"
-                minLength={6}
-                value={password} onChange={e => setPassword(e.target.value)}
-              />
-            </div>
+            {mode !== 'forgot-code' && (
+              <div className="form-group">
+                <label htmlFor="email">Correo electrónico</label>
+                <input
+                  id="email" name={`email_${mode}`} autoComplete={mode === 'login' ? 'email' : 'off'}
+                  type="email" className="input" required placeholder="tu@correo.com"
+                  value={email} onChange={e => setEmail(e.target.value)}
+                />
+              </div>
+            )}
+            {mode === 'forgot-code' && (
+              <div className="form-group">
+                <label htmlFor="code">Código de verificación</label>
+                <input
+                  id="code" name="code" autoComplete="one-time-code" inputMode="numeric"
+                  type="text" className="input" required placeholder="123456"
+                  maxLength={6} pattern="[0-9]{6}"
+                  style={{ letterSpacing: '4px', fontSize: '1.1rem', textAlign: 'center', fontWeight: 700 }}
+                  value={code} onChange={e => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                  autoFocus
+                />
+              </div>
+            )}
+            {mode !== 'forgot' && mode !== 'forgot-code' && (
+              <div className="form-group">
+                <label htmlFor="password">Contraseña</label>
+                <input
+                  id="password" name={`password_${mode}`} autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
+                  type="password" className="input" required placeholder="Mínimo 6 caracteres"
+                  minLength={6}
+                  value={password} onChange={e => setPassword(e.target.value)}
+                />
+                {mode === 'login' && (
+                  <button
+                    type="button"
+                    onClick={() => { setMode('forgot'); setPassword(''); setError(''); setMessage(''); }}
+                    style={{ background: 'none', border: 'none', color: 'var(--text3)', fontSize: '0.78rem', cursor: 'pointer', textDecoration: 'underline', marginTop: '6px', padding: 0 }}
+                  >
+                    ¿Olvidaste tu contraseña?
+                  </button>
+                )}
+              </div>
+            )}
 
             {error && (
               <div style={{ padding: '10px', background: 'rgba(239,68,68,0.1)', borderRadius: '8px', color: '#ef4444', fontSize: '0.82rem', border: '1px solid rgba(239,68,68,0.3)' }}>
@@ -172,10 +247,33 @@ export default function AuthScreen() {
 
             <button type="submit" className="btn-primary" disabled={loading} style={{ marginTop: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
               {loading && <Loader2 size={18} className="ocr-spinner" />}
-              {mode === 'login' ? 'Iniciar Sesión' : 'Crear Cuenta'}
+              {mode === 'login' ? 'Iniciar Sesión'
+                : mode === 'register' ? 'Crear Cuenta'
+                : mode === 'forgot-code' ? 'Verificar código'
+                : 'Enviar código de verificación'}
             </button>
+            {mode === 'forgot-code' && (
+              <button
+                type="button"
+                onClick={() => { setMode('forgot'); setCode(''); setError(''); setMessage(''); setDevCode(''); }}
+                style={{ background: 'none', border: 'none', color: 'var(--text3)', fontSize: '0.8rem', cursor: 'pointer', textDecoration: 'underline' }}
+              >
+                Reenviar código
+              </button>
+            )}
+            {(mode === 'forgot' || mode === 'forgot-code') && (
+              <button
+                type="button"
+                onClick={() => { setMode('login'); setError(''); setMessage(''); setCode(''); setDevCode(''); }}
+                style={{ background: 'none', border: 'none', color: 'var(--text3)', fontSize: '0.8rem', cursor: 'pointer', textDecoration: 'underline' }}
+              >
+                Volver a iniciar sesión
+              </button>
+            )}
           </form>
 
+          {mode !== 'forgot' && mode !== 'forgot-code' && (
+          <>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px', margin: '20px 0' }}>
             <div style={{ flex: 1, height: '1px', background: 'var(--glass-border)' }}></div>
             <span style={{ fontSize: '0.75rem', color: 'var(--text3)' }}>o continúa con</span>
@@ -211,6 +309,8 @@ export default function AuthScreen() {
             </svg>
             Continuar con Google
           </button>
+          </>
+          )}
         </div>
 
         <p style={{ textAlign: 'center', fontSize: '0.72rem', color: 'var(--text3)', marginTop: '20px' }}>

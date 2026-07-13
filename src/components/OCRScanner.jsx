@@ -1,6 +1,6 @@
-import React, { useRef, useState, useEffect } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import Tesseract from 'tesseract.js';
-import { Camera, Image, FileText, RotateCw, Loader2, Sparkles } from 'lucide-react';
+import { Camera, FileText, RotateCw, Loader2, Sparkles } from 'lucide-react';
 import { prepareImage, extractDetailedData, extractPaymentInfo } from '../utils/ocrUtils';
 import { useFinance } from '../context/FinanceContext';
 
@@ -160,8 +160,7 @@ Devuelve ÚNICAMENTE un objeto JSON válido con la siguiente estructura exacta, 
     try {
       const cleanJsonStr = textResponse.replace(/```json/i, '').replace(/```/g, '').trim();
       return JSON.parse(cleanJsonStr);
-    } catch (e) {
-      console.error("Failed to parse Gemini JSON:", textResponse);
+    } catch {
       throw new Error('Error al interpretar la respuesta de IA.');
     }
   };
@@ -179,7 +178,6 @@ Devuelve ÚNICAMENTE un objeto JSON válido con la siguiente estructura exacta, 
     const systemApiKey = import.meta.env.VITE_GEMINI_API_KEY || localStorage.getItem('planga_gemini_api_key') || '';
     if (!systemApiKey) {
       showToast('Error de configuración: Clave API de Gemini del sistema no encontrada', 'error');
-      console.error("Gemini API key is missing. Please configure VITE_GEMINI_API_KEY in your environmental variables or configure it internally.");
       return;
     }
 
@@ -213,8 +211,7 @@ Devuelve ÚNICAMENTE un objeto JSON válido con la siguiente estructura exacta, 
       setLoadingProgress(100);
       showToast('Factura optimizada con éxito mediante Gemini AI', 'success');
 
-    } catch (err) {
-      console.error("Gemini Upgrade Error:", err);
+    } catch {
       showToast('Error al conectar con la IA de Gemini. Reintenta.', 'error');
     } finally {
       setLoading(false);
@@ -252,8 +249,7 @@ Devuelve ÚNICAMENTE un objeto JSON válido con la siguiente estructura exacta, 
 
       showToast('Factura analizada (lector local)', 'success');
 
-    } catch (err) {
-      console.error("Local OCR Error:", err);
+    } catch {
       showToast('Error al analizar la imagen. Intenta de nuevo.', 'error');
     } finally {
       setLoading(false);
@@ -315,8 +311,7 @@ Devuelve ÚNICAMENTE un objeto JSON válido con la siguiente estructura exacta, 
 
       showToast('Factura PDF analizada (lector local)', 'success');
 
-    } catch (err) {
-      console.error("PDF Processing/Local OCR Error:", err);
+    } catch {
       showToast('Error al procesar el archivo PDF.', 'error');
     } finally {
       setLoading(false);
