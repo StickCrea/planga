@@ -1,3 +1,10 @@
+## Design Context
+
+Finly es una app web (producto) de finanzas personales. El contexto de diseño vive en dos archivos de la raíz, léelos antes de cualquier trabajo de UI/UX:
+
+- `PRODUCT.md` — registro, usuarios, propósito, posicionamiento y principios estratégicos ("el número de hoy manda", "registrar nunca debe dar pereza", "motivar, no juzgar", "un solo patrimonio, una sola verdad", "cercano pero serio").
+- `DESIGN.md` — sistema visual real (norte creativo "La luz verde": fondo azul-noche + verde señal #00E676, tipografía Inter/JetBrains Mono, componentes). El acento verde comunica estado ("vas bien"), no solo marca; resérvalo para eso.
+
 ## graphify
 
 This project has a knowledge graph at graphify-out/ with god nodes, community structure, and cross-file relationships.
