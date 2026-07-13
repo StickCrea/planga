@@ -14,7 +14,11 @@ dist-ssr
 
 # Local agent tooling (not part of the app)
 .claude/
+.agents/
+.codex/
+.impeccable/
 graphify-out/
+skills-lock.json
 
 # Editor directories and files
 .vscode/*
