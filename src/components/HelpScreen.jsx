@@ -33,7 +33,7 @@ export default function HelpScreen() {
     <div className="help-screen" style={{ padding: '0 4px 40px' }}>
       <div className="glass-card" style={{ padding: '24px', marginBottom: '20px', background: 'var(--accent-glow)' }}>
         <h2 style={{ fontSize: '1.4rem', fontWeight: 800, marginBottom: '8px', color: 'var(--text)' }}>
-          Bienvenido a Finly <span className="logo-dot">.</span>
+          Bienvenido a Finly
         </h2>
         <p style={{ fontSize: '0.85rem', color: 'var(--text2)', lineHeight: 1.5 }}>
           Estás usando una herramienta financiera de alta ingeniería. Aquí tienes una guía rápida para dominar todas sus funciones.

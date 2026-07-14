@@ -14,6 +14,7 @@ import ResetPasswordScreen from './components/ResetPasswordScreen';
 import OnboardingScreen from './components/OnboardingScreen';
 import SidebarMenu from './components/SidebarMenu';
 import HelpScreen from './components/HelpScreen';
+import Logo from './components/ui/Logo';
 import { useFinance } from './context/FinanceContext';
 import { getCycleInfo, formatDateRange } from './utils/financeUtils';
 
@@ -35,7 +36,7 @@ function App() {
   if (authLoading) {
     return (
       <div className="app-init-loader">
-        <h1 className="logo-big" translate="no">Finly<span className="logo-dot">.</span></h1>
+        <Logo size={44} />
         <Loader2 size={32} className="spin" style={{ color: 'var(--green)' }} />
         <p>Iniciando experiencia premium...</p>
       </div>
@@ -127,7 +128,7 @@ function App() {
 
   const DesktopSidebar = () => (
     <aside className="desktop-sidebar">
-      <div className="logo" translate="no">Finly<span className="logo-dot">.</span></div>
+      <div className="logo"><Logo size={28} /></div>
       <div className="sidebar-links">
         <button className={`sidebar-link ${currentScreen === 'dashboard' ? 'active' : ''}`} onClick={goHome}>
           <Home size={20} /> Inicio
@@ -163,7 +164,7 @@ function App() {
           <header className="screen-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '15px 0', width: '100%', gap: '8px' }}>
             {/* Left: Spacer/Logo container to maintain flex balance */}
             <div style={{ flex: 1, display: 'flex', alignItems: 'center', minWidth: 0 }}>
-              <div className="logo" translate="no" style={{ fontSize: '1.5rem', margin: 0 }}>Finly<span className="logo-dot">.</span></div>
+              <Logo size={24} />
             </div>
             
             {/* Center: Active Billing Cycle Pill with Calendar Icon */}

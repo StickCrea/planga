@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Loader2 } from 'lucide-react';
 import { useFinance } from '../context/FinanceContext';
+import Logo from './ui/Logo';
 
 export default function ResetPasswordScreen() {
   const { completePasswordRecovery, cancelPasswordRecovery } = useFinance();
@@ -39,9 +40,7 @@ export default function ResetPasswordScreen() {
     }}>
       <div style={{ width: '100%', maxWidth: '400px' }}>
         <div style={{ textAlign: 'center', marginBottom: '32px' }}>
-          <h1 style={{ fontSize: '2.5rem', fontWeight: 900, letterSpacing: '-1px' }}>
-            Finly<span style={{ color: 'var(--green)' }}>.</span>
-          </h1>
+          <Logo size={46} />
           <p style={{ color: 'var(--text3)', fontSize: '0.9rem', marginTop: '6px' }}>
             Elige una nueva contraseña
           </p>

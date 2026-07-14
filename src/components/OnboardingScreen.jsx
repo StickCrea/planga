@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { fmt, getCycleInfo } from '../utils/financeUtils';
+import Logo from './ui/Logo';
 
 const STEPS = ['Bienvenida', 'Ingresos', 'Ciclo', 'Compromisos'];
 
@@ -91,9 +92,7 @@ export default function OnboardingScreen({ user, onComplete }) {
 
         {/* Header */}
         <div style={{ textAlign: 'center', marginBottom: '28px' }}>
-          <h1 style={{ fontSize: '2.2rem', fontWeight: 900, marginBottom: '4px' }}>
-            Finly<span style={{ color: 'var(--green)' }}>.</span>
-          </h1>
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '4px' }}><Logo size={40} /></div>
           <p style={{ color: 'var(--text3)', fontSize: '0.88rem' }}>Configuración inicial — solo se hace una vez</p>
         </div>
 
