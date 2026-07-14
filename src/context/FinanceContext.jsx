@@ -558,7 +558,7 @@ export function FinanceProvider({ children }) {
       return; 
     }
 
-    showToast('Gasto guardado correctamente');
+    showToast('Anotado, gasto registrado.');
 
     // Insert items
     if (expense.items && expense.items.length > 0) {

@@ -7,8 +7,8 @@
   --bg3: rgba(255, 255, 255, 0.06);
   --bg-card: rgba(21, 27, 45, 0.7);
   --bg-input: #1C243A;
-  --text: #FFFFFF;
-  --text1: #FFFFFF;
+  --text: #F5F5F5;
+  --text1: #F5F5F5;
   --text2: #A0AEC0;
   --text3: #718096;
   --accent: #00E676;
@@ -849,7 +849,7 @@ body {
 .ocr-debug-info { margin-top: 10px; border-top: 1px solid var(--glass-border); padding-top: 8px; }
 .ocr-debug-info p { font-size: .7rem; color: var(--text3); margin-bottom: 4px; }
 .ocr-debug-text { 
-  font-size: .75rem; font-family: 'JetBrains Mono', monospace; 
+  font-size: .75rem; font-family: 'IBM Plex Mono', monospace; 
   color: var(--text2); background: rgba(0,0,0,0.2); 
   padding: 8px; border-radius: 6px; 
   max-height: 80px; overflow-y: auto; line-height: 1.4;
@@ -869,7 +869,7 @@ body {
 .details-subtitle { font-size: .75rem; font-weight: 700; color: var(--text3); text-transform: uppercase; margin-bottom: 12px; }
 .details-items-list { list-style: none; padding: 0; }
 .details-item { display: flex; justify-content: space-between; font-size: .9rem; padding: 6px 0; color: var(--text2); }
-.details-item-price { font-family: 'JetBrains Mono', monospace; font-weight: 600; color: var(--text1); }
+.details-item-price { font-family: 'IBM Plex Mono', monospace; font-weight: 600; color: var(--text1); }
 
 .details-meta-container { margin-top: 16px; }
 .details-meta-toggle { 
@@ -885,7 +885,7 @@ body {
 .details-meta-content { margin-top: 8px; padding: 0 4px; }
 .details-meta-list { list-style: none; padding: 0; }
 .details-meta-item { display: flex; justify-content: space-between; font-size: .68rem; color: var(--text3); padding: 3px 0; }
-.details-meta-val { font-family: 'JetBrains Mono', monospace; }
+.details-meta-val { font-family: 'IBM Plex Mono', monospace; }
 
 .details-footer { 
   margin-top: 20px; padding-top: 16px; border-top: 2px solid var(--glass-border); 
@@ -938,7 +938,7 @@ body {
 }
 .budget-table td { padding: 12px 4px; border-bottom: 1px solid rgba(148,163,184,0.05); }
 .budget-cat-cell { display: flex; align-items: center; gap: 8px; font-weight: 600; }
-.budget-val { font-family: 'JetBrains Mono', monospace; font-weight: 600; }
+.budget-val { font-family: 'IBM Plex Mono', monospace; font-weight: 600; }
 .variation-cell { text-align: right; font-weight: 800; }
 .var-pos { color: var(--green); }
 .var-neg { color: var(--red); }

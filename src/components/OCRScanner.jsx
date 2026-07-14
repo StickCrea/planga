@@ -257,7 +257,7 @@ Devuelve ÚNICAMENTE un objeto JSON válido con la siguiente estructura exacta, 
       showToast(usedQR ? 'Factura electrónica leída desde QR' : 'Factura analizada (lector local)', 'success');
 
     } catch {
-      showToast('Error al analizar la imagen. Intenta de nuevo.', 'error');
+      showToast('No pudimos leerla. ¿Escaneas otra foto o tecleas el valor?', 'error');
     } finally {
       setLoading(false);
       setLoadingProgress(0);
@@ -324,7 +324,7 @@ Devuelve ÚNICAMENTE un objeto JSON válido con la siguiente estructura exacta, 
       showToast(usedQR ? 'Factura electrónica (PDF) leída desde QR' : 'Factura PDF analizada (lector local)', 'success');
 
     } catch {
-      showToast('Error al procesar el archivo PDF.', 'error');
+      showToast('No pudimos leer el PDF. Intenta con otra foto o teclea el valor.', 'error');
     } finally {
       setLoading(false);
       setLoadingProgress(0);

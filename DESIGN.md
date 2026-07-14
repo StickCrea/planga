@@ -5,7 +5,7 @@ colors:
   bg: "#0A0F1E"
   surface: "#1C243A"
   surface-glass: "#151B2D"
-  ink: "#FFFFFF"
+  ink: "#F5F5F5"
   ink-muted: "#A0AEC0"
   ink-subtle: "#718096"
   accent: "#00E676"
@@ -40,6 +40,12 @@ typography:
     fontWeight: 400
     lineHeight: 1.55
     letterSpacing: "normal"
+  caption:
+    fontFamily: "Inter, system-ui, sans-serif"
+    fontSize: "0.8rem"
+    fontWeight: 400
+    lineHeight: 1.4
+    letterSpacing: "normal"
   label:
     fontFamily: "Inter, system-ui, sans-serif"
     fontSize: "0.7rem"
@@ -47,7 +53,7 @@ typography:
     lineHeight: 1.2
     letterSpacing: "0.05em"
   mono:
-    fontFamily: "'JetBrains Mono', ui-monospace, monospace"
+    fontFamily: "'IBM Plex Mono', ui-monospace, monospace"
     fontSize: "0.85rem"
     fontWeight: 600
     lineHeight: 1.4
@@ -129,7 +135,7 @@ Una paleta de un solo protagonista —verde vivo— sobre neutros azul-noche, co
 - **Azul-Noche** (#0A0F1E): El fondo base de toda la app. Casi negro con sesgo azul frío; el lienzo que hace brillar el verde.
 - **Superficie** (#1C243A): Fondos de inputs y superficies sólidas para datos densos.
 - **Vidrio** (#151B2D a 60-70% de opacidad): Tarjetas translúcidas con desenfoque; se usa donde la atmósfera aporta.
-- **Tinta** (#FFFFFF): Texto principal y números hero.
+- **Tinta** (#F5F5F5): Texto principal y números hero. Blanco suave, no puro — descansa la vista sobre el fondo noche.
 - **Tinta Media** (#A0AEC0): Texto secundario, descripciones. Mínimo para cuerpo sobre fondo oscuro.
 - **Tinta Tenue** (#718096): Etiquetas, metadatos, texto de apoyo. Nunca para cuerpo largo.
 - **Bordes** (#FFFFFF a 8-10%): Divisiones sutiles de vidrio; se ven, no gritan.
@@ -142,7 +148,7 @@ Una paleta de un solo protagonista —verde vivo— sobre neutros azul-noche, co
 ## 3. Typography
 
 **Display / Body Font:** Inter (con system-ui, -apple-system, sans-serif)
-**Numeric Font:** JetBrains Mono (para precios y totales alineados en columnas)
+**Numeric Font:** IBM Plex Mono (para precios y totales alineados en columnas; más cálida que JetBrains, menos "code")
 
 **Character:** Una sola familia humanista-geométrica (Inter) cargando toda la jerarquía por peso, del 400 al 900, para una voz limpia y sin ruido. Los números importantes se apoyan en un mono de cifras tabulares para que las columnas de pesos cuadren y se lean como datos, no como prosa.
 
@@ -151,8 +157,9 @@ Una paleta de un solo protagonista —verde vivo— sobre neutros azul-noche, co
 - **Headline** (800, ~1.1rem): Títulos de pantalla y de modales.
 - **Title** (700, ~0.95rem): Títulos de tarjeta y de sección.
 - **Body** (400, 1rem, line-height 1.55): Texto de lectura. Tope de 65–75ch en bloques largos.
+- **Caption** (400, 0.8rem): Texto de apoyo pequeño — subtítulos explicativos bajo una cifra, notas de contexto. En tinta media (#A0AEC0), nunca tinta tenue: sigue siendo lectura, no metadato.
 - **Label** (700, ~0.7rem, tracking 0.05em, MAYÚSCULAS): Etiquetas de estadística ("DINERO DISPONIBLE", "DÍAS RESTANTES"), en tinta tenue.
-- **Mono** (600, ~0.85rem, JetBrains Mono): Precios de ítems y totales de factura donde importa la alineación.
+- **Mono** (600, ~0.85rem, IBM Plex Mono): Precios de ítems y totales de factura donde importa la alineación.
 
 ### Named Rules
 **La Regla del Número Hero.** Cada pantalla clave tiene un número protagonista en Display, más grande que todo lo demás por un margen claro. La cifra manda; la etiqueta la sirve.
@@ -202,7 +209,7 @@ La tarjeta de "Dinero Disponible" / "Patrimonio Neto" es el componente firma: n�
 ### Do:
 - **Do** reservar el verde señal (#00E676) para lo que comunica "disponible / positivo / adelante". La Regla del Semáforo es el alma del sistema.
 - **Do** dar a cada pantalla clave un único número hero en Display, más grande que todo lo demás.
-- **Do** mantener el texto de cuerpo en tinta (#FFFFFF) o tinta media (#A0AEC0) sobre el fondo noche, con contraste ≥4.5:1. La legibilidad es criterio de calidad, no opcional.
+- **Do** mantener el texto de cuerpo en tinta (#F5F5F5) o tinta media (#A0AEC0) sobre el fondo noche, con contraste ≥4.5:1. La legibilidad es criterio de calidad, no opcional.
 - **Do** usar texto azul-noche oscuro (#0A0F1E) sobre los botones verdes; el verde es claro y pide tinta oscura.
 - **Do** usar JetBrains Mono para columnas de precios y totales, para que las cifras cuadren.
 - **Do** confirmar toda acción destructiva con un `ConfirmDialog` en rojo antes de ejecutarla.
