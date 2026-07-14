@@ -215,7 +215,7 @@ export default function Dashboard({ onSelectExpense }) {
       <div className={`glass-card main-card pulse-border-${status.level}`}>
         <h2 className="card-label">Dinero Disponible</h2>
         <div className="money-big">{mask(available)}</div>
-        <p style={{ fontSize: '0.68rem', color: 'var(--text3)', marginTop: '-8px', marginBottom: '12px' }}>
+        <p style={{ fontSize: '0.8rem', color: 'var(--text2)', marginTop: '-8px', marginBottom: '12px' }}>
           Tu saldo disponible (Ingreso Base + Ingresos Extra - Gastos Registrados)
         </p>
         
@@ -223,7 +223,7 @@ export default function Dashboard({ onSelectExpense }) {
           <div className="card-stat">
             <span className="stat-label">Días Restantes</span>
             <span className="stat-value">{daysLeft}</span>
-            <span style={{ fontSize: '0.65rem', color: 'var(--text3)', marginTop: '2px' }}>Para fin de ciclo</span>
+            <span style={{ fontSize: '0.7rem', color: 'var(--text3)', marginTop: '2px' }}>Para fin de ciclo</span>
           </div>
           <div className="card-divider"></div>
           <div className="card-stat">
@@ -231,7 +231,7 @@ export default function Dashboard({ onSelectExpense }) {
             <span className="stat-value stat-highlight" style={{ color: `var(--${status.level})` }}>
               {mask(dailyBudget)}
             </span>
-            <span style={{ fontSize: '0.65rem', color: 'var(--text3)', marginTop: '2px' }}>Límite sugerido por hoy</span>
+            <span style={{ fontSize: '0.7rem', color: 'var(--text3)', marginTop: '2px' }}>Límite sugerido por hoy</span>
           </div>
         </div>
       </div>
@@ -252,26 +252,26 @@ export default function Dashboard({ onSelectExpense }) {
           </div>
         </div>
         <div className="progress-stats" style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)', justifyContent: 'center' }}>
-          <div className="pstat" style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)', background: 'var(--bg3)', padding: 'var(--space-2) var(--space-4)', borderRadius: 'var(--radius-sm)', borderLeft: '3px solid var(--accent)' }}>
+          <div className="pstat" style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)', background: 'var(--bg3)', padding: 'var(--space-3) var(--space-4)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)' }}>
             <TrendingDown size={16} style={{ color: 'var(--accent)', flexShrink: 0 }} />
             <div style={{ display: 'flex', flexDirection: 'column' }}>
               <span className="pstat-label" style={{ fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Gastos del Mes</span>
               <span className="pstat-val" style={{ fontSize: '1.1rem' }}>{mask(totalSpent)}</span>
             </div>
           </div>
-          <div className="pstat" style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)', background: 'var(--bg3)', padding: 'var(--space-2) var(--space-4)', borderRadius: 'var(--radius-sm)', borderLeft: '3px solid var(--yellow)' }}>
+          <div className="pstat" style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)', background: 'var(--bg3)', padding: 'var(--space-3) var(--space-4)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)' }}>
             <Activity size={16} style={{ color: 'var(--yellow)', flexShrink: 0 }} />
             <div style={{ display: 'flex', flexDirection: 'column' }}>
               <span className="pstat-label" style={{ fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Promedio Diario</span>
               <span className="pstat-val" style={{ fontSize: '1.1rem' }}>{mask(dailyAvg)}</span>
             </div>
           </div>
-          <div className="pstat" style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)', background: 'var(--bg3)', padding: 'var(--space-2) var(--space-4)', borderRadius: 'var(--radius-sm)', borderLeft: '3px solid var(--blue)' }}>
+          <div className="pstat" style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)', background: 'var(--bg3)', padding: 'var(--space-3) var(--space-4)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)' }}>
             <Repeat size={16} style={{ color: 'var(--blue)', flexShrink: 0 }} />
             <div style={{ display: 'flex', flexDirection: 'column' }}>
               <span className="pstat-label" style={{ fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Compromisos</span>
               <span className="pstat-val" style={{ fontSize: '1.1rem' }}>{mask(commitmentsTotal)}</span>
-              <span style={{ fontSize: '0.58rem', color: 'var(--text3)' }}>Pagos fijos reservados</span>
+              <span style={{ fontSize: '0.7rem', color: 'var(--text3)' }}>Pagos fijos reservados</span>
             </div>
           </div>
         </div>
