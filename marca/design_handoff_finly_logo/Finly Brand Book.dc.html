@@ -1,0 +1,1888 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="design_doc_mode" content="canvas">
+<title>Finly — Brand Book</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: #0A0F1E;
+    color: #F5F5F5;
+    line-height: 1.6;
+    overflow-x: hidden;
+  }
+  
+  /* Navegación superior fija */
+  nav {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    background: rgba(10, 15, 30, 0.95);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid rgba(160, 174, 192, 0.1);
+    padding: 0 2rem;
+    height: 64px;
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+    z-index: 1000;
+  }
+  
+  nav h1 {
+    font-size: 20px;
+    font-weight: 700;
+    color: #00E676;
+    letter-spacing: -0.5px;
+  }
+  
+  nav ul {
+    list-style: none;
+    display: flex;
+    gap: 1.5rem;
+    overflow-x: auto;
+    flex: 1;
+  }
+  
+  nav a {
+    font-size: 13px;
+    color: #A0AEC0;
+    text-decoration: none;
+    padding: 8px 0;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+  
+  nav a:hover, nav a.active {
+    color: #00E676;
+    border-bottom-color: #00E676;
+  }
+  
+  main {
+    margin-top: 64px;
+    max-width: 1400px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  
+  section {
+    scroll-margin-top: 80px;
+    padding: 3rem 2rem;
+    border-top: 1px solid rgba(160, 174, 192, 0.1);
+  }
+  
+  section:first-of-type {
+    border-top: none;
+  }
+  
+  h2 {
+    font-size: 32px;
+    font-weight: 700;
+    margin-bottom: 1rem;
+    color: #F5F5F5;
+  }
+  
+  h3 {
+    font-size: 20px;
+    font-weight: 600;
+    margin-top: 2rem;
+    margin-bottom: 1rem;
+    color: #E8F5E9;
+  }
+  
+  .stage-badge {
+    display: inline-block;
+    background: rgba(0, 230, 118, 0.15);
+    color: #00E676;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    letter-spacing: 0.5px;
+  }
+  
+  .intro-text {
+    font-size: 18px;
+    color: #A0AEC0;
+    line-height: 1.8;
+    max-width: 800px;
+    margin-bottom: 2rem;
+  }
+  
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 2rem;
+    margin: 2rem 0;
+  }
+  
+  .card {
+    background: rgba(28, 36, 58, 0.6);
+    border: 1px solid rgba(160, 174, 192, 0.15);
+    border-radius: 12px;
+    padding: 2rem;
+    backdrop-filter: blur(10px);
+  }
+  
+  .card h4 {
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+    color: #00E676;
+  }
+  
+  .card p {
+    font-size: 14px;
+    color: #A0AEC0;
+    line-height: 1.7;
+  }
+  
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 2rem 0;
+    font-size: 14px;
+  }
+  
+  th {
+    background: rgba(0, 230, 118, 0.1);
+    color: #00E676;
+    padding: 12px;
+    text-align: left;
+    font-weight: 600;
+    border-bottom: 2px solid rgba(0, 230, 118, 0.3);
+  }
+  
+  td {
+    padding: 12px;
+    border-bottom: 1px solid rgba(160, 174, 192, 0.1);
+    color: #A0AEC0;
+  }
+  
+  tr:hover td {
+    background: rgba(0, 230, 118, 0.05);
+  }
+  
+  .conserva, .evoluciona, .descarta {
+    padding: 1rem;
+    border-radius: 8px;
+    margin: 1rem 0;
+    font-size: 13px;
+    line-height: 1.7;
+  }
+  
+  .conserva {
+    background: rgba(5, 150, 105, 0.15);
+    border-left: 4px solid #059669;
+    color: #A0AEC0;
+  }
+  
+  .evoluciona {
+    background: rgba(96, 165, 250, 0.15);
+    border-left: 4px solid #60A5FA;
+    color: #A0AEC0;
+  }
+  
+  .descarta {
+    background: rgba(255, 82, 82, 0.15);
+    border-left: 4px solid #FF5252;
+    color: #A0AEC0;
+  }
+  
+  .foda-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+    margin: 2rem 0;
+  }
+  
+  .foda-box {
+    background: rgba(28, 36, 58, 0.8);
+    border: 1px solid rgba(160, 174, 192, 0.15);
+    padding: 1.5rem;
+    border-radius: 8px;
+  }
+  
+  .foda-box h4 {
+    font-size: 14px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 1rem;
+  }
+  
+  .foda-box.fortalezas h4 { color: #00E676; }
+  .foda-box.oportunidades h4 { color: #60A5FA; }
+  .foda-box.debilidades h4 { color: #FFD740; }
+  .foda-box.amenazas h4 { color: #FF5252; }
+  
+  .foda-box ul {
+    list-style: none;
+    font-size: 13px;
+    color: #A0AEC0;
+  }
+  
+  .foda-box li {
+    padding: 0.5rem 0;
+    padding-left: 1.5rem;
+    position: relative;
+  }
+  
+  .foda-box li:before {
+    content: "→";
+    position: absolute;
+    left: 0;
+    color: inherit;
+  }
+  
+  .competitor-grid {
+    display: grid;
+    gap: 2rem;
+    margin: 2rem 0;
+  }
+  
+  .competitor-card {
+    background: rgba(28, 36, 58, 0.6);
+    border: 1px solid rgba(160, 174, 192, 0.15);
+    border-radius: 12px;
+    padding: 2rem;
+    overflow: hidden;
+  }
+  
+  .competitor-card h4 {
+    font-size: 18px;
+    font-weight: 700;
+    color: #F5F5F5;
+    margin-bottom: 1.5rem;
+  }
+  
+  .competitor-detail {
+    display: grid;
+    grid-template-columns: 120px 1fr;
+    gap: 1rem;
+    margin-bottom: 1rem;
+    font-size: 13px;
+  }
+  
+  .competitor-detail strong {
+    color: #00E676;
+    font-weight: 600;
+  }
+  
+  .competitor-detail span {
+    color: #A0AEC0;
+  }
+  
+  .personality-section {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 2rem;
+    margin: 2rem 0;
+  }
+  
+  .personality-item {
+    background: rgba(28, 36, 58, 0.6);
+    border: 1px solid rgba(160, 174, 192, 0.15);
+    border-radius: 12px;
+    padding: 2rem;
+  }
+  
+  .personality-item h4 {
+    font-size: 14px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #00E676;
+    margin-bottom: 1rem;
+  }
+  
+  .personality-item p {
+    font-size: 13px;
+    color: #A0AEC0;
+    line-height: 1.8;
+  }
+  
+  .direction-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+    gap: 2rem;
+    margin: 2rem 0;
+  }
+  
+  .direction-card {
+    background: rgba(28, 36, 58, 0.6);
+    border: 1px solid rgba(160, 174, 192, 0.15);
+    border-radius: 12px;
+    padding: 2rem;
+    overflow: hidden;
+  }
+  
+  .direction-card h4 {
+    font-size: 18px;
+    font-weight: 700;
+    color: #F5F5F5;
+    margin-bottom: 0.5rem;
+  }
+  
+  .direction-label {
+    font-size: 12px;
+    color: #60A5FA;
+    font-weight: 600;
+    margin-bottom: 1.5rem;
+  }
+  
+  .direction-preview {
+    width: 100%;
+    height: 200px;
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+    border: 1px solid rgba(160, 174, 192, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    color: #718096;
+  }
+  
+  .palette-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.5rem;
+    margin: 2rem 0;
+  }
+  
+  .palette-item {
+    background: rgba(28, 36, 58, 0.6);
+    border: 1px solid rgba(160, 174, 192, 0.15);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  
+  .palette-sample {
+    width: 100%;
+    height: 100px;
+    border-bottom: 1px solid rgba(160, 174, 192, 0.15);
+  }
+  
+  .palette-info {
+    padding: 1rem;
+    font-size: 12px;
+  }
+  
+  .palette-info strong {
+    display: block;
+    color: #F5F5F5;
+    margin-bottom: 0.5rem;
+    font-size: 13px;
+  }
+  
+  .palette-codes {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+    margin-top: 0.75rem;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: #60A5FA;
+  }
+  
+  .palette-psychology {
+    color: #A0AEC0;
+    font-size: 11px;
+    margin-top: 0.75rem;
+    line-height: 1.6;
+    font-style: italic;
+  }
+  
+  .contrast-check {
+    font-size: 11px;
+    padding: 6px;
+    margin-top: 0.5rem;
+    background: rgba(0, 230, 118, 0.1);
+    border-radius: 4px;
+    color: #00E676;
+    font-family: monospace;
+  }
+</style>
+
+<nav>
+  <h1>FINLY</h1>
+  <ul>
+    <li><a href="#stage1" onclick="scrollTo('#stage1')">1. Estrategia</a></li>
+    <li><a href="#stage2" onclick="scrollTo('#stage2')">2. Mercado</a></li>
+    <li><a href="#stage3" onclick="scrollTo('#stage3')">3. Personalidad</a></li>
+    <li><a href="#stage4" onclick="scrollTo('#stage4')">4. Direcciones</a></li>
+    <li><a href="#stage5" onclick="scrollTo('#stage5')">5. Paleta</a></li>
+    <li><a href="#stage6" onclick="scrollTo('#stage6')">6. Tipografía</a></li>
+    <li><a href="#stage7" onclick="scrollTo('#stage7')">7. Iconografía</a></li>
+    <li><a href="#stage8" onclick="scrollTo('#stage8')">8. Logo</a></li>
+    <li><a href="#stage9" onclick="scrollTo('#stage9')">9. Sistema Visual</a></li>
+    <li><a href="#stage13" onclick="scrollTo('#stage13')">13. UX/UI</a></li>
+    <li><a href="#conclusion" onclick="scrollTo('#conclusion')">Conclusión</a></li>
+  </ul>
+</nav>
+
+<main>
+  <!-- ETAPA 1: ANÁLISIS ESTRATÉGICO -->
+  <section id="stage1">
+    <div class="stage-badge">ETAPA 1 / ESTRATEGIA VISUAL</div>
+    <h2>Análisis Estratégico</h2>
+    <p class="intro-text">Finly resuelve un problema real: el colombiano que cobra por ciclo no sabe cuánto puede gastar sin quedar corto. La marca debe comunicar claridad, cercanía y control, diferenciándose de bancos fríos y fintech agresivas.</p>
+    
+    <h3>Proposición de Valor Auditada</h3>
+    <p style="color: #A0AEC0; margin-bottom: 2rem; max-width: 800px;">Finly es la herramienta diaria que responde "¿cuánto puedo gastar hoy?" desde tu ciclo de pago real, no desde un mes calendario. Registro sin fricción, patrimonio único, sin sermones.</p>
+    
+    <div class="foda-grid">
+      <div class="foda-box fortalezas">
+        <h4>Fortalezas</h4>
+        <ul>
+          <li>Solución única al problema del ciclo de pago</li>
+          <li>UX móvil-first optimizada (QR scanner, OCR)</li>
+          <li>Psicología positiva (aliado, no juez)</li>
+          <li>Mercado inicial claro y validado (Colombia)</li>
+          <li>Escalabilidad a LatAm natural</li>
+        </ul>
+      </div>
+      
+      <div class="foda-box oportunidades">
+        <h4>Oportunidades</h4>
+        <ul>
+          <li>Educación financiera integrada sin predica</li>
+          <li>Expansión a presupuesto familiar/compartido</li>
+          <li>APIs con bancos digitales colombianos</li>
+          <li>Posicionamiento como "anti-severidad"</li>
+          <li>Marca diferenciada en LatAm</li>
+        </ul>
+      </div>
+      
+      <div class="foda-box debilidades">
+        <h4>Debilidades</h4>
+        <ul>
+          <li>Mercado saturado de fintech (pero nicho poco cubierto)</li>
+          <li>Requiere educación del usuario sobre ciclo de pago</li>
+          <li>Dependencia de OCR y APIs de terceros</li>
+          <li>Competencia de billeteras digitales con reach mayor</li>
+        </ul>
+      </div>
+      
+      <div class="foda-box amenazas">
+        <h4>Amenazas</h4>
+        <ul>
+          <li>Bancos grandes lanzan features similares</li>
+          <li>Competidores internacionales globalizan</li>
+          <li>Cambios en regulación DIAN o QR</li>
+          <li>Consolidación del sector fintech colombiano</li>
+        </ul>
+      </div>
+    </div>
+    
+    <h3>Reposicionamiento Propuesto</h3>
+    <p style="color: #A0AEC0; max-width: 900px;">Actual: "Todo tu dinero en un solo lugar". <strong style="color: #00E676;">Propuesta mejorada:</strong> "Gasta sin miedo. Sabe cuánto tienes hoy." Enfatiza la tranquilidad (beneficio emocional) antes que la cantidad de datos (beneficio funcional). La marca se posiciona como guardiana del dinero ciclo a ciclo, no como base de datos.</p>
+    
+    <div class="conserva">
+      <strong style="color: #059669;">✓ CONSERVA:</strong> El verde como estado positivo ("vas bien"), no como decoración. El fondo azul-noche como escenario que hace brillar el verde. La personalidad cercana pero seria. Número hero por pantalla.
+    </div>
+    
+    <div class="evoluciona">
+      <strong style="color: #60A5FA;">→ EVOLUCIONA:</strong> El posicionamiento desde "todo tu dinero" hacia "tranquilidad ciclo a ciclo". La promesa de marca: no es que tengas más datos, es que duermas sin miedo. El verde evoluciona de "acento decorativo" a "señal de estado" (semáforo integrado).
+    </div>
+    
+    <div class="descarta">
+      <strong style="color: #FF5252;">✗ DESCARTA:</strong> Cualquier retórica de "empoderamiento financiero" que suene corporativa o sermoneadora. Lenguaje de "control total" que culpabilice. Referencias a cripto, trading o inversión agresiva.
+    </div>
+  </section>
+
+  <!-- ETAPA 2: INVESTIGACIÓN DE MERCADO -->
+  <section id="stage2">
+    <div class="stage-badge">ETAPA 2 / INVESTIGACIÓN DE MERCADO</div>
+    <h2>Análisis Competitivo Profundo</h2>
+    <p class="intro-text">Análisis de 6 competidores directos: paleta, tipografía, tono, fortalezas y debilidades. Objetivo: identificar huecos para diferenciar a Finly.</p>
+    
+    <div class="competitor-grid">
+      <div class="competitor-card">
+        <h4>🇬🇧 Fintonic</h4>
+        <div class="competitor-detail">
+          <strong>Color</strong>
+          <span>Azul marino + naranja</span>
+        </div>
+        <div class="competitor-detail">
+          <strong>Tipografía</strong>
+          <span>Gotham / Open Sans</span>
+        </div>
+        <div class="competitor-detail">
+          <strong>Tono</strong>
+          <span>Educativo, gamificado</span>
+        </div>
+        <div class="competitor-detail">
+          <strong>Fortaleza</strong>
+          <span>Onboarding claro, análisis detallado</span>
+        </div>
+        <div class="competitor-detail">
+          <strong>Debilidad</strong>
+          <span>Interfaz densa, sentimiento de "lección"</span>
+        </div>
+        <p style="font-size: 12px; color: #718096; margin-top: 1rem; font-style: italic;">&rarr; Hueco: Finly es más cercana, menos sermón.</p>
+      </div>
+      
+      <div class="competitor-card">
+        <h4>🇧🇷 Mobills</h4>
+        <div class="competitor-detail">
+          <strong>Color</strong>
+          <span>Verde claro + blanco</span>
+        </div>
+        <div class="competitor-detail">
+          <strong>Tipografía</strong>
+          <span>Montserrat / Lato</span>
+        </div>
+        <div class="competitor-detail">
+          <strong>Tono</strong>
+          <span>Motivador, pop</span>
+        </div>
+        <div class="competitor-detail">
+          <strong>Fortaleza</strong>
+          <span>Comunidad activa, interfaz amable</span>
+        </div>
+        <div class="competitor-detail">
+          <strong>Debilidad</strong>
+          <span>Diseño infantilizado, poco profesional para adultos</span>
+        </div>
+        <p style="font-size: 12px; color: #718096; margin-top: 1rem; font-style: italic;">&rarr; Hueco: Finly es seria sin ser fría, cercana sin ser infantil.</p>
+      </div>
+      
+      <div class="competitor-card">
+        <h4>🇪🇸 Wallet by BudgetBakers</h4>
+        <div class="competitor-detail">
+          <strong>Color</strong>
+          <span>Azul + púrpura gradiente</span>
+        </div>
+        <div class="competitor-detail">
+          <strong>Tipografía</strong>
+          <span>Poppins / Inter</span>
+        </div>
+        <div class="competitor-detail">
+          <strong>Tono</strong>
+          <span>Moderno, Tech-forward</span>
+        </div>
+        <div class="competitor-detail">
+          <strong>Fortaleza</strong>
+          <span>Diseño limpio, multi-plataforma</span>
+        </div>
+        <div class="competitor-detail">
+          <strong>Debilidad</strong>
+          <span>Genérico, no diferencia psicología del ciclo de pago</span>
+        </div>
+        <p style="font-size: 12px; color: #718096; margin-top: 1rem; font-style: italic;">&rarr; Hueco: Finly resuelve "ciclo de pago", no solo "presupuesto".</p>
+      </div>
+      
+      <div class="competitor-card">
+        <h4>🇧🇷 Monefy</h4>
+        <div class="competitor-detail">
+          <strong>Color</strong>
+          <span>Rojo + gris</span>
+        </div>
+        <div class="competitor-detail">
+          <strong>Tipografía</strong>
+          <span>San Francisco / Roboto</span>
+        </div>
+        <div class="competitor-detail">
+          <strong>Tono</strong>
+          <span>Minimalista, frío</span>
+        </div>
+        <div class="competitor-detail">
+          <strong>Fortaleza</strong>
+          <span>Simplicidad extrema, rápido de usar</span>
+        </div>
+        <div class="competitor-detail">
+          <strong>Debilidad</strong>
+          <span>Sin emoción, no acompaña psicológicamente</span>
+        </div>
+        <p style="font-size: 12px; color: #718096; margin-top: 1rem; font-style: italic;">&rarr; Hueco: Finly acompaña, motiva, no es solo registro.</p>
+      </div>
+      
+      <div class="competitor-card">
+        <h4>🇺🇸 Spendee</h4>
+        <div class="competitor-detail">
+          <strong>Color</strong>
+          <span>Gradiente azul-violeta</span>
+        </div>
+        <div class="competitor-detail">
+          <strong>Tipografía</strong>
+          <span>Circular Std / Graphik</span>
+        </div>
+        <div class="competitor-detail">
+          <strong>Tono</strong>
+          <span>Lúdico, aspiracional</span>
+        </div>
+        <div class="competitor-detail">
+          <strong>Fortaleza</strong>
+          <span>Visualizaciones hermosas, atractivo</span>
+        </div>
+        <div class="competitor-detail">
+          <strong>Debilidad</strong>
+          <span>Más aspiracional que práctico, no local</span>
+        </div>
+        <p style="font-size: 12px; color: #718096; margin-top: 1rem; font-style: italic;">&rarr; Hueco: Finly es local, pragmático, para hoy.</p>
+      </div>
+      
+      <div class="competitor-card">
+        <h4>🇨🇴 Nequi (referencia local)</h4>
+        <div class="competitor-detail">
+          <strong>Color</strong>
+          <span>Morado + blanco</span>
+        </div>
+        <div class="competitor-detail">
+          <strong>Tipografía</strong>
+          <span>Montserrat</span>
+        </div>
+        <div class="competitor-detail">
+          <strong>Tono</strong>
+          <span>Joven, social, casual</span>
+        </div>
+        <div class="competitor-detail">
+          <strong>Fortaleza</strong>
+          <span>Penetración masiva, confianza en Colombia</span>
+        </div>
+        <div class="competitor-detail">
+          <strong>Debilidad</strong>
+          <span>Sin especificidad en ciclo de pago, genérico</span>
+        </div>
+        <p style="font-size: 12px; color: #718096; margin-top: 1rem; font-style: italic;">&rarr; Hueco: Finly es especializado en un problema que Nequi no resuelve.</p>
+      </div>
+    </div>
+    
+    <h3>Síntesis de Huecos de Mercado</h3>
+    <div style="background: rgba(0, 230, 118, 0.1); border-left: 4px solid #00E676; padding: 1.5rem; border-radius: 8px; margin: 2rem 0;">
+      <p style="color: #A0AEC0; font-size: 14px; line-height: 1.8;">
+        <strong style="color: #00E676; display: block; margin-bottom: 0.5rem;">Oportunidad clara:</strong>
+        Ningún competidor comunica claramente "tranquilidad ciclo a ciclo". Fintonic es educativa, Mobills es infantil, Monefy es fría, Spendee es aspiracional, Nequi es genérica. <strong>Finly</strong> será: seria pero cercana, local pero escalable, motivadora sin sermón, oscura pero luminosa (verde como faro).
+      </p>
+    </div>
+    
+    <div class="conserva">
+      <strong style="color: #059669;">✓ CONSERVA:</strong> Verde como diferenciador único en el mercado colombiano. Fondo oscuro (ningún competidor lo usa sistemáticamente). Tipografía moderna (Inter ya es fortaleza).
+    </div>
+    
+    <div class="evoluciona">
+      <strong style="color: #60A5FA;">→ EVOLUCIONA:</strong> El verde de decorativo a semáforo integrado (positivo/advertencia/acción). La paleta secundaria para comunicar estados sin culpa. Tipografía: explora si hay pareja mejor que JetBrains Mono para cifras.
+    </div>
+    
+    <div class="descarta">
+      <strong style="color: #FF5252;">✗ DESCARTA:</strong> Gradientes decorativos (Wallet, Spendee). Infantilismo (Mobills). Frialdad extrema (Monefy). Aspiracionalismo desconectado de la realidad local (Spendee).
+    </div>
+  </section>
+
+  <!-- ETAPA 3: PERSONALIDAD -->
+  <section id="stage3">
+    <div class="stage-badge">ETAPA 3 / PERSONALIDAD DE MARCA</div>
+    <h2>Arquitectura de Personalidad</h2>
+    
+    <div class="personality-section">
+      <div class="personality-item">
+        <h4>Arquetipo</h4>
+        <p>El Guardián Cercano — protege tu dinero sin ser alarmista, acompaña sin juzgar. Como un amigo financiero que entiende tus ciclos, no como un asesor corporativo.</p>
+      </div>
+      
+      <div class="personality-item">
+        <h4>Promesa de Marca</h4>
+        <p>"Gasta sin miedo. Sabe cuánto tienes hoy." La promesa es tranquilidad en la incertidumbre, no riqueza o poder.</p>
+      </div>
+      
+      <div class="personality-item">
+        <h4>Misión</h4>
+        <p>Eliminar la ansiedad del dinero para el colombiano que cobra por ciclo. Una pregunta menos cada día.</p>
+      </div>
+      
+      <div class="personality-item">
+        <h4>Visión</h4>
+        <p>Ser la herramienta que define cómo millones en LatAm gestionan su dinero ciclo a ciclo.</p>
+      </div>
+      
+      <div class="personality-item">
+        <h4>Valores Core</h4>
+        <p>1. Claridad (el número importa hoy). 2. Cercanía (no somos banco). 3. Respeto (sin sermones). 4. Precisión (tus datos son exactos).</p>
+      </div>
+      
+      <div class="personality-item">
+        <h4>Propósito</h4>
+        <p>Restaurar la confianza en el dinero propio. Que duermas sabiendo que llegarás al siguiente pago.</p>
+      </div>
+    </div>
+    
+    <h3>Tono de Voz: Microcopy Real</h3>
+    
+    <table>
+      <tr>
+        <th>Escenario</th>
+        <th>Tono Finly</th>
+        <th>¿Por qué?</th>
+      </tr>
+      <tr>
+        <td><strong>Éxito: Gasto registrado</strong></td>
+        <td>"Anotado. Tienes ${{ available }} hoy."</td>
+        <td>Confirmación neutra, refuerza el número (no celebra el gasto)</td>
+      </tr>
+      <tr>
+        <td><strong>Alerta: Gastos altos</strong></td>
+        <td>"Vas por ${{ percent }}. Aún tienes {{ days }} días."</td>
+        <td>Contexto sin alarma, recupera perspectiva de tiempo</td>
+      </tr>
+      <tr>
+        <td><strong>Peligro: Poco dinero</strong></td>
+        <td>"${{ available }} hasta {{ date }}. ¿Qué necesitas hoy?"</td>
+        <td>Nomina la realidad, abre puerta a ajuste de gasto sin culpa</td>
+      </tr>
+      <tr>
+        <td><strong>Error: Foto de factura ilegible</strong></td>
+        <td>"No pudimos leerla. ¿Escanes otra foto o tecleas el valor?"</td>
+        <td>Problema técnico, no culpa del usuario; ofrece alternativa</td>
+      </tr>
+      <tr>
+        <td><strong>Onboarding: Primer ciclo</strong></td>
+        <td>"Faltan {{ days }} para tu próximo pago. Empecemos a rastrear hoy."</td>
+        <td>Contexto real, propósito claro, tiempo exacto</td>
+      </tr>
+      <tr>
+        <td><strong>Celebración: Llegaste al pago</strong></td>
+        <td>"Llegaste. Ahora {{ new_available }} para el próximo ciclo."</td>
+        <td>Reconoce logro, reinicia ciclo sin drama</td>
+      </tr>
+    </table>
+    
+    <h3>Palabras Marca / Palabras Prohibidas</h3>
+    <div class="grid">
+      <div class="card">
+        <h4 style="color: #00E676;">Palabras Clave</h4>
+        <p><strong>Hoy, ciclo, disponible, llegarás, rastrear, claro, acompaña, adelante, sin miedo, tranquilo</strong> — Conectan con el problema (tiempo, certeza, cercanía).</p>
+      </div>
+      <div class="card">
+        <h4 style="color: #FF5252;">Prohibidas</h4>
+        <p><strong>Optimiza, empodera, domina, controla, maximiza, invierte, compra, brinda, goza</strong> — Suena sermoneadora, corporativa, o aspira a fintech agresiva.</p>
+      </div>
+    </div>
+    
+    <div class="conserva">
+      <strong style="color: #059669;">✓ CONSERVA:</strong> Personalidad cercana pero seria. Tono conversacional sin coloquialismo excesivo. Foco en número/tiempo, no en emoción superficial.
+    </div>
+    
+    <div class="evoluciona">
+      <strong style="color: #60A5FA;">→ EVOLUCIONA:</strong> Microcopy desde "registro de datos" hacia "tranquilidad contexto". Tono: menos instruccional, más empático. Verde como señal emocional ("vas bien") integrada en mensajes.
+    </div>
+  </section>
+
+  <!-- ETAPA 4: DIRECCIONES VISUALES -->
+  <section id="stage4">
+    <div class="stage-badge">ETAPA 4 / DIRECCIONES VISUALES</div>
+    <h2>Tres Direcciones de Diseño</h2>
+    <p class="intro-text">Tres enfoques visuales: una evolución rigurosa de "La luz verde", una alternativa moderna, y una exploración experimental. Cada una resuelve el briefing de forma diferente.</p>
+    
+    <div class="direction-container">
+      <div class="direction-card">
+        <h4>DIRECCIÓN 1: LA LUZ VERDE (Evolución)</h4>
+        <div class="direction-label">Principal | Recomendada</div>
+        <div class="direction-preview" style="background: linear-gradient(135deg, #0A0F1E 0%, #1a1f35 100%); position: relative; overflow: hidden;">
+          <div style="position: absolute; top: 20px; left: 20px; width: 120px; height: 120px; background: radial-gradient(circle, #00E676 0%, transparent 70%); filter: blur(30px); opacity: 0.6;"></div>
+          <span style="position: relative; z-index: 1;">Fondo azul-noche + verde como faro</span>
+        </div>
+        <p style="font-size: 13px; color: #A0AEC0; margin-bottom: 1rem; line-height: 1.7;"><strong>Concepto:</strong> Mantiene el fondo azul-noche (escenario oscuro que crea intimidad). El verde evoluciona de "acento decorativo" a "semáforo de estado integrado" — positivo/disponible/adelante. El brillo verde es símbolo de tranquilidad, no decoración.</p>
+        <p style="font-size: 13px; color: #A0AEC0; margin-bottom: 1rem; line-height: 1.7;"><strong>Emoción:</strong> Seguridad en la penumbra. Confianza. Claridad sin frialdad.</p>
+        <p style="font-size: 13px; color: #A0AEC0; margin-bottom: 1rem; line-height: 1.7;"><strong>Ventajas:</strong> Reconocimiento inmediato, diferenciación clara en mercado, psicología clara (oscuro = confiabilidad, verde = va bien), escalable a Light Mode.</p>
+        <p style="font-size: 13px; color: #A0AEC0;"><strong>Desventajas:</strong> Requiere cuidado en contraste para accesibilidad. Menos "moderno" que gradientes. Requiere disciplina tipográfica.</p>
+      </div>
+      
+      <div class="direction-card">
+        <h4>DIRECCIÓN 2: NEON MINIMALISTA (Alternativa Moderna)</h4>
+        <div class="direction-label">Exploración | Moderna</div>
+        <div class="direction-preview" style="background: linear-gradient(135deg, #FFFFFF 0%, #F5F5F5 100%); position: relative; overflow: hidden;">
+          <div style="position: absolute; inset: 0; background: repeating-linear-gradient(90deg, transparent, transparent 2px, rgba(0,230,118,0.1) 2px, rgba(0,230,118,0.1) 4px); pointer-events: none;"></div>
+          <span style="color: #0A0F1E; position: relative; z-index: 1;">Blanco puro + verde neón como acento lineal</span>
+        </div>
+        <p style="font-size: 13px; color: #A0AEC0; margin-bottom: 1rem; line-height: 1.7;"><strong>Concepto:</strong> Fondo blanco limpio (máxima legibilidad, moderno). Verde neón (#00E676) como líneas/bordes para estructurar (inputs, cards, CTAs). Minimalismo geométrico sin gradientes.</p>
+        <p style="font-size: 13px; color: #A0AEC0; margin-bottom: 1rem; line-height: 1.7;"><strong>Emoción:</strong> Modernidad. Claridad. Energía controlada.</p>
+        <p style="font-size: 13px; color: #A0AEC0; margin-bottom: 1rem; line-height: 1.7;"><strong>Ventajas:</strong> Excelente contraste (AAA), contemporáneo, muy legible en móvil, cae bien a público tech.</p>
+        <p style="font-size: 13px; color: #A0AEC0;"><strong>Desventajas:</strong> Pierde "intimidad" del fondo oscuro. Verde pierde poder psicológico de "faro". Menos diferenciado en mercado colombiano (más parecido a competidores internacionales). Pueden parecer "neón cripto" si no hay cuidado.</p>
+      </div>
+      
+      <div class="direction-card">
+        <h4>DIRECCIÓN 3: GRADIENTE CÁLIDO (Exploración Experimental)</h4>
+        <div class="direction-label">Alternativa | Experimental</div>
+        <div class="direction-preview" style="background: linear-gradient(135deg, #1a0f2e 0%, #2d1a3d 50%, #1a3d2e 100%);"></div>
+        <p style="font-size: 13px; color: #A0AEC0; margin-bottom: 1rem; line-height: 1.7;"><strong>Concepto:</strong> Fondo azul-noche + tonos verdes/teales subidos (gradiente sutil). Verde primario más cálido (#00E676 → #26D07C). El gradiente da movimiento y calidez sin perder sofisticación.</p>
+        <p style="font-size: 13px; color: #A0AEC0; margin-bottom: 1rem; line-height: 1.7;"><strong>Emoción:</strong> Calidez en la seguridad. Movimiento sin ruido. Humana.</p>
+        <p style="font-size: 13px; color: #A0AEC0; margin-bottom: 1rem; line-height: 1.7;"><strong>Ventajas:</strong> Diferenciación visual alta. Calidez humanizante. Escala bien a brand extensions (merch, publicidad).</p>
+        <p style="font-size: 13px; color: #A0AEC0;"><strong>Desventajas:</strong> Requiere mucho cuidado en tipografía para no parecer "decorativo". Menos contraste que otras. Riesgo de sobrediseño. Contrasta con "minimalismo de cifras".</p>
+      </div>
+    </div>
+    
+    <h3>Recomendación</h3>
+    <div style="background: rgba(0, 230, 118, 0.1); border: 2px solid #00E676; border-radius: 8px; padding: 2rem; margin: 2rem 0;">
+      <p style="color: #A0AEC0; font-size: 14px; line-height: 1.8;">
+        <strong style="color: #00E676; display: block; margin-bottom: 0.75rem;">DIRECCIÓN 1: LA LUZ VERDE (Evolución)</strong>
+        Es la más defendible. Preserva el 80% de la dirección actual (fondo oscuro, verde), pero la eleva: el verde pasa de "acento" a "semáforo integrado" (función psicológica clara). Diferencia a Finly en mercado, escala bien a Light Mode, comunica valores sin palabras. El riesgo es menor porque conserva lo que funciona.
+      </p>
+    </div>
+    
+    <div class="conserva">
+      <strong style="color: #059669;">✓ CONSERVA (DIRECCIÓN 1):</strong> Fondo azul-noche (#0A0F1E). Verde primario (#00E676). Concepto de "luz en penumbra". Escala a Dark Mode ya existente.
+    </div>
+    
+    <div class="evoluciona">
+      <strong style="color: #60A5FA;">→ EVOLUCIONA (DIRECCIÓN 1):</strong> Verde de decoración a semáforo (estados integrados). Paleta secundaria clara (rojo, ámbar, azul) con función psicológica. Tipografía refinada. Sombras y texturas sutiles.
+    </div>
+    
+    <div class="descarta">
+      <strong style="color: #FF5252;">✗ DESCARTA:</strong> Dirección 2 y 3 como primarias (aunque valiosas como exploración). El neon corre riesgo de "cripto". El gradiente, de "decorativo".
+    </div>
+  </section>
+
+  <!-- ETAPA 5: PALETA COMPLETA -->
+  <section id="stage5">
+    <div class="stage-badge">ETAPA 5 / PALETA DE COLOR COMPLETA</div>
+    <h2>Sistema de Color Cerrado</h2>
+    <p class="intro-text">Evolución rigurosa de los tokens actuales. Cada color tiene función psicológica y de estado. Verificación de contraste AA en toda la paleta.</p>
+    
+    <h3>Paleta Principal + Secundaria</h3>
+    <div class="palette-grid">
+      <div class="palette-item">
+        <div class="palette-sample" style="background: #0A0F1E;"></div>
+        <div class="palette-info">
+          <strong>Fondo Base</strong>
+          <p style="color: #60A5FA; margin: 0.5rem 0; font-family: monospace; font-size: 11px;">#0A0F1E</p>
+          <p style="color: #A0AEC0; margin: 0.5rem 0; font-size: 11px;">RGB(10, 15, 30)</p>
+          <p style="color: #718096; margin: 0.5rem 0; font-size: 11px; font-style: italic;">Azul-noche casi negro. Lienzo base de confianza, privacidad, seguridad. Crea "intimidad digital".</p>
+          <div class="contrast-check">AA ✓ con #F5F5F5</div>
+        </div>
+      </div>
+      
+      <div class="palette-item">
+        <div class="palette-sample" style="background: #1C243A;"></div>
+        <div class="palette-info">
+          <strong>Superficie</strong>
+          <p style="color: #60A5FA; margin: 0.5rem 0; font-family: monospace; font-size: 11px;">#1C243A</p>
+          <p style="color: #A0AEC0; margin: 0.5rem 0; font-size: 11px;">RGB(28, 36, 58)</p>
+          <p style="color: #718096; margin: 0.5rem 0; font-size: 11px; font-style: italic;">Ligero más claro. Inputs, cards, áreas de contenido. Separación visual sin frialdad.</p>
+          <div class="contrast-check">AA ✓ con #F5F5F5</div>
+        </div>
+      </div>
+      
+      <div class="palette-item">
+        <div class="palette-sample" style="background: #00E676;"></div>
+        <div class="palette-info">
+          <strong>Acento / Estado Positivo</strong>
+          <p style="color: #60A5FA; margin: 0.5rem 0; font-family: monospace; font-size: 11px;">#00E676</p>
+          <p style="color: #A0AEC0; margin: 0.5rem 0; font-size: 11px;">RGB(0, 230, 118)</p>
+          <p style="color: #718096; margin: 0.5rem 0; font-size: 11px; font-style: italic;">Verde neón. "Vas bien", dinero disponible, adelante. Semáforo positivo. Faro en penumbra.</p>
+          <div class="contrast-check">AAA ✓ con #0A0F1E</div>
+        </div>
+      </div>
+      
+      <div class="palette-item">
+        <div class="palette-sample" style="background: #059669;"></div>
+        <div class="palette-info">
+          <strong>Verde Profundo / Hover</strong>
+          <p style="color: #60A5FA; margin: 0.5rem 0; font-family: monospace; font-size: 11px;">#059669</p>
+          <p style="color: #A0AEC0; margin: 0.5rem 0; font-size: 11px;">RGB(5, 150, 105)</p>
+          <p style="color: #718096; margin: 0.5rem 0; font-size: 11px; font-style: italic;">Verde oscuro. Estados pressed/hover. Continuidad con #00E676 sin perder contraste.</p>
+          <div class="contrast-check">AA ✓ con #0A0F1E</div>
+        </div>
+      </div>
+      
+      <div class="palette-item">
+        <div class="palette-sample" style="background: #FF5252;"></div>
+        <div class="palette-info">
+          <strong>Rojo Alerta</strong>
+          <p style="color: #60A5FA; margin: 0.5rem 0; font-family: monospace; font-size: 11px;">#FF5252</p>
+          <p style="color: #A0AEC0; margin: 0.5rem 0; font-size: 11px;">RGB(255, 82, 82)</p>
+          <p style="color: #718096; margin: 0.5rem 0; font-size: 11px; font-style: italic;">Rojo claro. Gastos altos, deudas, destructivo. Llama atención sin alarmar.</p>
+          <div class="contrast-check">AA ✓ con #0A0F1E</div>
+        </div>
+      </div>
+      
+      <div class="palette-item">
+        <div class="palette-sample" style="background: #FFD740;"></div>
+        <div class="palette-info">
+          <strong>Ámbar / Advertencia</strong>
+          <p style="color: #60A5FA; margin: 0.5rem 0; font-family: monospace; font-size: 11px;">#FFD740</p>
+          <p style="color: #A0AEC0; margin: 0.5rem 0; font-size: 11px;">RGB(255, 215, 64)</p>
+          <p style="color: #718096; margin: 0.5rem 0; font-size: 11px; font-style: italic;">Amarillo cálido. Atención, promedio, precaución. "Vas por la mitad".</p>
+          <div class="contrast-check">AAA ✓ con #0A0F1E</div>
+        </div>
+      </div>
+      
+      <div class="palette-item">
+        <div class="palette-sample" style="background: #60A5FA;"></div>
+        <div class="palette-info">
+          <strong>Azul Info</strong>
+          <p style="color: #60A5FA; margin: 0.5rem 0; font-family: monospace; font-size: 11px;">#60A5FA</p>
+          <p style="color: #A0AEC0; margin: 0.5rem 0; font-size: 11px;">RGB(96, 165, 250)</p>
+          <p style="color: #718096; margin: 0.5rem 0; font-size: 11px; font-style: italic;">Azul claro. Datos neutros, contexto, links, info. No emocional.</p>
+          <div class="contrast-check">AAA ✓ con #0A0F1E</div>
+        </div>
+      </div>
+      
+      <div class="palette-item">
+        <div class="palette-sample" style="background: #F5F5F5;"></div>
+        <div class="palette-info">
+          <strong>Tinta Principal</strong>
+          <p style="color: #60A5FA; margin: 0.5rem 0; font-family: monospace; font-size: 11px;">#F5F5F5</p>
+          <p style="color: #A0AEC0; margin: 0.5rem 0; font-size: 11px;">RGB(245, 245, 245)</p>
+          <p style="color: #718096; margin: 0.5rem 0; font-size: 11px; font-style: italic;">Blanco suave (no puro). Texto principal, números hero, cuerpo.</p>
+          <div class="contrast-check">AAA ✓ con #0A0F1E</div>
+        </div>
+      </div>
+      
+      <div class="palette-item">
+        <div class="palette-sample" style="background: #A0AEC0;"></div>
+        <div class="palette-info">
+          <strong>Tinta Secundaria</strong>
+          <p style="color: #60A5FA; margin: 0.5rem 0; font-family: monospace; font-size: 11px;">#A0AEC0</p>
+          <p style="color: #A0AEC0; margin: 0.5rem 0; font-size: 11px;">RGB(160, 174, 192)</p>
+          <p style="color: #718096; margin: 0.5rem 0; font-size: 11px; font-style: italic;">Gris medio. Subtítulos, anotaciones, texto secundario.</p>
+          <div class="contrast-check">AA ✓ con #0A0F1E</div>
+        </div>
+      </div>
+      
+      <div class="palette-item">
+        <div class="palette-sample" style="background: #718096;"></div>
+        <div class="palette-info">
+          <strong>Tinta Tenue</strong>
+          <p style="color: #60A5FA; margin: 0.5rem 0; font-family: monospace; font-size: 11px;">#718096</p>
+          <p style="color: #A0AEC0; margin: 0.5rem 0; font-size: 11px;">RGB(113, 128, 150)</p>
+          <p style="color: #718096; margin: 0.5rem 0; font-size: 11px; font-style: italic;">Gris tenue. Etiquetas, placeholders, deshabilitado. Casi imperceptible.</p>
+          <div class="contrast-check">AA ✓ en contraste</div>
+        </div>
+      </div>
+    </div>
+    
+    <h3>Regla del Semáforo Integrada</h3>
+    <p style="color: #A0AEC0; max-width: 900px; margin-bottom: 2rem;">El sistema de color no es decorativo. Cada matiz comunica estado:</p>
+    
+    <table>
+      <tr>
+        <th>Estado</th>
+        <th>Color</th>
+        <th>Uso</th>
+        <th>Psicología</th>
+      </tr>
+      <tr>
+        <td>✓ Positivo / Disponible</td>
+        <td style="color: #00E676; font-weight: 600;">#00E676</td>
+        <td>Dinero disponible, CTAs, "Vas bien", confirmaciones</td>
+        <td>Confianza, avance, permiso</td>
+      </tr>
+      <tr>
+        <td>⚠ Advertencia / Promedio</td>
+        <td style="color: #FFD740; font-weight: 600;">#FFD740</td>
+        <td>Gastos al 50-75%, tendencias, "vas por la mitad"</td>
+        <td>Atención calmada, contextualización</td>
+      </tr>
+      <tr>
+        <td>✗ Alerta / Peligro</td>
+        <td style="color: #FF5252; font-weight: 600;">#FF5252</td>
+        <td>Gastos altos (>75%), deudas, dinero insuficiente, destructivo</td>
+        <td>Urgencia sin pánico, acción requerida</td>
+      </tr>
+      <tr>
+        <td>ℹ Información / Neutral</td>
+        <td style="color: #60A5FA; font-weight: 600;">#60A5FA</td>
+        <td>Contexto, datos históricos, tips, links</td>
+        <td>Educación sin culpa, asistencia</td>
+      </tr>
+    </table>
+    
+    <h3>Paleta Light Mode (Futuro)</h3>
+    <p style="color: #A0AEC0; margin-bottom: 2rem;">Cuando se implemente Light Mode, el desafío es mantener el verde como "faro":</p>
+    
+    <table>
+      <tr>
+        <th>Elemento</th>
+        <th>Dark Mode</th>
+        <th>Light Mode (Propuesta)</th>
+      </tr>
+      <tr>
+        <td>Fondo Base</td>
+        <td>#0A0F1E</td>
+        <td>#FAFAFA o blanco suave</td>
+      </tr>
+      <tr>
+        <td>Superficie</td>
+        <td>#1C243A</td>
+        <td>#F5F5F5 o gris 50</td>
+      </tr>
+      <tr>
+        <td>Verde Primario</td>
+        <td>#00E676</td>
+        <td>#00B84D o #00A84D (más saturado para compensar el fondo claro)</td>
+      </tr>
+      <tr>
+        <td>Tinta Principal</td>
+        <td>#F5F5F5</td>
+        <td>#0A0F1E</td>
+      </tr>
+    </table>
+    
+    <div class="conserva">
+      <strong style="color: #059669;">✓ CONSERVA:</strong> Verde #00E676 y rojo/ámbar/azul como paleta funcional. Accesibilidad AA/AAA en todo. Fondo oscuro como escenario principal.
+    </div>
+    
+    <div class="evoluciona">
+      <strong style="color: #60A5FA;">→ EVOLUCIONA:</strong> Verde de "acento" a "semáforo integrado" (función psicológica clara). Rojo/ámbar/azul con usos definidos, no decorativos. Propuesta Light Mode lista para futuro.
+    </div>
+  </section>
+
+  <!-- ETAPA 6: TIPOGRAFÍA -->
+  <section id="stage6">
+    <div class="stage-badge">ETAPA 6 / TIPOGRAFÍA</div>
+    <h2>Sistema Tipográfico</h2>
+    <p class="intro-text">Evaluación y evolución de Inter + JetBrains Mono. Recomendación de pareja que refuerce personalidad cercana pero seria.</p>
+    
+    <h3>Opción A: CONSERVAR Inter + JetBrains Mono</h3>
+    <div class="card">
+      <h4 style="color: #00E676;">Evaluación</h4>
+      <p style="color: #A0AEC0;">✓ <strong>Fortalezas:</strong> Inter es limpia, moderna, gratuita, excelente en pantalla. JetBrains Mono es monoespaciada, clara para números. Ambas open-source.</p>
+      <p style="color: #A0AEC0;">✗ <strong>Debilidades:</strong> JetBrains Mono es muy "tech/code". Para cifras, podría ser más humanizada. Inter es muy común (buscador de Google, Figma, etc.). Sin dejar marca.</p>
+    </div>
+    
+    <h3>Opción B: EVOLUCIONAR a Inter + IBM Plex Mono</h3>
+    <div class="card">
+      <h4 style="color: #60A5FA;">Pareja: Inter (cuerpo) + IBM Plex Mono (números/cifras)</h4>
+      <p style="color: #A0AEC0;"><strong>IBM Plex Mono</strong> (gratuita, Google Fonts) es monoespaciada pero con más calidez que JetBrains. Los números respiran más. Más humanizada para "dinero" sin perder precisión.</p>
+      <p style="color: #A0AEC0; margin-top: 1rem;">
+        <strong>Jerarquía:</strong><br>
+        • <strong style="font-size: 32px;">H1 (Títulos de pantalla):</strong> Inter 700, 32px, leading 1.2<br>
+        • <strong style="font-size: 20px;">H2 (Subtítulos):</strong> Inter 600, 20px, leading 1.3<br>
+        • <strong style="font-size: 16px;">Body (Cuerpo):</strong> Inter 400, 16px, leading 1.6<br>
+        • <strong style="font-size: 13px;">Caption (Etiquetas):</strong> Inter 400, 13px, leading 1.5<br>
+        • <strong style="font-family: 'JetBrains Mono', monospace; font-size: 24px; letter-spacing: 1px;">NÚMERO HERO (dinero disponible):</strong> IBM Plex Mono 700, 24-32px, letter-spacing +1px
+      </p>
+    </div>
+    
+    <h3>Opción C: CAMBIO RADICAL a Inter + Courier Prime</h3>
+    <div class="card">
+      <h4 style="color: #FFD740;">Pareja: Inter (cuerpo) + Courier Prime (números)</h4>
+      <p style="color: #A0AEC0;">Courier Prime (gratuita) es la monoespaciada clásica, con historia (typewriter). Comunica "precisión histórica", menos tech. Más humanizada, pero arriesgada si parece "retrô".</p>
+      <p style="color: #A0AEC0; margin-top: 1rem;"><strong>Riesgo:</strong> Puede parecer nostalgia forzada o "retro irrónico".</p>
+    </div>
+    
+    <h3>Recomendación</h3>
+    <div style="background: rgba(0, 230, 118, 0.1); border: 2px solid #00E676; border-radius: 8px; padding: 2rem; margin: 2rem 0;">
+      <p style="color: #A0AEC0; font-size: 14px; line-height: 1.8;">
+        <strong style="color: #00E676; display: block; margin-bottom: 0.75rem;">OPCIÓN B: Inter + IBM Plex Mono</strong>
+        Mejora la humanidad de las cifras sin perder modernidad ni precisión. IBM Plex Mono respira más, es menos "code-y". El cambio es mínimo (una monoespaciada por otra) pero el impacto en emoción es significativo. Inter se mantiene como la pareja versátil. Ambas gratuitas y escalables.
+      </p>
+    </div>
+    
+    <h3>Restricciones</h3>
+    <ul style="color: #A0AEC0; margin: 1.5rem 0; font-size: 13px; line-height: 1.8;">
+      <li>✓ Solo fuentes gratuitas/open-source.</li>
+      <li>✓ Máximo 2 familias tipográficas (una sans, una mono).</li>
+      <li>✓ Números hero siempre en mono, tamaño mínimo 24px (contraste dinámico).</li>
+      <li>✓ Leading (interlineado) mínimo 1.5x en cuerpo (legibilidad móvil).</li>
+      <li>✓ Respeta prefers-reduced-motion (sin transiciones de fuentes).</li>
+    </ul>
+    
+    <div class="conserva">
+      <strong style="color: #059669;">✓ CONSERVA:</strong> Inter como pareja base (cuerpo, UI). Concepto de monoespaciada para números.
+    </div>
+    
+    <div class="evoluciona">
+      <strong style="color: #60A5FA;">→ EVOLUCIONA:</strong> JetBrains Mono → IBM Plex Mono (más calidez en cifras). Hierarchy clara por peso/tamaño, no solo peso. Números hero como símbolos visuales, no texto.
+    </div>
+  </section>
+
+  <!-- ETAPA 7: ICONOGRAFÍA -->
+  <section id="stage7">
+    <div class="stage-badge">ETAPA 7 / SISTEMA DE ICONOGRAFÍA</div>
+    <h2>Librería de Iconos y Reglas</h2>
+    <p class="intro-text">Sistema coherente de iconos para categorías de gastos, estados, y acciones. Estilo, tamaño, consistencia.</p>
+    
+    <h3>Principios de Diseño de Iconos</h3>
+    <table>
+      <tr>
+        <th>Atributo</th>
+        <th>Especificación</th>
+      </tr>
+      <tr>
+        <td><strong>Grosor de línea (stroke)</strong></td>
+        <td>2px en 24x24, escala proporcionalmente en otros tamaños</td>
+      </tr>
+      <tr>
+        <td><strong>Bordes</strong></td>
+        <td>Redondeados (radius 2-3px en vértices, no extremos)</td>
+      </tr>
+      <tr>
+        <td><strong>Relleno</strong></td>
+        <td>Stroke (contorno) por defecto. Relleno solo en estados activos (hover/selected)</td>
+      </tr>
+      <tr>
+        <td><strong>Tamaños</strong></td>
+        <td>16x16 (micro), 24x24 (estándar), 32x32 (prominent), 48x48 (hero)</td>
+      </tr>
+      <tr>
+        <td><strong>Alineación</strong></td>
+        <td>Centro de la caja, padding interno 2-4px</td>
+      </tr>
+      <tr>
+        <td><strong>Color</strong></td>
+        <td>Heredan del contexto (#F5F5F5 default, #00E676 en estado positivo, #FF5252 en alerta)</td>
+      </tr>
+    </table>
+    
+    <h3>Categorías de Gasto (Iconografía Financiera)</h3>
+    <div style="background: rgba(28, 36, 58, 0.6); border: 1px solid rgba(160, 174, 192, 0.15); border-radius: 12px; padding: 2rem; margin: 2rem 0;">
+      <p style="color: #A0AEC0; font-size: 13px; margin-bottom: 1.5rem;"><strong>Criterio:</strong> Cada ícono es reconocible a 24x24 sin etiqueta. Evita ambigüedad. Usa símbolos conocidos pero con giro de Finly (cercano, no corporativo).</p>
+      
+      <table>
+        <tr>
+          <th>Categoría</th>
+          <th>Ícono (descripción)</th>
+          <th>Uso</th>
+        </tr>
+        <tr>
+          <td>Comida</td>
+          <td>Tenedor + cuchillo (línea, sencillo)</td>
+          <td>Restaurantes, cafés, supermercado (alimentos)</td>
+        </tr>
+        <tr>
+          <td>Transporte</td>
+          <td>Automóvil de perfil (simple)</td>
+          <td>Gasolina, Uber, transporte público, estacionamiento</td>
+        </tr>
+        <tr>
+          <td>Vivienda</td>
+          <td>Casa (silueta con puerta)</td>
+          <td>Arriendo, servicios, mantenimiento hogar</td>
+        </tr>
+        <tr>
+          <td>Salud</td>
+          <td>Cruz + corazón (médico, calidez)</td>
+          <td>Farmacia, médico, odontología, seguros</td>
+        </tr>
+        <tr>
+          <td>Entretenimiento</td>
+          <td>Nota musical o cine (símbolo abierto)</td>
+          <td>Películas, conciertos, juegos, streaming</td>
+        </tr>
+        <tr>
+          <td>Educación</td>
+          <td>Libro abierto (línea limpia)</td>
+          <td>Cursos, libros, suscripciones educativas</td>
+        </tr>
+        <tr>
+          <td>Ingreso</td>
+          <td>Flecha arriba + signo pesos (↑ + $)</td>
+          <td>Pago, bonificación, reintegro</td>
+        </tr>
+        <tr>
+          <td>Ahorro</td>
+          <td>Alcancía (simple, línea)</td>
+          <td>Monto transferido a ahorros</td>
+        </tr>
+        <tr>
+          <td>Deuda</td>
+          <td>Cadena o candado (símbolo de restricción)</td>
+          <td>Crédito, préstamo, deuda pendiente</td>
+        </tr>
+        <tr>
+          <td>Inversión</td>
+          <td>Gráfica (línea ascendente simple)</td>
+          <td>Fondos, acciones, criptos (si aplica futuro)</td>
+        </tr>
+      </table>
+    </div>
+    
+    <h3>Iconos de Estado/Acción</h3>
+    <table>
+      <tr>
+        <th>Acción</th>
+        <th>Ícono</th>
+        <th>Color</th>
+      </tr>
+      <tr>
+        <td>Añadir gasto</td>
+        <td>+ (más, cuadrado con +)</td>
+        <td>#00E676 (positivo, invita)</td>
+      </tr>
+      <tr>
+        <td>Editar/Modificar</td>
+        <td>Lápiz (línea)</td>
+        <td>#60A5FA (info, acción neutra)</td>
+      </tr>
+      <tr>
+        <td>Eliminar/Descartar</td>
+        <td>Papelera (línea)</td>
+        <td>#FF5252 (destructivo, alerta)</td>
+      </tr>
+      <tr>
+        <td>Escanear QR</td>
+        <td>QR + cámara (superpuesto)</td>
+        <td>#00E676 (invita acción)</td>
+      </tr>
+      <tr>
+        <td>Subir archivo</td>
+        <td>Nube con flecha arriba</td>
+        <td>#60A5FA (acción)</td>
+      </tr>
+      <tr>
+        <td>Información</td>
+        <td>i (información, dentro de círculo)</td>
+        <td>#60A5FA (neutro, educativo)</td>
+      </tr>
+      <tr>
+        <td>Alertas/Advertencia</td>
+        <td>! (exclamación, dentro de triángulo)</td>
+        <td>#FFD740 (precaución)</td>
+      </tr>
+      <tr>
+        <td>Éxito/Confirmación</td>
+        <td>✓ (checkmark)</td>
+        <td>#00E676 (positivo)</td>
+      </tr>
+    </table>
+    
+    <h3>Librería Recomendada</h3>
+    <p style="color: #A0AEC0; margin: 1.5rem 0; font-size: 13px;">
+      <strong style="color: #00E676;">Opción 1 (Recomendada):</strong> <a href="https://tabler.io" style="color: #60A5FA;">Tabler Icons</a> — Iconografía limpia, stroke 2px, gratuita, actualizada. Adáptala al sistema de colores de Finly.<br><br>
+      <strong style="color: #60A5FA;">Opción 2:</strong> <a href="https://www.svgrepo.com" style="color: #60A5FA;">SVG Repo</a> — Cúralas manualmente, asegura consistencia visual.<br><br>
+      <strong style="color: #FFD740;">Opción 3:</strong> Diseña el 80% custom si los íconos deben tener personalidad única.
+    </p>
+    
+    <div class="conserva">
+      <strong style="color: #059669;">✓ CONSERVA:</strong> Concepto de iconografía limpia (stroke, sin relleno por defecto). Coherencia visual con Inter.
+    </div>
+    
+    <div class="evoluciona">
+      <strong style="color: #60A5FA;">→ EVOLUCIONA:</strong> Cada ícono debe ser "señal", no decoración. Colores heredados del contexto (verde positivo, rojo alerta). Librería curada y escalable a futuro.
+    </div>
+  </section>
+
+  <!-- ETAPA 8: LOGO SYSTEM -->
+  <section id="stage8">
+    <div class="stage-badge">ETAPA 8 / SISTEMA DE LOGO</div>
+    <h2>Logo System Completo</h2>
+    <p class="intro-text">Auditoría del logo actual "Finly." + punto verde, y evoluciones que preservan la esencia mientras refuerzan personalidad. El punto verde evoluciona de decoración a símbolo de estado.</p>
+    
+    <h3>Auditoría del Logo Actual</h3>
+    <div style="background: rgba(28, 36, 58, 0.6); border: 1px solid rgba(160, 174, 192, 0.15); border-radius: 12px; padding: 2rem; margin: 2rem 0;">
+      <p style="color: #A0AEC0; font-size: 13px; margin-bottom: 1rem;"><strong style="color: #00E676;">Finly · (wordmark + punto verde)</strong></p>
+      <p style="color: #A0AEC0; font-size: 13px; line-height: 1.8;">
+        <strong style="color: #60A5FA;">✓ Fortalezas:</strong> Simple, legible, el punto verde diferencia inmediatamente. Escalable a favicon. La forma del punto es neutra (no corporativa).<br><br>
+        <strong style="color: #FFD740;">⚠ Áreas de mejora:</strong> El punto es "pasivo" (decorativo). No comunica "estado" o "tranquilidad". La tipografía "Finly" podría ser más personalizada (hoy es Inter standard). No hay isotipo fuerte (si se quita el wordmark, ¿queda reconocible?).
+      </p>
+    </div>
+    
+    <h3>Evolución 1: PUNTO COMO FARO (Recomendado)</h3>
+    <div class="card" style="margin: 2rem 0;">
+      <h4 style="color: #00E676;">Concepto Principal</h4>
+      <p style="color: #A0AEC0; font-size: 13px; line-height: 1.8;">
+        El punto verde se convierte en un <strong>"faro"</strong> que emite luz. La idea: una luz que brilla en la penumbra (tranquilidad, claridad). El punto tiene un brillo/halo sutil (como un beacon). El wordmark "Finly" usa la misma tipografía pero con slight letter-spacing para air y modernidad.
+      </p>
+      <div style="background: rgba(10, 15, 30, 0.8); border: 1px solid rgba(160, 174, 192, 0.2); border-radius: 8px; padding: 3rem 2rem; margin: 1.5rem 0; text-align: center;">
+        <div style="display: inline-block; position: relative;">
+          <div style="font-size: 48px; font-weight: 700; color: #F5F5F5; letter-spacing: 2px; margin-bottom: 1.5rem;">FINLY</div>
+          <div style="position: relative; width: 40px; height: 40px; margin: 0 auto;">
+            <div style="position: absolute; inset: 0; background: radial-gradient(circle, #00E676 0%, transparent 70%); filter: blur(8px); opacity: 0.6;"></div>
+            <div style="position: absolute; inset: 8px; background: #00E676; border-radius: 50%;"></div>
+          </div>
+        </div>
+      </div>
+      <p style="color: #A0AEC0; font-size: 12px; margin-top: 1rem; font-style: italic;">El punto con "brillo" comunica luz/faro/tranquilidad sin palabras. El halo es sutil en tamaños grandes, desaparece en favicon.</p>
+    </div>
+    
+    <h3>Isotipo Alternativo: PUNTO COMO SÍMBOLO DE ESTADO</h3>
+    <div class="card" style="margin: 2rem 0;">
+      <h4 style="color: #60A5FA;">Concepto: El Punto Que Habla</h4>
+      <p style="color: #A0AEC0; font-size: 13px; line-height: 1.8;">
+        El punto evoluciona para ser un símbolo visual que <strong>comunica estado sin palabras</strong>:
+        <br>• <strong style="color: #00E676;">Verde brillante</strong> = "Vas bien, tienes dinero disponible"
+        <br>• <strong style="color: #FFD740;">Ámbar/pulsante</strong> = "Atención, vas por la mitad"
+        <br>• <strong style="color: #FF5252;">Rojo</strong> = "Alerta, dinero bajo"
+        <br><br>
+        En el logo estático es verde. Pero en la app, el punto puede ser dinámico (cambiar color según estado). El wordmark "FINLY" se mantiene, pero el isotipo (solo el punto) es reconocible por sí solo.
+      </p>
+      <div style="background: rgba(10, 15, 30, 0.8); border: 1px solid rgba(160, 174, 192, 0.2); border-radius: 8px; padding: 2rem; margin: 1.5rem 0;">
+        <div style="display: flex; gap: 2rem; justify-content: center; align-items: center; flex-wrap: wrap;">
+          <div style="text-align: center;">
+            <div style="width: 60px; height: 60px; background: #00E676; border-radius: 50%; margin: 0 auto 1rem; box-shadow: 0 0 20px rgba(0, 230, 118, 0.4);"></div>
+            <p style="font-size: 11px; color: #A0AEC0;">Disponible / Bien</p>
+          </div>
+          <div style="text-align: center;">
+            <div style="width: 60px; height: 60px; background: #FFD740; border-radius: 50%; margin: 0 auto 1rem; box-shadow: 0 0 20px rgba(255, 215, 64, 0.4);"></div>
+            <p style="font-size: 11px; color: #A0AEC0;">Advertencia</p>
+          </div>
+          <div style="text-align: center;">
+            <div style="width: 60px; height: 60px; background: #FF5252; border-radius: 50%; margin: 0 auto 1rem; box-shadow: 0 0 20px rgba(255, 82, 82, 0.4);"></div>
+            <p style="font-size: 11px; color: #A0AEC0;">Alerta</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <h3>Sistema de Logo Completo</h3>
+    <table style="margin: 2rem 0;">
+      <tr>
+        <th>Variante</th>
+        <th>Uso</th>
+        <th>Descripción</th>
+      </tr>
+      <tr>
+        <td><strong>Logo Horizontal (Principal)</strong></td>
+        <td>Landing, email, docs, redes sociales en formato horizontal</td>
+        <td>FINLY [punto] en una línea. Ratio 3:1 (ancho:alto aprox.)</td>
+      </tr>
+      <tr>
+        <td><strong>Logo Vertical</strong></td>
+        <td>Apps móvil, pantallas narrow, headers de página</td>
+        <td>FINLY encima del punto, centrados. Ratio 1:1.2 (ancho:alto)</td>
+      </tr>
+      <tr>
+        <td><strong>Isotipo (Solo Punto)</strong></td>
+        <td>Favicon, app icon, badge, marca de agua</td>
+        <td>El punto con halo, cuadrado 1:1. Reconocible a 16x16px</td>
+      </tr>
+      <tr>
+        <td><strong>Imagotipo</strong></td>
+        <td>Brand header, hero section, documentos oficiales</td>
+        <td>Logo completo + marca registrada (si aplica)</td>
+      </tr>
+      <tr>
+        <td><strong>Monograma (Alternativo)</strong></td>
+        <td>Casos especiales, merch, secundario</td>
+        <td>Inicial "F" + punto integrado. Menos común.</td>
+      </tr>
+    </table>
+    
+    <h3>Especificaciones Técnicas</h3>
+    <table style="margin: 2rem 0;">
+      <tr>
+        <th>Parámetro</th>
+        <th>Especificación</th>
+      </tr>
+      <tr>
+        <td><strong>Colores</strong></td>
+        <td>Primario: Verde #00E676. Versión monocromo: #0A0F1E (sobre claro) o #F5F5F5 (sobre oscuro)</td>
+      </tr>
+      <tr>
+        <td><strong>Tipografía Logo</strong></td>
+        <td>Inter 700, letter-spacing +0.5px (para air y elegancia)</td>
+      </tr>
+      <tr>
+        <td><strong>Tamaño Mínimo</strong></td>
+        <td>Logo completo: 120px (ancho). Isotipo: 32px (para que brille legible)</td>
+      </tr>
+      <tr>
+        <td><strong>Área de Seguridad</strong></td>
+        <td>Espacio en blanco mínimo = tamaño del punto (aprox. 1/5 del logo)</td>
+      </tr>
+      <tr>
+        <td><strong>Variantes</strong></td>
+        <td>Color (verde), Inverso (blanco/negro), Monocromo (gris). NO gradientes, NO sombras decorativas.</td>
+      </tr>
+      <tr>
+        <td><strong>Favicon (32x32)</strong></td>
+        <td>Isotipo sin halo (solo punto). Fondo #0A0F1E, punto #00E676</td>
+      </tr>
+      <tr>
+        <td><strong>App Icon (180x180 iOS, 192x192 Android)</strong></td>
+        <td>Isotipo centrado con pequeño padding. Fondo #0A0F1E, punto #00E676. Esquinas redondeadas (iOS: 25%, Android: 0%)</td>
+      </tr>
+    </table>
+    
+    <h3>Casos de Uso: Correcto vs. Incorrecto</h3>
+    <div class="grid">
+      <div class="card">
+        <h4 style="color: #00E676;">✓ CORRECTO</h4>
+        <p style="color: #A0AEC0; font-size: 13px;">
+          • Logo en color verde sobre fondo oscuro<br>
+          • Monocromo blanco sobre fondo oscuro<br>
+          • Monocromo negro sobre fondo claro<br>
+          • Punto con halo en tamaños grandes<br>
+          • Espacio mínimo respetado<br>
+          • Proporciones 3:1 (horizontal) o 1:1 (isotipo)
+        </p>
+      </div>
+      <div class="card">
+        <h4 style="color: #FF5252;">✗ INCORRECTO</h4>
+        <p style="color: #A0AEC0; font-size: 13px;">
+          • Gradientes o sombras en el logo<br>
+          • Estirado o comprimido (deformar proporciones)<br>
+          • Colores secundarios en lugar de verde/mono<br>
+          • Punto sin brillo en tamaños pequeños<br>
+          • Bajo espacio blanco (<1/5 del logo)<br>
+          • Rotado u orientación anómala
+        </p>
+      </div>
+    </div>
+    
+    <div class="conserva">
+      <strong style="color: #059669;">✓ CONSERVA:</strong> Punto verde como elemento central. Wordmark "Finly" limpio. Simplicidad extrema (círculo + texto). Escalabilidad a todos los tamaños.
+    </div>
+    
+    <div class="evoluciona">
+      <strong style="color: #60A5FA;">→ EVOLUCIONA:</strong> Punto de "decoración" a "faro" (con halo sutil). Punto como isotipo independiente reconocible. Potencial para dinamismo en app (cambio de color por estado). Especificaciones precisas para favicon + app icons.
+    </div>
+    
+    <div class="descarta">
+      <strong style="color: #FF5252;">✗ DESCARTA:</strong> Gradientes en el punto. Formas complejas. Ilustración o decoración. Tipografía custom difícil de licenciar (mantén Inter o similar open-source).
+    </div>
+  </section>
+
+  <!-- ETAPA 9: SISTEMA VISUAL -->
+  <section id="stage9">
+    <div class="stage-badge">ETAPA 9 / SISTEMA VISUAL</div>
+    <h2>Componentes, Patrones y Elementos</h2>
+    <p class="intro-text">El sistema visual traducido a componentes de UI: botones, inputs, cards, layouts. Cada elemento hereda la psicología de color y la tipografía.</p>
+    
+    <h3>Botones (Estados y Variantes)</h3>
+    <div style="background: rgba(28, 36, 58, 0.6); border: 1px solid rgba(160, 174, 192, 0.15); border-radius: 12px; padding: 2rem; margin: 2rem 0;">
+      <p style="color: #A0AEC0; font-size: 13px; margin-bottom: 1.5rem;"><strong>Principio:</strong> Los botones comunican acción con color + tamaño. El verde es CTA primaria (positivo, invita). El azul es secundario. El rojo es destructivo.</p>
+      
+      <div style="display: grid; gap: 2rem; margin: 1.5rem 0;">
+        <div>
+          <p style="color: #F5F5F5; font-size: 13px; font-weight: 600; margin-bottom: 1rem;">Primary (Verde / Positivo)</p>
+          <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+            <button style="background: #00E676; color: #0A0F1E; border: none; padding: 12px 24px; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 14px;">Registrar gasto</button>
+            <button style="background: #00E676; color: #0A0F1E; border: none; padding: 12px 24px; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 14px; opacity: 0.7;">Hover (más oscuro)</button>
+            <button style="background: #059669; color: #F5F5F5; border: none; padding: 12px 24px; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 14px;">Pressed</button>
+          </div>
+        </div>
+        
+        <div>
+          <p style="color: #F5F5F5; font-size: 13px; font-weight: 600; margin-bottom: 1rem;">Secondary (Azul / Info)</p>
+          <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+            <button style="background: transparent; color: #60A5FA; border: 2px solid #60A5FA; padding: 10px 22px; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 14px;">Ver histórico</button>
+            <button style="background: transparent; color: #60A5FA; border: 2px solid #60A5FA; padding: 10px 22px; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 14px; opacity: 0.6;">Hover</button>
+          </div>
+        </div>
+        
+        <div>
+          <p style="color: #F5F5F5; font-size: 13px; font-weight: 600; margin-bottom: 1rem;">Destructive (Rojo / Alerta)</p>
+          <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+            <button style="background: transparent; color: #FF5252; border: 2px solid #FF5252; padding: 10px 22px; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 14px;">Eliminar</button>
+            <button style="background: #FF5252; color: #0A0F1E; border: none; padding: 12px 24px; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 14px;">Confirmar eliminación</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <h3>Inputs y Campos de Formulario</h3>
+    <table style="margin: 2rem 0;">
+      <tr>
+        <th>Elemento</th>
+        <th>Especificación</th>
+      </tr>
+      <tr>
+        <td><strong>Fondo Input</strong></td>
+        <td>Superficie #1C243A, border 1px rgba(0,230,118,0.2) (verde tenue)</td>
+      </tr>
+      <tr>
+        <td><strong>Focus State</strong></td>
+        <td>Border cambia a #00E676 (verde brillante), box-shadow sutil rgba(0,230,118,0.2)</td>
+      </tr>
+      <tr>
+        <td><strong>Error State</strong></td>
+        <td>Border #FF5252, label de error en rojo. Ícono ✗ a la derecha</td>
+      </tr>
+      <tr>
+        <td><strong>Success State</strong></td>
+        <td>Border #00E676, checkmark verde. Mensaje "Datos válidos"</td>
+      </tr>
+      <tr>
+        <td><strong>Placeholder Text</strong></td>
+        <td>Color #718096 (tinte tenue). Desaparece al escribir</td>
+      </tr>
+      <tr>
+        <td><strong>Label</strong></td>
+        <td>Inter 400, 13px, color #A0AEC0. Encima del input, margin-bottom 6px</td>
+      </tr>
+    </table>
+    
+    <h3>Cards y Contenedores</h3>
+    <div style="background: rgba(28, 36, 58, 0.6); border: 1px solid rgba(160, 174, 192, 0.15); border-radius: 12px; padding: 2rem; margin: 2rem 0;">
+      <p style="color: #A0AEC0; font-size: 13px; margin-bottom: 1.5rem;"><strong>Base:</strong> Fondo #1C243A, border 1px rgba(160,174,192,0.15), border-radius 12px, padding 1.5rem.</p>
+      
+      <div style="background: #1C243A; border: 1px solid rgba(160, 174, 192, 0.15); border-radius: 12px; padding: 1.5rem; margin: 1rem 0;">
+        <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem;">
+          <div>
+            <p style="color: #A0AEC0; font-size: 12px; margin-bottom: 0.5rem;">Dinero disponible</p>
+            <p style="color: #00E676; font-size: 28px; font-weight: 700; font-family: 'IBM Plex Mono', monospace; letter-spacing: 1px;">$847.350</p>
+          </div>
+          <div style="background: #00E676; color: #0A0F1E; width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: 600;">✓</div>
+        </div>
+        <p style="color: #718096; font-size: 12px;">Próximo pago: 15 de julio (7 días)</p>
+      </div>
+      <p style="color: #A0AEC0; font-size: 11px; font-style: italic; margin-top: 1rem;">↑ Card típica de "Dinero Disponible": número hero en verde, contexto en gris tenue, ícono de estado a la derecha.</p>
+    </div>
+    
+    <h3>Patrones de Layout</h3>
+    <table style="margin: 2rem 0;">
+      <tr>
+        <th>Patrón</th>
+        <th>Uso</th>
+      </tr>
+      <tr>
+        <td><strong>Número Hero (Centered)</strong></td>
+        <td>Dinero disponible, total de gastos. Tipografía grande (28-48px), color verde/rojo según estado, IBM Plex Mono</td>
+      </tr>
+      <tr>
+        <td><strong>Grid de Gastos</strong></td>
+        <td>Histórico de transacciones. Cards compactas con ícono + descripción + monto. Swipe para editar/eliminar (móvil)</td>
+      </tr>
+      <tr>
+        <td><strong>Progress Bar (Gasto vs. Disponible)</strong></td>
+        <td>Visual de "cuánto llevas gastado". Verde < 50%, Ámbar 50-75%, Rojo > 75%. Height 8px, border-radius 4px</td>
+      </tr>
+      <tr>
+        <td><strong>Sidebar / Menú Lateral</strong></td>
+        <td>Fondo #0A0F1E. Items activo en verde, hover en #1C243A. Iconos 24x24 + texto 13px</td>
+      </tr>
+      <tr>
+        <td><strong>Modal/Overlay</strong></td>
+        <td>Backdrop rgba(0,0,0,0.6). Modal cards con padding 2rem, border-radius 16px. CTA verde primaria</td>
+      </tr>
+    </table>
+    
+    <div class="conserva">
+      <strong style="color: #059669;">✓ CONSERVA:</strong> Verde como CTA primaria. Inputs con border verde tenue. Cards minimalistas. Números hero como protagonistas.
+    </div>
+    
+    <div class="evoluciona">
+      <strong style="color: #60A5FA;">→ EVOLUCIONA:</strong> Estados visuales claros (focus, error, success). Progress bar con semáforo integrado. Ícono de estado en cards (checkmark verde, alerta roja). Swipe gestures para móvil.
+    </div>
+  </section>
+
+  <!-- ETAPA 13: UX/UI DARK MODE + LIGHT MODE -->
+  <section id="stage13">
+    <div class="stage-badge">ETAPA 13 / UX/UI: DARK MODE + LIGHT MODE</div>
+    <h2>Diseño de Pantallas: Hero Screen "Dinero Disponible"</h2>
+    <p class="intro-text">La pantalla más crítica: "¿Cuánto puedo gastar hoy?" en Dark Mode y Light Mode. Mockup funcional en HTML que muestra la jerarquía visual, interacciones y adaptación a luz/oscuridad.</p>
+    
+    <h3>Dark Mode (Primario)</h3>
+    <div style="background: #0A0F1E; border: 1px solid rgba(160, 174, 192, 0.2); border-radius: 12px; padding: 0; overflow: hidden; margin: 2rem 0;">
+      <div style="background: linear-gradient(135deg, #0A0F1E 0%, #1a1f35 100%); padding: 1.5rem; border-bottom: 1px solid rgba(160, 174, 192, 0.1);">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <div>
+            <p style="color: #718096; font-size: 12px; margin-bottom: 0.25rem;">Tu dinero hoy</p>
+            <p style="color: #F5F5F5; font-size: 20px; font-weight: 700;">Ciclo en curso</p>
+          </div>
+          <div style="width: 40px; height: 40px; background: #00E676; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #0A0F1E; font-weight: 700; font-size: 20px;">⚙</div>
+        </div>
+      </div>
+      
+      <div style="padding: 2rem 1.5rem; text-align: center;">
+        <p style="color: #A0AEC0; font-size: 13px; margin-bottom: 0.75rem;">Tienes disponible</p>
+        <p style="color: #00E676; font-size: 48px; font-weight: 700; font-family: 'IBM Plex Mono', monospace; letter-spacing: 2px; margin-bottom: 0.5rem;">$847.350</p>
+        <p style="color: #718096; font-size: 12px;">hasta el 15 de julio (7 días)</p>
+      </div>
+      
+      <div style="padding: 1.5rem; border-top: 1px solid rgba(160, 174, 192, 0.1);">
+        <p style="color: #A0AEC0; font-size: 12px; margin-bottom: 1rem; text-transform: uppercase; letter-spacing: 0.5px;">Detalles</p>
+        <div style="display: grid; gap: 1rem;">
+          <div style="display: flex; justify-content: space-between;">
+            <span style="color: #A0AEC0; font-size: 13px;">Ingresos ciclo</span>
+            <span style="color: #F5F5F5; font-size: 13px; font-weight: 600; font-family: monospace;">$1.200.000</span>
+          </div>
+          <div style="display: flex; justify-content: space-between;">
+            <span style="color: #A0AEC0; font-size: 13px;">Gastos hasta ahora</span>
+            <span style="color: #FF5252; font-size: 13px; font-weight: 600; font-family: monospace;">$352.650</span>
+          </div>
+          <div style="display: flex; justify-content: space-between;">
+            <span style="color: #A0AEC0; font-size: 13px;">Vas por</span>
+            <span style="color: #FFD740; font-size: 13px; font-weight: 600;">29% del ciclo</span>
+          </div>
+        </div>
+      </div>
+      
+      <div style="padding: 1.5rem; border-top: 1px solid rgba(160, 174, 192, 0.1); display: grid; gap: 1rem;">
+        <button style="background: #00E676; color: #0A0F1E; border: none; padding: 14px; border-radius: 8px; font-weight: 600; font-size: 14px; cursor: pointer;">+ Registrar gasto</button>
+        <button style="background: transparent; color: #60A5FA; border: 2px solid #60A5FA; padding: 12px; border-radius: 8px; font-weight: 600; font-size: 14px; cursor: pointer;">Escanear factura</button>
+      </div>
+    </div>
+    
+    <p style="color: #718096; font-size: 11px; font-style: italic; margin-top: 1rem;">↑ <strong>Dark Mode:</strong> Fondo oscuro crea intimidad. Verde brilla como faro. Número hero es el protagonista. Estructura clara: qué importa hoy (disponible) → detalles → acciones.</p>
+    
+    <h3>Light Mode (Adaptación Futura)</h3>
+    <div style="background: #FAFAFA; border: 1px solid rgba(160, 174, 192, 0.2); border-radius: 12px; padding: 0; overflow: hidden; margin: 2rem 0;">
+      <div style="background: linear-gradient(135deg, #FAFAFA 0%, #F5F5F5 100%); padding: 1.5rem; border-bottom: 1px solid rgba(160, 174, 192, 0.15);">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <div>
+            <p style="color: #718096; font-size: 12px; margin-bottom: 0.25rem;">Tu dinero hoy</p>
+            <p style="color: #0A0F1E; font-size: 20px; font-weight: 700;">Ciclo en curso</p>
+          </div>
+          <div style="width: 40px; height: 40px; background: #00B84D; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #F5F5F5; font-weight: 700; font-size: 20px;">⚙</div>
+        </div>
+      </div>
+      
+      <div style="padding: 2rem 1.5rem; text-align: center;">
+        <p style="color: #718096; font-size: 13px; margin-bottom: 0.75rem;">Tienes disponible</p>
+        <p style="color: #00A84D; font-size: 48px; font-weight: 700; font-family: 'IBM Plex Mono', monospace; letter-spacing: 2px; margin-bottom: 0.5rem;">$847.350</p>
+        <p style="color: #A0AEC0; font-size: 12px;">hasta el 15 de julio (7 días)</p>
+      </div>
+      
+      <div style="padding: 1.5rem; border-top: 1px solid rgba(160, 174, 192, 0.15);">
+        <p style="color: #718096; font-size: 12px; margin-bottom: 1rem; text-transform: uppercase; letter-spacing: 0.5px;">Detalles</p>
+        <div style="display: grid; gap: 1rem;">
+          <div style="display: flex; justify-content: space-between;">
+            <span style="color: #718096; font-size: 13px;">Ingresos ciclo</span>
+            <span style="color: #0A0F1E; font-size: 13px; font-weight: 600; font-family: monospace;">$1.200.000</span>
+          </div>
+          <div style="display: flex; justify-content: space-between;">
+            <span style="color: #718096; font-size: 13px;">Gastos hasta ahora</span>
+            <span style="color: #E53935; font-size: 13px; font-weight: 600; font-family: monospace;">$352.650</span>
+          </div>
+          <div style="display: flex; justify-content: space-between;">
+            <span style="color: #718096; font-size: 13px;">Vas por</span>
+            <span style="color: #F9A825; font-size: 13px; font-weight: 600;">29% del ciclo</span>
+          </div>
+        </div>
+      </div>
+      
+      <div style="padding: 1.5rem; border-top: 1px solid rgba(160, 174, 192, 0.15); display: grid; gap: 1rem;">
+        <button style="background: #00B84D; color: #F5F5F5; border: none; padding: 14px; border-radius: 8px; font-weight: 600; font-size: 14px; cursor: pointer;">+ Registrar gasto</button>
+        <button style="background: transparent; color: #0066CC; border: 2px solid #0066CC; padding: 12px; border-radius: 8px; font-weight: 600; font-size: 14px; cursor: pointer;">Escanear factura</button>
+      </div>
+    </div>
+    
+    <p style="color: #718096; font-size: 11px; font-style: italic; margin-top: 1rem;">↑ <strong>Light Mode:</strong> Fondo claro, verde más saturado (#00B84D vs #00E676) para mantener poder visual. Números en verde oscuro. Estructura idéntica, colores adaptados. Rojo y ámbar también ajustados (#E53935, #F9A825).</p>
+    
+    <h3>Principios de Diseño de Pantalla</h3>
+    <table style="margin: 2rem 0;">
+      <tr>
+        <th>Principio</th>
+        <th>Aplicación en Finly</th>
+      </tr>
+      <tr>
+        <td><strong>Un número hero por pantalla</strong></td>
+        <td>Dinero disponible es el protagonista, no se compite con otros datos</td>
+      </tr>
+      <tr>
+        <td><strong>Contexto antes de acción</strong></td>
+        <td>Primero "cuánto tienes", luego "qué puedes hacer"</td>
+      </tr>
+      <tr>
+        <td><strong>Reducción de fricción</strong></td>
+        <td>2 botones máximo en hero screen (registrar + escanear). Menos es más.</td>
+      </tr>
+      <tr>
+        <td><strong>Semáforo integrado en datos</strong></td>
+        <td>Verde (disponible), Ámbar (promedio), Rojo (bajo). Sin alarmas sonoras, solo color.</td>
+      </tr>
+      <tr>
+        <td><strong>Tipografía jerárquica clara</strong></td>
+        <td>Número hero (48px), labels (13px), contexto (12px). Cada tamaño es intencionado.</td>
+      </tr>
+    </table>
+    
+    <div class="conserva">
+      <strong style="color: #059669;">✓ CONSERVA:</strong> Fondo oscuro como primario. Verde como CTA. Número hero como foco. Estructura simple (qué tengo → detalles → hago).
+    </div>
+    
+    <div class="evoluciona">
+      <strong style="color: #60A5FA;">→ EVOLUCIONA:</strong> Light Mode con verde más saturado. Semáforo en colores de datos (rojo/ámbar en gastos). Iconografía clara en botones. Micro-copy contextual.
+    </div>
+  </section>
+
+  <!-- CONCLUSIÓN -->
+  <section id="conclusion" style="border-top: 2px solid rgba(0, 230, 118, 0.3); padding: 3rem 2rem; background: rgba(0, 230, 118, 0.05);">
+    <h2 style="color: #00E676;">Conclusión y Dirección Final</h2>
+    
+    <h3>Dirección Visual Elegida: "La Luz Verde"</h3>
+    <p style="color: #A0AEC0; max-width: 900px; line-height: 1.8; margin-bottom: 2rem;">
+      <strong style="color: #F5F5F5;">La Luz Verde</strong> no es solo estética. Es una metáfora funcional: el fondo oscuro (azul-noche #0A0F1E) crea intimidad y seguridad. El verde (#00E676) es un faro que brilla en esa penumbra, comunicando "vas bien, tienes dinero, puedes avanzar" sin palabras. En la app, el verde es dinámico (cambia a ámbar/rojo con estados de alerta). En la marca, es reconocible al instante.
+    </p>
+    
+    <h3>Elementos Visuales Inamovibles (Protegidos)</h3>
+    <div class="grid">
+      <div class="card">
+        <h4 style="color: #00E676;">Fondo Oscuro (#0A0F1E)</h4>
+        <p style="color: #A0AEC0;">Nunca cambiar. Es el escenario de confianza y privacidad. El dinero personal es íntimo. Este fondo lo comunica.</p>
+      </div>
+      <div class="card">
+        <h4 style="color: #00E676;">Verde Primario (#00E676)</h4>
+        <p style="color: #A0AEC0;">Es la firma de Finly. Nunca decorativo. Siempre funcional: positivo, disponible, adelante. El diferenciador en mercado.</p>
+      </div>
+      <div class="card">
+        <h4 style="color: #00E676;">Número Hero por Pantalla</h4>
+        <p style="color: #A0AEC0;">Cada pantalla tiene UN número protagonista (dinero disponible, total gasto, ahorro). Estructura clara, sin ruido.</p>
+      </div>
+      <div class="card">
+        <h4 style="color: #00E676;">Inter + IBM Plex Mono</h4>
+        <p style="color: #A0AEC0;">Humanizada, accesible, moderna. Las fuentes comunican cercanía sin sacrificar profesionalismo.</p>
+      </div>
+    </div>
+    
+    <h3>Crecimiento en 10 Años: Expansión a LatAm</h3>
+    <p style="color: #A0AEC0; max-width: 900px; line-height: 1.8; margin-bottom: 2rem;">
+      La marca está diseñada para escalar. Colombia es el mercado inicial, pero la identidad funciona igual en México, Perú, Argentina, Chile. El verde y el fondo oscuro son universales (no tienen referencia cultural que limite). Los cambios necesarios serían:
+    </p>
+    
+    <table style="margin: 2rem 0;">
+      <tr>
+        <th>Aspecto</th>
+        <th>Hoy (Colombia)</th>
+        <th>Futuro (LatAm)</th>
+      </tr>
+      <tr>
+        <td><strong>Lenguaje</strong></td>
+        <td>Español colombiano, "ciclo de pago", contexto DIAN/QR</td>
+        <td>Español neutro, adaptar terminología por país (quincena vs. mes, factura digital local)</td>
+      </tr>
+      <tr>
+        <td><strong>Moneda</strong></td>
+        <td>COP, símbolo $ local</td>
+        <td>MXN, PEN, ARS, CLP—adaptar formato de número. Lógica de conversión si es necesario</td>
+      </tr>
+      <tr>
+        <td><strong>Regulación / API</strong></td>
+        <td>Integración con DIAN, bancos colombianos</td>
+        <td>Integración con SAT (México), SUNAT (Perú), AFIP (Argentina)—API locales por país</td>
+      </tr>
+      <tr>
+        <td><strong>Visual / Brand</strong></td>
+        <td>Fondo oscuro, verde, microcopy cercano</td>
+        <td>100% idéntica. No cambiar. La identidad es el diferenciador cross-border.</td>
+      </tr>
+    </table>
+    
+    <h3>Roadmap: Próximos Módulos y Extensiones de Brand</h3>
+    <p style="color: #A0AEC0; font-size: 13px; line-height: 1.8; margin: 2rem 0;">
+      <strong style="color: #F5F5F5;">Año 1 (MVP):</strong> Dark Mode completo, presupuesto personal, escaneo QR, histórico.<br><br>
+      <strong style="color: #F5F5F5;">Año 2:</strong> Light Mode, presupuesto familiar/compartido, alertas inteligentes, integración con bancos colombianos.<br><br>
+      <strong style="color: #F5F5F5;">Año 3+:</strong> Módulo de inversiones (con branding cuidado: no agresivo), educación financiera, asesoría (human + IA), expansión a LatAm (nuevas APIs, localizaciones).
+    </p>
+    
+    <h3>Qué Nunca Debe Cambiar (Identidad Permanente)</h3>
+    <div style="background: rgba(0, 230, 118, 0.1); border: 2px solid #00E676; border-radius: 8px; padding: 2rem; margin: 2rem 0;">
+      <ul style="color: #A0AEC0; font-size: 13px; line-height: 1.8; list-style: none;">
+        <li style="padding: 0.75rem 0;"><strong style="color: #00E676;">•</strong> Fondo azul-noche (#0A0F1E) como lienzo base</li>
+        <li style="padding: 0.75rem 0;"><strong style="color: #00E676;">•</strong> Verde #00E676 como estado positivo (no solo marca, función psicológica)</li>
+        <li style="padding: 0.75rem 0;"><strong style="color: #00E676;">•</strong> Número hero por pantalla (arquitectura de info)</li>
+        <li style="padding: 0.75rem 0;"><strong style="color: #00E676;">•</strong> Logo: wordmark + punto (isotipo dinámico por estado)</li>
+        <li style="padding: 0.75rem 0;"><strong style="color: #00E676;">•</strong> Tono: cercano pero serio, conversacional sin sermón</li>
+        <li style="padding: 0.75rem 0;"><strong style="color: #00E676;">•</strong> Promesa: "Gasta sin miedo. Sabe cuánto tienes hoy."</li>
+        <li style="padding: 0.75rem 0;"><strong style="color: #00E676;">•</strong> Semáforo integrado (verde/ámbar/rojo como función, no decoración)</li>
+      </ul>
+    </div>
+    
+    <h3>Métricas de Éxito de Marca</h3>
+    <table style="margin: 2rem 0;">
+      <tr>
+        <th>Métrica</th>
+        <th>Target</th>
+      </tr>
+      <tr>
+        <td>Reconocimiento del punto verde sin contexto</td>
+        <td>>70% de usuarios post-onboarding reconocen el punto como "Finly"</td>
+      </tr>
+      <tr>
+        <td>Contraste AA/AAA en 100% de UI</td>
+        <td>Auditoría de accesibilidad: cero fallos en WCAG 2.1 AA</td>
+      </tr>
+      <tr>
+        <td>Consistencia visual en todas las plataformas</td>
+        <td>Guía de marca seguida sin excepciones (web, mobile, merch, redes)</td>
+      </tr>
+      <tr>
+        <td>Tono de voz reconocible</td>
+        <td>>60% de usuarios identifican que "Finly no culpa, contextualiza"</td>
+      </tr>
+      <tr>
+        <td>Escalabilidad a LatAm</td>
+        <td>Identidad funciona igual en 3+ países sin rediseño</td>
+      </tr>
+    </table>
+    
+    <h3>Archivos Entregables</h3>
+    <p style="color: #A0AEC0; font-size: 13px; line-height: 1.8; margin-bottom: 2rem;">
+      Este Brand Book (HTML interactivo) es el punto de partida. Para implementación:
+    </p>
+    <ul style="color: #A0AEC0; font-size: 13px; line-height: 1.8; list-style: none;">
+      <li style="padding: 0.5rem 0;">✓ <strong>Logo files:</strong> AI/SVG (horizontal, vertical, isotipo, favicon, app icons) — Adobe Illustrator o Figma</li>
+      <li style="padding: 0.5rem 0;">✓ <strong>Design System:</strong> Figma o Storybook (componentes, estados, documentación)</li>
+      <li style="padding: 0.5rem 0;">✓ <strong>Brand Guidelines PDF:</strong> Versión printable de este Brand Book (uso correcto/incorrecto)</li>
+      <li style="padding: 0.5rem 0;">✓ <strong>Código CSS:</strong> Tokens de color, variables de tipografía, espaciado (Tailwind config o CSS custom properties)</li>
+      <li style="padding: 0.5rem 0;">✓ <strong>Iconografía:</strong> SVG library (Tabler Icons curada + custom si es necesario)</li>
+      <li style="padding: 0.5rem 0;">✓ <strong>Mockups:</strong> Dark + Light Mode (web y móvil), key screens (hero, histórico, onboarding)</li>
+    </ul>
+    
+    <h3>Firmas Finales</h3>
+    <p style="color: #A0AEC0; max-width: 900px; line-height: 1.8; margin-bottom: 2rem;">
+      <strong style="color: #F5F5F5;">Finly es una marca seria pero cercana, local pero escalable, oscura pero luminosa.</strong> El verde no es moda, es función. La tranquilidad ciclo a ciclo no se comunica con palabras, sino con diseño: un fondo de confianza, un número claro, un faro que brilla. Cuando el usuario abre Finly, sabe que está en un lugar donde se entiende su dinero, sin sermones, sin frialdad. Eso es la marca.
+    </p>
+    
+    <p style="color: #60A5FA; font-size: 12px; font-style: italic;">
+      <strong>Brand Book completo: Etapas 1-13 desarrolladas.</strong><br>
+      Próximo paso: Implementación en código (Design System, Figma, desarrollo web).
+    </p>
+  </section>
+
+  <!-- CIERRE ETAPAS 1-8 -->
+  <section style="border-top: 2px solid rgba(0, 230, 118, 0.3); padding: 3rem 2rem; background: rgba(0, 230, 118, 0.05);">
+    <h2 style="color: #00E676;">Etapas 1-8: Síntesis</h2>
+    <p style="color: #A0AEC0; max-width: 900px; line-height: 1.8; margin-bottom: 2rem;">
+      <strong style="color: #F5F5F5;">Estrategia:</strong> Finly se posiciona como "tranquilidad ciclo a ciclo", guardiana del dinero, no predicadora.<br><br>
+      <strong style="color: #F5F5F5;">Mercado:</strong> Ningún competidor ocupa el espacio de "cercano + serio + local + verde-faro". Oportunidad clara.<br><br>
+      <strong style="color: #F5F5F5;">Personalidad:</strong> Arquetipo "Guardián Cercano". Tono conversacional sin sermón. Microcopy refuerza contexto, no culpa.<br><br>
+      <strong style="color: #F5F5F5;">Dirección Visual:</strong> "La Luz Verde" evolucionada. Fondo azul-noche, verde como semáforo integrado (estado, no decoración).<br><br>
+      <strong style="color: #F5F5F5;">Paleta:</strong> Verde #00E676, Rojo #FF5252, Ámbar #FFD740, Azul #60A5FA—cada uno con función psicológica. AA/AAA verificado.<br><br>
+      <strong style="color: #F5F5F5;">Tipografía:</strong> Inter + IBM Plex Mono. Humanizada, accesible, moderna, gratuita.<br><br>
+      <strong style="color: #F5F5F5;">Iconografía:</strong> Limpia, stroke 2px, colores heredados del contexto. Tabler Icons como base curada.<br><br>
+      <strong style="color: #F5F5F5;">Logo:</strong> "Finly · punto" evolucionado. Punto como faro con halo. Isotipo independiente. App icons dinámicos por estado.
+    </p>
+    <p style="color: #60A5FA; font-size: 13px; font-style: italic;">
+      <strong>Siguiente:</strong> Etapas 9-14 completarán Sistema Visual (componentes, patrones), UX/UI (Dark + Light Mode, hero screens), Brand Book de aplicación, y conclusiones estratégicas.
+    </p>
+  </section>
+
+</main>
+
+<script>
+  function scrollTo(selector) {
+    const el = document.querySelector(selector);
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }
+  
+  // Activa link en nav según scroll
+  window.addEventListener('scroll', () => {
+    const sections = document.querySelectorAll('section');
+    const navLinks = document.querySelectorAll('nav a');
+    
+    let current = '';
+    sections.forEach(section => {
+      const sectionTop = section.offsetTop;
+      const sectionHeight = section.clientHeight;
+      if (window.pageYOffset >= sectionTop - 100) {
+        current = section.getAttribute('id');
+      }
+    });
+    
+    navLinks.forEach(link => {
+      link.classList.remove('active');
+      if (link.getAttribute('href') === '#' + current) {
+        link.classList.add('active');
+      }
+    });
+  });
+</script>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

@@ -193,10 +193,11 @@ function App() {
 
             {/* Right: Avatar with squircle gradient profile */}
             <div style={{ flex: 1, display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '8px', minWidth: 0 }}>
-              <button 
+              <button
+                className="header-profile-btn"
                 onClick={() => setIsSidebarOpen(true)}
-                style={{ 
-                  display: 'flex', alignItems: 'center', gap: '8px', 
+                style={{
+                  display: 'flex', alignItems: 'center', gap: '8px',
                   background: 'rgba(0, 230, 118, 0.03)', border: '1px solid rgba(0, 230, 118, 0.15)',
                   padding: '4px 10px 4px 4px', borderRadius: '24px', cursor: 'pointer', transition: 'all 0.2s',
                   maxWidth: '100%',

@@ -106,92 +106,105 @@ export default function Dashboard({ onSelectExpense }) {
       labels,
       datasets: [
         {
-          label: 'Gasto Real Acumulado',
+          label: 'Gasto real',
           data: realData,
-          borderColor: 'rgb(0, 230, 118)',
-          backgroundColor: 'rgba(0, 230, 118, 0.08)',
-          fill: true,
-          tension: 0.3,
-          pointRadius: 2,
+          borderColor: '#00E676',
           borderWidth: 2,
+          fill: true,
+          // Relleno con degradado verde→transparente para dar profundidad al área.
+          backgroundColor: (ctx) => {
+            const { chart } = ctx;
+            const area = chart.chartArea;
+            if (!area) return 'rgba(0, 230, 118, 0.12)';
+            const g = chart.ctx.createLinearGradient(0, area.top, 0, area.bottom);
+            g.addColorStop(0, 'rgba(0, 230, 118, 0.30)');
+            g.addColorStop(1, 'rgba(0, 230, 118, 0.01)');
+            return g;
+          },
+          tension: 0.3,
+          // Solo el punto de "hoy" (el último) es visible y grande: es lo que importa.
+          pointRadius: (ctx) => ctx.dataIndex === ctx.dataset.data.length - 1 ? 5 : 0,
+          pointHoverRadius: 6,
+          pointBackgroundColor: '#00E676',
+          pointBorderColor: '#0A0F1E',
+          pointBorderWidth: 2,
         },
         {
-          label: 'Ritmo Ideal',
+          label: 'Ritmo ideal',
           data: idealData,
-          borderColor: 'rgba(255, 255, 255, 0.15)',
+          borderColor: 'rgba(245, 245, 245, 0.30)',
           borderDash: [5, 5],
           fill: false,
           tension: 0,
           pointRadius: 0,
+          pointHoverRadius: 0,
           borderWidth: 1.5,
         }
       ]
     };
   };
 
+  // Chart.js dibuja en canvas y NO resuelve variables CSS (var(--x)); requiere
+  // valores de color reales, si no el texto cae al gris oscuro por defecto e
+  // "desaparece" sobre el fondo. Por eso aquí van hex de las tintas de marca.
+  const FONT = "'Inter', system-ui, sans-serif";
+  const compactPeso = (v) => {
+    if (Math.abs(v) >= 1000000) return '$' + (v / 1000000).toFixed(1).replace('.0', '') + 'M';
+    if (Math.abs(v) >= 1000) return '$' + Math.round(v / 1000) + 'k';
+    return '$' + v;
+  };
   const chartOptions = {
     responsive: true,
     maintainAspectRatio: false,
+    interaction: { mode: 'index', intersect: false },
     plugins: {
       legend: {
         display: true,
         position: 'top',
+        align: 'end',
         labels: {
-          color: 'var(--text)',
-          boxWidth: 12,
-          font: {
-            size: 10,
-            family: 'Outfit, sans-serif'
-          }
+          color: '#F5F5F5',
+          usePointStyle: true,
+          pointStyle: 'line',
+          boxWidth: 18,
+          padding: 16,
+          font: { size: 11, family: FONT, weight: '600' }
         }
       },
       tooltip: {
-        mode: 'index',
-        intersect: false,
-        backgroundColor: 'rgba(15, 23, 42, 0.9)',
-        titleColor: '#fff',
-        bodyColor: '#ccc',
-        borderColor: 'rgba(255, 255, 255, 0.1)',
+        backgroundColor: 'rgba(10, 15, 30, 0.95)',
+        titleColor: '#F5F5F5',
+        bodyColor: '#A0AEC0',
+        borderColor: 'rgba(255, 255, 255, 0.12)',
         borderWidth: 1,
+        padding: 12,
+        cornerRadius: 10,
+        titleFont: { family: FONT, weight: '700', size: 12 },
+        bodyFont: { family: FONT, size: 12 },
         callbacks: {
-          label: function(context) {
-            let label = context.dataset.label || '';
-            if (label) {
-              label += ': ';
-            }
-            if (context.parsed.y !== null) {
-              label += mask(context.parsed.y);
-            }
-            return label;
-          }
+          label: (ctx) => `${ctx.dataset.label}: ${mask(ctx.parsed.y)}`
         }
       }
     },
     scales: {
       x: {
-        grid: {
-          display: false
-        },
+        grid: { display: false },
+        border: { color: 'rgba(255, 255, 255, 0.08)' },
         ticks: {
-          color: 'var(--text3)',
-          font: {
-            size: 8
-          },
+          color: '#A0AEC0',
+          font: { size: 10, family: FONT },
+          maxRotation: 0,
           maxTicksLimit: 6
         }
       },
       y: {
-        grid: {
-          color: 'rgba(255, 255, 255, 0.03)'
-        },
+        grid: { color: 'rgba(255, 255, 255, 0.05)' },
+        border: { display: false },
         ticks: {
-          color: 'var(--text3)',
-          font: {
-            size: 8
-          },
-          callback: function(value) {
-            return mask(value);
-          }
+          color: '#A0AEC0',
+          font: { size: 10, family: FONT },
+          maxTicksLimit: 5,
+          callback: (value) => compactPeso(value)
         }
       }
     }

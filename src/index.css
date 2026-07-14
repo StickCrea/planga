@@ -1118,6 +1118,10 @@ body {
 
 @media (max-width: 1023px) {
   .desktop-sidebar { display: none !important; }
+  /* El chip de perfil del header es redundante en móvil/tablet: la barra
+     inferior ya tiene "Perfil" (mismo menú). En escritorio (>=1024px) sí se
+     mantiene, porque ahí la barra lateral no lleva acceso al perfil. */
+  .header-profile-btn { display: none !important; }
   .onboarding-screen { position: relative; z-index: 1000; pointer-events: auto; }
   .onboarding-screen button { pointer-events: auto !important; cursor: pointer; }
 }
