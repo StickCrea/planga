@@ -50,23 +50,42 @@ export function FinanceProvider({ children }) {
 
   // ─── Auth listener & Inactivity Timer ───
   useEffect(() => {
-    let inactivityTimer;
+    const INACTIVITY_MS = 30 * 60 * 1000; // 30 min
 
-    const resetTimer = () => {
-      if (inactivityTimer) clearTimeout(inactivityTimer);
-      // Logout after 30 minutes of inactivity
-      inactivityTimer = setTimeout(() => {
-        supabase.auth.getSession().then(({ data: { session } }) => {
-          if (session?.user) {
-            supabase.auth.signOut();
-            showToast('Sesión cerrada por inactividad', 'info');
-          }
-        });
-      }, 30 * 60 * 1000); 
+    // Marca de tiempo de la última actividad, persistida en localStorage. Los
+    // navegadores móviles CONGELAN los setTimeout cuando la pantalla se bloquea
+    // o cambias de app, por eso un temporizador de 30 min no dispara. En vez de
+    // eso guardamos "cuándo fue la última actividad" y verificamos el tiempo
+    // transcurrido al volver a la app o al recargar — así el cierre por
+    // inactividad sí se aplica.
+    let lastActivity = Number(localStorage.getItem('finly_last_activity')) || Date.now();
+    // Foto sincrónica al montar: decide el cierre por inactividad del arranque
+    // ANTES de que cualquier listener (onAuthStateChange) marque actividad y
+    // anule la decisión por una condición de carrera.
+    const wasIdleOnLoad = Date.now() - lastActivity >= INACTIVITY_MS;
+    const markActivity = () => { lastActivity = Date.now(); };
+    const persistActivity = () => {
+      try { localStorage.setItem('finly_last_activity', String(lastActivity)); } catch { /* ignore */ }
+    };
+
+    const idleLogout = () => {
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        if (session?.user) {
+          supabase.auth.signOut();
+          showToast('Sesión cerrada por inactividad', 'info');
+        }
+      });
+    };
+    // Cierra la sesión si pasó el umbral. Devuelve true si cerró.
+    const enforceIdle = () => {
+      if (Date.now() - lastActivity >= INACTIVITY_MS) { idleLogout(); return true; }
+      return false;
     };
 
     const events = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart'];
-    events.forEach(event => document.addEventListener(event, resetTimer));
+    events.forEach(event => document.addEventListener(event, markActivity));
+    // Chequeo periódico mientras la pestaña sigue abierta y activa.
+    const idleInterval = setInterval(() => { persistActivity(); enforceIdle(); }, 60 * 1000);
 
     const fetchSession = async () => {
       try {
@@ -80,16 +99,22 @@ export function FinanceProvider({ children }) {
         if (error) console.error('Supabase session error:', error);
 
         if (session?.user) {
-          setUser(session.user);
-          resetTimer();
-          
-          // Instant bootstrap from cache
-          const cached = localStorage.getItem(`finly_state_${session.user.id}`);
-          if (cached) {
-            try {
-              const parsed = JSON.parse(cached);
-              setState(parsed);
-            } catch (e) { console.error('Cache parse error', e); }
+          // Si la sesión llevaba demasiado tiempo inactiva (incluye el tiempo
+          // con la pestaña cerrada), ciérrala en vez de reabrirla.
+          if (wasIdleOnLoad) {
+            supabase.auth.signOut();
+          } else {
+            markActivity();
+            setUser(session.user);
+
+            // Instant bootstrap from cache
+            const cached = localStorage.getItem(`finly_state_${session.user.id}`);
+            if (cached) {
+              try {
+                const parsed = JSON.parse(cached);
+                setState(parsed);
+              } catch (e) { console.error('Cache parse error', e); }
+            }
           }
         }
       } catch (err) {
@@ -101,18 +126,21 @@ export function FinanceProvider({ children }) {
 
     fetchSession();
 
-    // Handle mobile backgrounding (returning from camera/gallery)
+    // Manejo del segundo plano (volver de la cámara/galería) + chequeo de inactividad.
     const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible') {
-        // App came back to foreground, ensure session is active
-        supabase.auth.getSession().then(({ data: { session } }) => {
-          if (session?.user) {
-            setUser(session.user);
-          }
-        }).catch(() => {});
+      if (document.visibilityState === 'hidden') {
+        persistActivity(); // guarda el momento en que dejaste la app
+        return;
       }
+      // Volviste a la app: primero verifica si estuviste inactivo demasiado
+      // tiempo (aunque el timer estuviera congelado); si no cerró, refresca.
+      if (enforceIdle()) return;
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        if (session?.user) setUser(session.user);
+      }).catch(() => {});
     };
     document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('beforeunload', persistActivity);
 
     const { data: { subscription: authSub } } = supabase.auth.onAuthStateChange((_event, session) => {
       if (_event === 'PASSWORD_RECOVERY') {
@@ -124,14 +152,16 @@ export function FinanceProvider({ children }) {
         return;
       }
       setUser(session?.user ?? null);
-      if (session?.user) resetTimer();
+      if (session?.user) { markActivity(); persistActivity(); }
     });
 
     return () => {
       authSub.unsubscribe();
-      events.forEach(event => document.removeEventListener(event, resetTimer));
+      events.forEach(event => document.removeEventListener(event, markActivity));
       document.removeEventListener('visibilitychange', handleVisibilityChange);
-      if (inactivityTimer) clearTimeout(inactivityTimer);
+      window.removeEventListener('beforeunload', persistActivity);
+      clearInterval(idleInterval);
+      persistActivity();
     };
   }, []);
 
