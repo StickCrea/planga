@@ -749,7 +749,33 @@ export function FinanceProvider({ children }) {
 
   // ─── Sign out ───
   const signOut = async () => {
+    const uid = user?.id;
     await supabase.auth.signOut();
+    // Los datos financieros son sensibles: no deben sobrevivir al logout en el
+    // dispositivo (riesgo en equipos compartidos). Limpiamos la caché por-usuario
+    // y las claves locales, y reseteamos el estado en memoria para que no quede
+    // patrimonio del usuario anterior visible al siguiente.
+    if (uid) {
+      localStorage.removeItem(`finly_state_${uid}`);
+      localStorage.removeItem(`planga_commitments_${uid}`);
+    }
+    localStorage.removeItem(LOCAL_COMMITMENTS_KEY);
+    localStorage.removeItem(LOCAL_BUDGETS_KEY);
+    localStorage.removeItem(LOCAL_INCOMES_KEY);
+    setState({
+      income: 0,
+      cycleDay: null,
+      expenses: [],
+      categoryBudgets: {},
+      commitments: [],
+      savings: [],
+      investments: [],
+      debts: [],
+      incomes: [],
+      selectedMonth: null,
+      currentCiclo: null,
+      paidCommitmentIds: {},
+    });
   };
 
   // ─── Password recovery ───
