@@ -34,11 +34,12 @@ function App() {
 
   // ─── Auth gate ───
   if (authLoading) {
+    // Splash mínimo y silencioso: solo la marca, sin texto de "cargando" ni
+    // spinner. El arranque resuelve en <4s (timeout de seguridad en el
+    // contexto), así que esto casi nunca alcanza a verse.
     return (
       <div className="app-init-loader">
         <Logo size={44} />
-        <Loader2 size={32} className="spin" style={{ color: 'var(--green)' }} />
-        <p>Iniciando experiencia premium...</p>
       </div>
     );
   }

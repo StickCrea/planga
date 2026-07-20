@@ -70,9 +70,15 @@ export function FinanceProvider({ children }) {
 
     const fetchSession = async () => {
       try {
-        const { data: { session }, error } = await supabase.auth.getSession();
+        // Nunca dejes el arranque colgado: si getSession no responde en 4s
+        // (red/Supabase lento), seguimos sin sesión y mostramos el login.
+        // Si la sesión llega tarde, onAuthStateChange la aplica igual.
+        const { data: { session }, error } = await Promise.race([
+          supabase.auth.getSession(),
+          new Promise((resolve) => setTimeout(() => resolve({ data: { session: null }, error: null }), 4000)),
+        ]);
         if (error) console.error('Supabase session error:', error);
-        
+
         if (session?.user) {
           setUser(session.user);
           resetTimer();

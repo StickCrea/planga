@@ -194,7 +194,7 @@ export default function AuthScreen() {
                 <label htmlFor="email">Correo electrónico</label>
                 <input
                   id="email" name={`email_${mode}`} autoComplete={mode === 'login' ? 'email' : 'off'}
-                  type="email" className="input" required placeholder="tu@correo.com"
+                  type="email" className="input" required
                   value={email} onChange={e => setEmail(e.target.value)}
                 />
               </div>
@@ -217,7 +217,7 @@ export default function AuthScreen() {
                 <label htmlFor="password">Contraseña</label>
                 <input
                   id="password" name={`password_${mode}`} autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
-                  type="password" className="input" required placeholder="Mínimo 6 caracteres"
+                  type="password" className="input" required
                   minLength={6}
                   value={password} onChange={e => setPassword(e.target.value)}
                 />
