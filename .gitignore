@@ -12,8 +12,15 @@ dist
 dist-ssr
 *.local
 
+# Env / secrets (never commit Supabase keys)
+.env
+.env.*
+!.env.example
+
 # Local agent tooling (not part of the app)
-.claude/
+# Ignore .claude/* contents but keep the project subagents versioned.
+.claude/*
+!.claude/agents/
 .agents/
 .codex/
 .impeccable/
