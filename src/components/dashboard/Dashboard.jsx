@@ -1,11 +1,14 @@
+import { useState } from 'react';
 import { useFinance } from '../../context/FinanceContext';
 import {
   getAvailableMoney, getDaysRemaining, getDailyBudget,
   getTotalSpent, getStatus, getCurrentMonthExpenses,
-  getTotalCommitments, fmt, CATEGORY_ICONS
+  getTotalCommitments, getTotalIncome, getMonthKey,
+  fmt, formatColombianInput, parseColombianInput, CATEGORY_ICONS
 } from '../../utils/financeUtils';
-import { TrendingDown, Activity, Repeat } from 'lucide-react';
+import { TrendingDown, Activity, Repeat, Plus } from 'lucide-react';
 import EmptyState from '../ui/EmptyState';
+import Modal from '../ui/Modal';
 import { Line } from 'react-chartjs-2';
 import {
   Chart as ChartJS,
@@ -32,8 +35,22 @@ ChartJS.register(
 );
 
 export default function Dashboard({ onSelectExpense }) {
-  const { state } = useFinance();
+  const { state, addIncome, showToast } = useFinance();
 
+  const [isIncomeModalOpen, setIsIncomeModalOpen] = useState(false);
+  const [incomeForm, setIncomeForm] = useState({ name: '', amount: '' });
+
+  const handleAddIncome = (e) => {
+    e.preventDefault();
+    const parsedAmount = parseColombianInput(incomeForm.amount);
+    if (parsedAmount <= 0) { showToast('Ingresa un monto válido', 'error'); return; }
+    addIncome({ id: 'i' + Date.now(), month: getMonthKey(state), name: incomeForm.name || 'Ingreso', amount: parsedAmount });
+    showToast('Ingreso registrado', 'success');
+    setIsIncomeModalOpen(false);
+    setIncomeForm({ name: '', amount: '' });
+  };
+
+  const totalIncome = getTotalIncome(state);
   const available = getAvailableMoney(state);
   const daysLeft = getDaysRemaining(state);
   const dailyBudget = getDailyBudget(state);
@@ -231,7 +248,20 @@ export default function Dashboard({ onSelectExpense }) {
         <p style={{ fontSize: '0.8rem', color: 'var(--text2)', marginTop: '-8px', marginBottom: '12px' }}>
           Tu saldo disponible (Ingreso Base + Ingresos Extra - Gastos Registrados)
         </p>
-        
+
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', marginBottom: '14px' }}>
+          <span style={{ fontSize: '0.8rem', color: 'var(--text2)' }}>
+            Recibido este ciclo: <strong style={{ color: 'var(--text)' }}>{mask(totalIncome)}</strong>
+          </span>
+          <button
+            type="button"
+            onClick={() => setIsIncomeModalOpen(true)}
+            style={{ display: 'flex', alignItems: 'center', gap: '4px', background: 'var(--green-glow)', color: 'var(--green)', border: '1px solid var(--green)', borderRadius: 'var(--radius-sm)', padding: '6px 12px', fontSize: '0.8rem', fontWeight: 700, cursor: 'pointer', flexShrink: 0 }}
+          >
+            <Plus size={14} /> Ingreso
+          </button>
+        </div>
+
         <div className="card-row">
           <div className="card-stat">
             <span className="stat-label">Días Restantes</span>
@@ -331,6 +361,29 @@ export default function Dashboard({ onSelectExpense }) {
           )}
         </ul>
       </div>
+
+      <Modal open={isIncomeModalOpen} onClose={() => setIsIncomeModalOpen(false)} title="Registrar ingreso">
+        <form onSubmit={handleAddIncome}>
+          <div className="form-group">
+            <label>Descripción (opcional)</label>
+            <input
+              type="text" className="input" placeholder="Ej: Comisión, freelance, bono…"
+              value={incomeForm.name} onChange={e => setIncomeForm({ ...incomeForm, name: e.target.value })}
+            />
+          </div>
+          <div className="form-group" style={{ marginTop: '12px' }}>
+            <label>Monto</label>
+            <input
+              type="text" inputMode="numeric" className="input" placeholder="0"
+              value={incomeForm.amount} onChange={e => setIncomeForm({ ...incomeForm, amount: formatColombianInput(e.target.value) })}
+              autoFocus
+            />
+          </div>
+          <button type="submit" className="btn-primary" style={{ marginTop: '20px', width: '100%' }}>
+            Agregar ingreso
+          </button>
+        </form>
+      </Modal>
     </>
   );
 }

@@ -155,14 +155,20 @@ export function getTotalCommitments(state) {
   return getFutureCommitments(state).reduce((s, c) => s + c.amount, 0);
 }
 
-export function getAvailableMoney(state) {
+// Ingreso total recibido en el ciclo actual: la base del ciclo más los ingresos
+// extra registrados con fecha dentro del ciclo. Es la cifra clave para el
+// ingreso variable — no asume un sueldo fijo, suma lo que realmente entró.
+export function getTotalIncome(state) {
   const mk = getMonthKey(state);
   const cycleIncomes = (state.incomes || []).filter(i => i.month === mk);
   const extraIncomeTotal = cycleIncomes.reduce((s, i) => s + i.amount, 0);
+  return state.income + extraIncomeTotal;
+}
 
+export function getAvailableMoney(state) {
   // Unpaid commitments are NOT discounted in advance like a debt.
   // They are only discounted from the available money of the present cycle when they are marked as paid (registered as an expense).
-  return state.income + extraIncomeTotal - getTotalSpent(state);
+  return getTotalIncome(state) - getTotalSpent(state);
 }
 
 export function getDailyBudget(state) {
