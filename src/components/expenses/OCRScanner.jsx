@@ -48,6 +48,7 @@ export default function OCRScanner({ onScanComplete }) {
   const qrStreamRef = useRef(null);
   const qrRafRef = useRef(null);
   const qrCanvasRef = useRef(null);
+  const qrScanStartRef = useRef(0);
   const [qrMode, setQrMode] = useState(false);
   const [qrError, setQrError] = useState('');
   const [qrHint, setQrHint] = useState('');
@@ -424,11 +425,18 @@ Devuelve ÚNICAMENTE un objeto JSON válido con la siguiente estructura exacta, 
           if (raw) {
             const qr = parseDianQR(raw);
             if (qr.isDian) { handleQrDetected(qr); return; }
-            setQrHint('Ese QR no parece de una factura electrónica. Sigo buscando…');
+            // Hay un QR en cuadro pero no es una factura DIAN: dilo claro y ofrece salida.
+            setQrHint('Detectamos un QR, pero no es de una factura electrónica DIAN. Usa "Tomar Foto" para leer el recibo.');
+          } else if (Date.now() - qrScanStartRef.current > 7000) {
+            // Lleva un rato sin encontrar nada: guía al usuario en vez de quedarse mudo.
+            setQrHint('¿No lo detecta? Acércate al código, mejora la luz, o usa "Tomar Foto".');
+          } else {
+            setQrHint('Buscando el QR de la factura…');
           }
         }
         qrRafRef.current = requestAnimationFrame(tick);
       };
+      qrScanStartRef.current = Date.now();
       qrRafRef.current = requestAnimationFrame(tick);
     } catch (err) {
       stopQrScan();
@@ -510,9 +518,12 @@ Devuelve ÚNICAMENTE un objeto JSON válido con la siguiente estructura exacta, 
               <div style={{ width: '62%', aspectRatio: '1 / 1', border: '2px solid var(--green)', borderRadius: 'var(--radius-sm)' }} />
             </div>
           </div>
-          <p style={{ textAlign: 'center', color: 'var(--text3)', fontSize: '0.8rem', margin: '10px 0' }}>
-            {qrHint}
-          </p>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', margin: '10px 0' }}>
+            <Loader2 size={16} className="ocr-spinner" style={{ color: 'var(--green)', flexShrink: 0 }} />
+            <p style={{ textAlign: 'center', color: 'var(--text3)', fontSize: '0.8rem', margin: 0 }}>
+              {qrHint}
+            </p>
+          </div>
           <button type="button" className="btn-secondary" onClick={stopQrScan} style={{ width: '100%', borderColor: 'var(--glass-border)' }}>
             Cancelar
           </button>
