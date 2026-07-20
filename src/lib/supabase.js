@@ -23,6 +23,10 @@ if (isConfigured) {
   }
 }
 
+// True cuando NO hay un cliente real de Supabase (corremos sobre el mock local,
+// "modo demo"). Sirve para ocultar herramientas de solo-demo en producción.
+export const isDemoMode = !supabaseClient;
+
 if (!supabaseClient) {
   console.warn('Finly: Supabase credentials are not configured. Running in Local Demo Mode with LocalStorage fallback.');
   

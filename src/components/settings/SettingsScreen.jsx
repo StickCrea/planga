@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useFinance } from '../../context/FinanceContext';
 import { CATEGORY_ICONS, formatColombianInput, parseColombianInput } from '../../utils/financeUtils';
+import { isDemoMode } from '../../lib/supabase';
 import ConfirmDialog from '../ui/ConfirmDialog';
 
 export default function SettingsScreen({ onSave }) {
@@ -128,6 +129,7 @@ export default function SettingsScreen({ onSave }) {
         </form>
       </div>
 
+      {isDemoMode && (
       <div className="glass-card" style={{ border: '1px solid rgba(239, 68, 68, 0.2)' }}>
         <h3 className="settings-subtitle" style={{ color: 'var(--red)' }}>Datos de Prueba</h3>
         <p style={{ fontSize: '0.8rem', color: 'var(--text3)', marginBottom: '16px', lineHeight: '1.4' }}>
@@ -159,6 +161,7 @@ export default function SettingsScreen({ onSave }) {
           Restablecer Base de Datos Local
         </button>
       </div>
+      )}
 
       <ConfirmDialog
         open={confirmReset}
