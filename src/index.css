@@ -344,6 +344,18 @@ body {
 }
 .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 12px 24px rgba(0, 230, 118, 0.4); }
 .btn-primary:active { transform: scale(.96); }
+/* Disabled: signal "no disponible" sin apagar la legibilidad del texto */
+.btn-primary:disabled,
+.btn-primary[disabled] {
+  opacity: .45;
+  filter: saturate(.6);
+  box-shadow: none;
+  cursor: not-allowed;
+}
+.btn-primary:disabled:hover,
+.btn-primary[disabled]:hover { transform: none; box-shadow: none; }
+.btn-primary:disabled:active,
+.btn-primary[disabled]:active { transform: none; }
 .btn-check { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 1.6rem; }
 .hidden { display: none !important; }
 
