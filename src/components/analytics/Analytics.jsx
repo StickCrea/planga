@@ -1,13 +1,13 @@
 import { useState } from 'react';
-import { useFinance } from '../context/FinanceContext';
+import { useFinance } from '../../context/FinanceContext';
 import { 
   getCurrentMonthExpenses, getTotalSpent, getAvailableMoney, 
   fmt, CATEGORY_ICONS, CATEGORY_COLORS, getDaysInMonth, getMonthKey,
   formatColombianInput, parseColombianInput
-} from '../utils/financeUtils';
+} from '../../utils/financeUtils';
 import { Trash2, AlertCircle, TrendingUp, CheckCircle2, Lightbulb, Sparkles, Calendar, Landmark } from 'lucide-react';
-import Modal from './ui/Modal';
-import EmptyState from './ui/EmptyState';
+import Modal from '../ui/Modal';
+import EmptyState from '../ui/EmptyState';
 import {
   Chart as ChartJS,
   CategoryScale,

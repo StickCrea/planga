@@ -1,11 +1,11 @@
-import { useFinance } from '../context/FinanceContext';
+import { useFinance } from '../../context/FinanceContext';
 import {
   getAvailableMoney, getDaysRemaining, getDailyBudget,
   getTotalSpent, getStatus, getCurrentMonthExpenses,
   getTotalCommitments, fmt, CATEGORY_ICONS
-} from '../utils/financeUtils';
+} from '../../utils/financeUtils';
 import { TrendingDown, Activity, Repeat } from 'lucide-react';
-import EmptyState from './ui/EmptyState';
+import EmptyState from '../ui/EmptyState';
 import { Line } from 'react-chartjs-2';
 import {
   Chart as ChartJS,

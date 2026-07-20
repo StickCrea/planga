@@ -1,8 +1,8 @@
-import { useFinance } from '../context/FinanceContext';
+import { useFinance } from '../../context/FinanceContext';
 import { 
   getCurrentMonthExpenses, getTotalSpent, getDaysInMonth, 
   fmt, CATEGORY_ICONS, CATEGORY_COLORS 
-} from '../utils/financeUtils';
+} from '../../utils/financeUtils';
 
 export default function Summary({ onSelectExpense }) {
   const { state } = useFinance();

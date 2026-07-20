@@ -54,7 +54,7 @@ vi.mock('tesseract.js', () => ({
 }));
 
 // ─── Dashboard ───────────────────────────────────────────────
-import Dashboard from '../components/Dashboard';
+import Dashboard from '../components/dashboard/Dashboard';
 
 describe('<Dashboard />', () => {
   it('renders Dinero Disponible label', () => {
@@ -89,7 +89,7 @@ describe('<Dashboard />', () => {
 });
 
 // ─── Summary ─────────────────────────────────────────────────
-import Summary from '../components/Summary';
+import Summary from '../components/dashboard/Summary';
 
 describe('<Summary />', () => {
   it('renders Resumen del Mes title', () => {
@@ -119,7 +119,7 @@ describe('<Summary />', () => {
 });
 
 // ─── Commitments ─────────────────────────────────────────────
-import Commitments from '../components/Commitments';
+import Commitments from '../components/portfolio/Commitments';
 
 describe('<Commitments />', () => {
   it('renders total commitments heading', () => {
@@ -153,7 +153,7 @@ describe('<Commitments />', () => {
 });
 
 // ─── Portfolio ────────────────────────────────────────────────
-import Portfolio from '../components/Portfolio';
+import Portfolio from '../components/portfolio/Portfolio';
 
 describe('<Portfolio />', () => {
   it('renders Patrimonio Neto heading', () => {
@@ -192,7 +192,7 @@ describe('<Portfolio />', () => {
 });
 
 // ─── ExpenseForm ──────────────────────────────────────────────
-import ExpenseForm from '../components/ExpenseForm';
+import ExpenseForm from '../components/expenses/ExpenseForm';
 
 describe('<ExpenseForm />', () => {
   it('renders Agregar Gasto title', () => {
@@ -254,7 +254,7 @@ describe('<ExpenseForm />', () => {
 });
 
 // ─── SettingsScreen ───────────────────────────────────────────
-import SettingsScreen from '../components/SettingsScreen';
+import SettingsScreen from '../components/settings/SettingsScreen';
 
 describe('<SettingsScreen />', () => {
   it('renders Configuración heading', () => {

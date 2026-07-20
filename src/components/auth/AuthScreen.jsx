@@ -1,8 +1,8 @@
 import { useState } from 'react';
-import { supabase } from '../lib/supabase';
+import { supabase } from '../../lib/supabase';
 import { Loader2 } from 'lucide-react';
-import { useFinance } from '../context/FinanceContext';
-import Logo from './ui/Logo';
+import { useFinance } from '../../context/FinanceContext';
+import Logo from '../ui/Logo';
 
 export default function AuthScreen() {
   const { requestPasswordReset, verifyPasswordResetCode } = useFinance();

@@ -1,9 +1,9 @@
 import { useState } from 'react';
-import { useFinance } from '../context/FinanceContext';
-import { CATEGORY_ICONS, fmt } from '../utils/financeUtils';
+import { useFinance } from '../../context/FinanceContext';
+import { CATEGORY_ICONS, fmt } from '../../utils/financeUtils';
 import { ChevronDown, Trash2 } from 'lucide-react';
-import Modal from './ui/Modal';
-import ConfirmDialog from './ui/ConfirmDialog';
+import Modal from '../ui/Modal';
+import ConfirmDialog from '../ui/ConfirmDialog';
 
 export default function ExpenseDetailsModal({ expense, onClose }) {
   const { deleteExpense } = useFinance();

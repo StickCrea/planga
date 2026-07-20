@@ -1,10 +1,10 @@
 import { useState } from 'react';
-import { useFinance } from '../context/FinanceContext';
-import { fmt, formatColombianInput, parseColombianInput } from '../utils/financeUtils';
+import { useFinance } from '../../context/FinanceContext';
+import { fmt, formatColombianInput, parseColombianInput } from '../../utils/financeUtils';
 import { Trash2, Plus, Edit2, Info } from 'lucide-react';
-import Modal from './ui/Modal';
-import ConfirmDialog from './ui/ConfirmDialog';
-import EmptyState from './ui/EmptyState';
+import Modal from '../ui/Modal';
+import ConfirmDialog from '../ui/ConfirmDialog';
+import EmptyState from '../ui/EmptyState';
 
 export default function Commitments() {
   const { state, addCommitment, updateCommitment, deleteCommitment, markCommitmentAsPaid, showToast } = useFinance();

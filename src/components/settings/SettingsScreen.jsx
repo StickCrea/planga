@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { useFinance } from '../context/FinanceContext';
-import { CATEGORY_ICONS, formatColombianInput, parseColombianInput } from '../utils/financeUtils';
-import ConfirmDialog from './ui/ConfirmDialog';
+import { useFinance } from '../../context/FinanceContext';
+import { CATEGORY_ICONS, formatColombianInput, parseColombianInput } from '../../utils/financeUtils';
+import ConfirmDialog from '../ui/ConfirmDialog';
 
 export default function SettingsScreen({ onSave }) {
   const { state, updateSettings, showToast } = useFinance();

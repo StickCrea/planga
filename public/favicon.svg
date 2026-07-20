@@ -1,5 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <!-- App icon Finly: contenedor azul-noche redondeado (estilo iOS) + triángulo verde "adelante". -->
-  <rect width="512" height="512" rx="120" fill="#0A0F1E" />
-  <path d="M256 150 L378 362 L134 362 Z" fill="#00E676" />
-</svg>

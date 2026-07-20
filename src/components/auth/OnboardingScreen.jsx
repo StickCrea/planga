@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { supabase } from '../lib/supabase';
-import { fmt, getCycleInfo } from '../utils/financeUtils';
-import Logo from './ui/Logo';
+import { supabase } from '../../lib/supabase';
+import { fmt, getCycleInfo } from '../../utils/financeUtils';
+import Logo from '../ui/Logo';
 
 const STEPS = ['Bienvenida', 'Ingresos', 'Ciclo', 'Compromisos'];
 

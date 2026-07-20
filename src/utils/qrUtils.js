@@ -1,18 +1,39 @@
 /**
+ * Lazily loads jsQR (kept out of the initial bundle, like PDF.js on the OCR
+ * screen). The import promise is cached so the live-scan loop and the
+ * still-image path share a single module instance. Returns the jsQR function,
+ * or null if the module can't be loaded.
+ */
+let _jsQRPromise;
+export function loadJsQR() {
+  if (!_jsQRPromise) {
+    _jsQRPromise = import('jsqr').then((m) => m.default).catch(() => null);
+  }
+  return _jsQRPromise;
+}
+
+/**
+ * Runs jsQR over a raw ImageData (e.g. a video frame or a decoded picture) and
+ * returns the decoded string, or null. `inversion` defaults to 'dontInvert' —
+ * cheapest, right for the per-frame live loop; the still-image path passes
+ * 'attemptBoth' since it only runs once and wants to be thorough.
+ */
+export function scanImageData(jsQR, imageData, inversion = 'dontInvert') {
+  if (!jsQR || !imageData) return null;
+  const result = jsQR(imageData.data, imageData.width, imageData.height, {
+    inversionAttempts: inversion,
+  });
+  return result ? result.data : null;
+}
+
+/**
  * Decodes a QR code from an image data URL (the same JPEG data URL the OCR
  * pipeline already produces via prepareImage / PDF render). Returns the raw
  * decoded string, or null if no QR is present or it can't be read.
- *
- * jsQR is imported dynamically so it stays out of the initial bundle and only
- * loads on the first scan - matching how the OCR screen lazy-loads PDF.js.
  */
 export async function readQRFromDataUrl(dataUrl) {
-  let jsQR;
-  try {
-    jsQR = (await import('jsqr')).default;
-  } catch {
-    return null;
-  }
+  const jsQR = await loadJsQR();
+  if (!jsQR) return null;
   return new Promise((resolve) => {
     const img = new Image();
     img.onload = () => {
@@ -23,8 +44,7 @@ export async function readQRFromDataUrl(dataUrl) {
         const ctx = canvas.getContext('2d');
         ctx.drawImage(img, 0, 0);
         const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-        const result = jsQR(imageData.data, imageData.width, imageData.height);
-        resolve(result ? result.data : null);
+        resolve(scanImageData(jsQR, imageData, 'attemptBoth'));
       } catch {
         resolve(null);
       }

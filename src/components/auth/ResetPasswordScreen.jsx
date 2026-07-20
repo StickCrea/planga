@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Loader2 } from 'lucide-react';
-import { useFinance } from '../context/FinanceContext';
-import Logo from './ui/Logo';
+import { useFinance } from '../../context/FinanceContext';
+import Logo from '../ui/Logo';
 
 export default function ResetPasswordScreen() {
   const { completePasswordRecovery, cancelPasswordRecovery } = useFinance();

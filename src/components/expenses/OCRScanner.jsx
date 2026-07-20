@@ -1,9 +1,9 @@
 import { useRef, useState, useEffect } from 'react';
 import Tesseract from 'tesseract.js';
-import { Camera, FileText, RotateCw, Loader2, Sparkles } from 'lucide-react';
-import { prepareImage, extractDetailedData, extractPaymentInfo } from '../utils/ocrUtils';
-import { readQRFromDataUrl, parseDianQR, mergeInvoiceData } from '../utils/qrUtils';
-import { useFinance } from '../context/FinanceContext';
+import { Camera, FileText, RotateCw, Loader2, Sparkles, QrCode, X } from 'lucide-react';
+import { prepareImage, extractDetailedData, extractPaymentInfo } from '../../utils/ocrUtils';
+import { readQRFromDataUrl, parseDianQR, mergeInvoiceData, loadJsQR, scanImageData } from '../../utils/qrUtils';
+import { useFinance } from '../../context/FinanceContext';
 
 // Dynamic loader for PDF.js to keep initial bundle light
 const loadPdfJS = () => {
@@ -24,10 +24,33 @@ const loadPdfJS = () => {
   });
 };
 
+// Reads today's AI-scan count from localStorage, resetting it when the day
+// rolls over. Module-level and side-effecting on read, so it can seed useState
+// lazily (once, on mount) instead of via an effect.
+const getAiScansCountToday = () => {
+  const todayStr = new Date().toISOString().slice(0, 10);
+  const storedDate = localStorage.getItem('planga_ai_scan_date');
+  if (storedDate !== todayStr) {
+    localStorage.setItem('planga_ai_scan_date', todayStr);
+    localStorage.setItem('planga_ai_scan_count', '0');
+    return 0;
+  }
+  return parseInt(localStorage.getItem('planga_ai_scan_count') || '0', 10);
+};
+
 export default function OCRScanner({ onScanComplete }) {
   const cameraInputRef = useRef(null);
   const galleryInputRef = useRef(null);
   const { showToast } = useFinance();
+
+  // ─── Live QR scanner ───
+  const videoRef = useRef(null);
+  const qrStreamRef = useRef(null);
+  const qrRafRef = useRef(null);
+  const qrCanvasRef = useRef(null);
+  const [qrMode, setQrMode] = useState(false);
+  const [qrError, setQrError] = useState('');
+  const [qrHint, setQrHint] = useState('');
   const [loading, setLoading] = useState(false);
   const [loadingMessage, setLoadingMessage] = useState('Escaneando Factura');
   const [loadingProgress, setLoadingProgress] = useState(0);
@@ -39,29 +62,14 @@ export default function OCRScanner({ onScanComplete }) {
   // Track if current preview was upgraded to Gemini AI
   const [wasAiProcessed, setWasAiProcessed] = useState(false);
   
-  // Daily rate limits
-  const [aiScansToday, setAiScansToday] = useState(0);
-
-  const getAiScansCountToday = () => {
-    const todayStr = new Date().toISOString().slice(0, 10);
-    const storedDate = localStorage.getItem('planga_ai_scan_date');
-    if (storedDate !== todayStr) {
-      localStorage.setItem('planga_ai_scan_date', todayStr);
-      localStorage.setItem('planga_ai_scan_count', '0');
-      return 0;
-    }
-    return parseInt(localStorage.getItem('planga_ai_scan_count') || '0', 10);
-  };
+  // Daily rate limits — seeded once from localStorage (no effect needed).
+  const [aiScansToday, setAiScansToday] = useState(getAiScansCountToday);
 
   const incrementAiScansCount = () => {
     const count = getAiScansCountToday();
     localStorage.setItem('planga_ai_scan_count', String(count + 1));
     setAiScansToday(count + 1);
   };
-
-  useEffect(() => {
-    setAiScansToday(getAiScansCountToday());
-  }, []);
 
   const handleFileChange = async (e) => {
     const file = e.target.files[0];
@@ -220,6 +228,37 @@ Devuelve ÚNICAMENTE un objeto JSON válido con la siguiente estructura exacta, 
     }
   };
 
+  // Analiza una imagen ya lista (data URL). "QR primero": la factura electrónica
+  // DIAN trae total/fecha digitalmente, así que leemos el QR primero y NO
+  // dependemos del OCR — si Tesseract falla (p. ej. sin red para su modelo), el
+  // gasto igual se registra desde el QR. El OCR solo enriquece (comercio, items,
+  // medio de pago).
+  const analyzeInvoiceImage = async (imgSource, ocrLogger) => {
+    const qr = parseDianQR(await readQRFromDataUrl(imgSource));
+
+    let ocrData = { total: null, date: null, category: 'otro', merchant: '', items: [], metadata: [] };
+    let paymentInfo = { method: 'efectivo', entity: null, type: 'debito' };
+    let ocrOk = false;
+    try {
+      const result = await Tesseract.recognize(imgSource, 'spa', { logger: ocrLogger });
+      const text = result.data.text;
+      ocrData = extractDetailedData(text);
+      paymentInfo = extractPaymentInfo(text);
+      ocrOk = true;
+    } catch {
+      // OCR no disponible; seguimos con lo que dé el QR.
+    }
+
+    const { data: merged, usedQR } = mergeInvoiceData(ocrData, qr);
+    // Si el dato viene del QR y el OCR no leyó un recibo (sin items), evita
+    // mostrar ruido del OCR como nombre de comercio.
+    if (usedQR && (!merged.merchant || merged.items.length === 0)) {
+      merged.merchant = 'Factura electrónica';
+    }
+
+    return { data: merged, paymentInfo, usedQR, ocrOk };
+  };
+
   const processImage = async (file, rot) => {
     setLoading(true);
     setLoadingMessage('Escaneando Factura');
@@ -229,31 +268,21 @@ Devuelve ÚNICAMENTE un objeto JSON válido con la siguiente estructura exacta, 
       const imgSource = await prepareImage(file, rot);
       setPreviewSrc(imgSource);
 
-      // Default: local Tesseract OCR engine (fast & completely offline-free)
-      const result = await Tesseract.recognize(imgSource, 'spa', {
-        logger: m => {
-          if (m.status === 'recognizing text') {
-            setLoadingProgress(Math.round(m.progress * 100));
-          }
+      const { data, paymentInfo, usedQR, ocrOk } = await analyzeInvoiceImage(imgSource, m => {
+        if (m.status === 'recognizing text') {
+          setLoadingProgress(Math.round(m.progress * 100));
         }
       });
 
-      const text = result.data.text;
-      let ocrData = extractDetailedData(text);
-      const paymentInfo = extractPaymentInfo(text);
-
-      // Electronic invoices (DIAN) embed a QR with the exact total/date - read
-      // it and let it override the OCR guesses when present.
-      const qrRaw = await readQRFromDataUrl(imgSource);
-      const { data: merged, usedQR } = mergeInvoiceData(ocrData, parseDianQR(qrRaw));
-      ocrData = merged;
-
-      setDebugData(ocrData);
-
-      if (onScanComplete) {
-        onScanComplete({ ...ocrData, paymentInfo });
+      if (!usedQR && !ocrOk) {
+        showToast('No pudimos leerla. ¿Escaneas otra foto o tecleas el valor?', 'error');
+        return;
       }
 
+      setDebugData(data);
+      if (onScanComplete) {
+        onScanComplete({ ...data, paymentInfo });
+      }
       showToast(usedQR ? 'Factura electrónica leída desde QR' : 'Factura analizada (lector local)', 'success');
 
     } catch {
@@ -297,30 +326,21 @@ Devuelve ÚNICAMENTE un objeto JSON válido con la siguiente estructura exacta, 
       setLoadingMessage('Escaneando Factura');
       setLoadingProgress(15);
 
-      // Default: local Tesseract OCR
-      const result = await Tesseract.recognize(imgSource, 'spa', {
-        logger: m => {
-          if (m.status === 'recognizing text') {
-            setLoadingProgress(Math.round(m.progress * 15 + 15)); // Scale local Tesseract progress
-          }
+      const { data, paymentInfo, usedQR, ocrOk } = await analyzeInvoiceImage(imgSource, m => {
+        if (m.status === 'recognizing text') {
+          setLoadingProgress(Math.round(m.progress * 15 + 15)); // Scale local Tesseract progress
         }
       });
 
-      const text = result.data.text;
-      let ocrData = extractDetailedData(text);
-      const paymentInfo = extractPaymentInfo(text);
-
-      // Read the DIAN QR from the rendered PDF page too.
-      const qrRaw = await readQRFromDataUrl(imgSource);
-      const { data: merged, usedQR } = mergeInvoiceData(ocrData, parseDianQR(qrRaw));
-      ocrData = merged;
-
-      setDebugData(ocrData);
-
-      if (onScanComplete) {
-        onScanComplete({ ...ocrData, paymentInfo });
+      if (!usedQR && !ocrOk) {
+        showToast('No pudimos leer el PDF. Intenta con otra foto o teclea el valor.', 'error');
+        return;
       }
 
+      setDebugData(data);
+      if (onScanComplete) {
+        onScanComplete({ ...data, paymentInfo });
+      }
       showToast(usedQR ? 'Factura electrónica (PDF) leída desde QR' : 'Factura PDF analizada (lector local)', 'success');
 
     } catch {
@@ -330,6 +350,100 @@ Devuelve ÚNICAMENTE un objeto JSON válido con la siguiente estructura exacta, 
       setLoadingProgress(0);
     }
   };
+
+  // Stop the camera stream and the per-frame loop, and hide the scanner view.
+  const stopQrScan = () => {
+    if (qrRafRef.current) {
+      cancelAnimationFrame(qrRafRef.current);
+      qrRafRef.current = null;
+    }
+    if (qrStreamRef.current) {
+      qrStreamRef.current.getTracks().forEach(t => t.stop());
+      qrStreamRef.current = null;
+    }
+    if (videoRef.current) videoRef.current.srcObject = null;
+    setQrMode(false);
+    setQrHint('');
+  };
+
+  // A DIAN QR carries the exact total/date digitally — prefill straight from it,
+  // no OCR needed. This is the lowest-friction capture path.
+  const handleQrDetected = (qr) => {
+    const base = { total: null, date: null, category: 'otro', merchant: '', items: [], metadata: [] };
+    const { data } = mergeInvoiceData(base, qr);
+    stopQrScan();
+    setPreviewSrc(null);
+    setDebugData(data);
+    setWasAiProcessed(false);
+    if (onScanComplete) {
+      onScanComplete({ ...data, paymentInfo: { method: 'efectivo', entity: null, type: 'debito' } });
+    }
+    showToast('Factura electrónica leída desde QR', 'success');
+  };
+
+  const startQrScan = async () => {
+    setQrError('');
+    setQrHint('Apunta al QR de la factura electrónica…');
+
+    if (!navigator.mediaDevices?.getUserMedia) {
+      setQrError('Tu navegador no permite usar la cámara aquí. Prueba con "Tomar Foto".');
+      return;
+    }
+
+    setQrMode(true);
+    try {
+      const jsQR = await loadJsQR();
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: 'environment' },
+        audio: false,
+      });
+      qrStreamRef.current = stream;
+
+      const video = videoRef.current;
+      if (!video) { // view unmounted while asking for permission
+        stream.getTracks().forEach(t => t.stop());
+        qrStreamRef.current = null;
+        return;
+      }
+      video.srcObject = stream;
+      video.setAttribute('playsinline', 'true');
+      await video.play();
+
+      const canvas = qrCanvasRef.current || document.createElement('canvas');
+      qrCanvasRef.current = canvas;
+      const ctx = canvas.getContext('2d', { willReadFrequently: true });
+
+      const tick = () => {
+        if (!qrStreamRef.current) return; // stopped
+        if (video.readyState === video.HAVE_ENOUGH_DATA && video.videoWidth) {
+          canvas.width = video.videoWidth;
+          canvas.height = video.videoHeight;
+          ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+          const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+          const raw = scanImageData(jsQR, imageData);
+          if (raw) {
+            const qr = parseDianQR(raw);
+            if (qr.isDian) { handleQrDetected(qr); return; }
+            setQrHint('Ese QR no parece de una factura electrónica. Sigo buscando…');
+          }
+        }
+        qrRafRef.current = requestAnimationFrame(tick);
+      };
+      qrRafRef.current = requestAnimationFrame(tick);
+    } catch (err) {
+      stopQrScan();
+      if (err?.name === 'NotAllowedError' || err?.name === 'SecurityError') {
+        setQrError('Necesitamos permiso de cámara para escanear el QR. Actívalo y reintenta.');
+      } else if (err?.name === 'NotFoundError' || err?.name === 'OverconstrainedError') {
+        setQrError('No encontramos una cámara. Usa "Tomar Foto" o "Subir Recibo".');
+      } else {
+        setQrError('No pudimos abrir la cámara. Prueba con "Tomar Foto".');
+      }
+    }
+  };
+
+  // Ensure the camera is released if the component unmounts mid-scan.
+  useEffect(() => stopQrScan, []);
 
   return (
     <div className="ocr-scan-container">
@@ -351,6 +465,57 @@ Devuelve ÚNICAMENTE un objeto JSON válido con la siguiente estructura exacta, 
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', background: 'rgba(34, 197, 94, 0.08)', border: '1px solid rgba(34, 197, 94, 0.2)', padding: '8px 12px', borderRadius: '12px', marginBottom: '8px', fontSize: '0.75rem', color: 'var(--green)', fontWeight: 700 }}>
           <span style={{ fontSize: '0.95rem' }}>✨</span>
           Optimizado con Escaneo Inteligente (Gemini AI)
+        </div>
+      )}
+
+      {/* Escaneo de QR en vivo: el camino más rápido y exacto (factura DIAN) */}
+      <button
+        type="button"
+        className="ocr-btn"
+        onClick={qrMode ? stopQrScan : startQrScan}
+        disabled={loading}
+        style={{
+          width: '100%',
+          marginBottom: '8px',
+          borderColor: 'var(--green)',
+          color: 'var(--green)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: '8px',
+          fontWeight: 700,
+        }}
+      >
+        {qrMode ? <X size={18} /> : <QrCode size={18} />}
+        {qrMode ? 'Cerrar escáner QR' : 'Escanear QR'}
+      </button>
+
+      {qrError && (
+        <div style={{ marginBottom: '8px', padding: '10px', borderRadius: 'var(--radius-sm)', color: 'var(--red)', fontSize: '0.8rem', border: '1px solid var(--glass-border)' }}>
+          {qrError}
+        </div>
+      )}
+
+      {qrMode && (
+        <div className="glass-card" style={{ marginBottom: '8px', padding: '12px' }}>
+          <div style={{ position: 'relative', borderRadius: 'var(--radius-sm)', overflow: 'hidden', background: 'var(--bg)' }}>
+            <video
+              ref={videoRef}
+              muted
+              playsInline
+              style={{ width: '100%', display: 'block' }}
+            />
+            {/* Marco de puntería */}
+            <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>
+              <div style={{ width: '62%', aspectRatio: '1 / 1', border: '2px solid var(--green)', borderRadius: 'var(--radius-sm)' }} />
+            </div>
+          </div>
+          <p style={{ textAlign: 'center', color: 'var(--text3)', fontSize: '0.8rem', margin: '10px 0' }}>
+            {qrHint}
+          </p>
+          <button type="button" className="btn-secondary" onClick={stopQrScan} style={{ width: '100%', borderColor: 'var(--glass-border)' }}>
+            Cancelar
+          </button>
         </div>
       )}
 

@@ -1,5 +1,5 @@
-import { useFinance } from '../context/FinanceContext';
-import { fmt, getMonthKey, getCycleInfo, formatDateRange } from '../utils/financeUtils';
+import { useFinance } from '../../context/FinanceContext';
+import { fmt, getMonthKey, getCycleInfo, formatDateRange } from '../../utils/financeUtils';
 
 export default function Reports({ onMonthSelect }) {
   const { state } = useFinance();

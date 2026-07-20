@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useFinance } from '../context/FinanceContext';
+import { useFinance } from '../../context/FinanceContext';
 import { Mail, Phone, Settings, LogOut, BarChart2, Globe, ListChecks, ChevronRight, Edit2, Check, X, BookOpen } from 'lucide-react';
 
 export default function SidebarMenu({ isOpen, onClose, onNavigate }) {
