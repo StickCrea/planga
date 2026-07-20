@@ -30,7 +30,7 @@ export default function Summary({ onSelectExpense }) {
     <>
       <div className="glass-card">
         <h2 className="card-title">Resumen del Mes</h2>
-        <p style={{ fontSize: '0.72rem', color: 'var(--text3)', marginTop: '-12px', marginBottom: '14px', lineHeight: '1.4' }}>
+        <p style={{ fontSize: '0.72rem', color: 'var(--text3)', marginTop: '4px', marginBottom: '14px', lineHeight: '1.4' }}>
           Consumo total acumulado y tu promedio de gasto diario registrado durante el periodo actual.
         </p>
         <div className="summary-stats-row" style={{ marginTop: '16px', marginBottom: '16px' }}>
@@ -68,7 +68,7 @@ export default function Summary({ onSelectExpense }) {
 
       <div className="glass-card">
         <h3 className="card-title">Por Categoría</h3>
-        <p style={{ fontSize: '0.72rem', color: 'var(--text3)', marginTop: '-12px', marginBottom: '14px', lineHeight: '1.4' }}>
+        <p style={{ fontSize: '0.72rem', color: 'var(--text3)', marginTop: '4px', marginBottom: '14px', lineHeight: '1.4' }}>
           Distribución de tus gastos agrupados de mayor a menor consumo.
         </p>
         <div className="category-breakdown">
@@ -101,7 +101,7 @@ export default function Summary({ onSelectExpense }) {
 
       <div className="glass-card" style={{ marginTop: '16px' }}>
         <h3 className="card-title">Todos los Gastos del Mes</h3>
-        <p style={{ fontSize: '0.72rem', color: 'var(--text3)', marginTop: '-12px', marginBottom: '14px', lineHeight: '1.4' }}>
+        <p style={{ fontSize: '0.72rem', color: 'var(--text3)', marginTop: '4px', marginBottom: '14px', lineHeight: '1.4' }}>
           Historial completo de consumos registrados durante este ciclo de pago, ordenado por fecha de manera descendente.
         </p>
         <ul className="expense-list-full">

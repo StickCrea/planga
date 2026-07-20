@@ -222,7 +222,7 @@ function App() {
                 }}>
                   {(user?.user_metadata?.nombre || user?.email || '?').charAt(0).toUpperCase()}
                 </div>
-                <span style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--text)', whiteSpace: 'nowrap', letterSpacing: '0.3px', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                <span className="header-profile-name" style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--text)', whiteSpace: 'nowrap', letterSpacing: '0.3px', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                   {user?.user_metadata?.nombre ? user.user_metadata.nombre.split(' ')[0] : 'Perfil'}
                 </span>
               </button>

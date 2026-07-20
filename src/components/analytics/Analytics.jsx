@@ -344,7 +344,7 @@ export default function Analytics() {
       </div>
       
       {/* KPIs */}
-      <div className="kpi-row" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px', gridColumn: '1 / -1', width: '100%' }}>
+      <div className="kpi-row" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '12px', gridColumn: '1 / -1', width: '100%' }}>
         <div className="glass-card kpi-card" style={{ padding: '16px 12px', textAlign: 'center', transition: 'all 0.2s', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', border: '1px solid rgba(255, 255, 255, 0.08)' }} onMouseEnter={e => e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.15)'} onMouseLeave={e => e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.08)'}>
           <div style={{ fontSize: '1.6rem', marginBottom: '6px' }}>💰</div>
           <div className="kpi-label" style={{ fontSize: '0.7rem', color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: '0.8px', fontWeight: 700 }}>Ingresos Totales</div>

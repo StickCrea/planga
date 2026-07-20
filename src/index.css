@@ -1289,6 +1289,16 @@ body {
   }
 }
 
+/* En celulares angostos el header (logo + pastilla del ciclo + perfil) no cabe
+   y se encima. Compactamos la pastilla y mostramos solo el avatar (sin el
+   nombre) para que las tres piezas quepan sin chocar. */
+@media (max-width: 430px) {
+  .screen-header { gap: 6px; }
+  .header-date-pill { padding: 5px 9px !important; }
+  .header-date-pill .date-text-short { font-size: 0.66rem !important; }
+  .header-profile-name { display: none !important; }
+}
+
 /* The full cycle-date text ("Ciclo: 25 de junio al 25 de agosto de 2026") is
    long and non-wrapping (flexShrink:0 in App.jsx), which forces the header -
    and with it .screen/.main-content - wider than the viewport in the tablet
