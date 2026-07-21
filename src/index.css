@@ -551,8 +551,11 @@ body {
     position: sticky;
     top: 0;
     z-index: 50;
-    background: rgba(10, 15, 30, 0.8);
-    backdrop-filter: blur(12px);
+    /* Fondo SÓLIDO, no translúcido: el blur no se aplica en Safari y, con el
+       número hero verde pasando por debajo, el 0.8 dejaba ver el contenido
+       "fantasma" al hacer scroll (se superponía). Sólido = nunca se transparenta. */
+    background: var(--bg);
+    border-bottom: 1px solid var(--glass-border);
   }
 
   .screen-header .logo {
