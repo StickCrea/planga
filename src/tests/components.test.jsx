@@ -122,9 +122,11 @@ describe('<Summary />', () => {
 import Commitments from '../components/portfolio/Commitments';
 
 describe('<Commitments />', () => {
-  it('renders total commitments heading', () => {
+  it('renders the cycle summary heading', () => {
     render(<Commitments />);
-    expect(screen.getByText('Total Compromisos Mes')).toBeInTheDocument();
+    // La tarjeta resume lo que FALTA por pagar (no el total bruto); sin
+    // compromisos configurados el encabezado es el estado pendiente.
+    expect(screen.getByText('Pendiente por pagar')).toBeInTheDocument();
   });
 
   it('shows empty state when no commitments', () => {

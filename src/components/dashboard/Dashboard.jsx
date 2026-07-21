@@ -245,11 +245,14 @@ export default function Dashboard({ onSelectExpense }) {
       <div className={`glass-card main-card pulse-border-${status.level}`}>
         <h2 className="card-label">Dinero Disponible</h2>
         <div className="money-big">{mask(available)}</div>
-        <p style={{ fontSize: '0.8rem', color: 'var(--text2)', marginTop: '-8px', marginBottom: '12px' }}>
-          Tu saldo disponible (Ingreso Base + Ingresos Extra - Gastos Registrados)
+        <p style={{ fontSize: '0.8rem', color: 'var(--text2)', marginBottom: '14px', lineHeight: 1.4 }}>
+          Esto es lo que te queda para gastar hasta el fin del ciclo.
         </p>
 
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', marginBottom: '14px' }}>
+        {/* Centrado (no space-between) para que "Recibido" y el botón formen un
+            grupo cohesionado bajo el número y no dejen un hueco vacío al medio
+            en pantallas anchas. flexWrap protege el celular. */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flexWrap: 'wrap', gap: '10px 14px', marginBottom: '14px' }}>
           <span style={{ fontSize: '0.8rem', color: 'var(--text2)' }}>
             Recibido este ciclo: <strong style={{ color: 'var(--text)' }}>{mask(totalIncome)}</strong>
           </span>

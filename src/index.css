@@ -180,12 +180,16 @@ body {
 .money-big {
   font-size: 3.2rem;
   font-weight: 900;
-  margin: 12px 0;
+  margin: 10px 0 6px;
   letter-spacing: -1.5px;
-  background: var(--accent-grad);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  text-shadow: var(--accent-glow);
+  line-height: 1.04;
+  /* "La luz verde": verde señal SÓLIDO (legible, AA) con un glow simétrico que
+     comunica el estado "vas bien". Antes era texto recortado sobre un degradado
+     verde, menos legible y con el extremo #059669 apagado.
+     tabular-nums evita que los dígitos "bailen" al cambiar el monto. */
+  color: var(--green);
+  text-shadow: 0 0 22px rgba(0, 230, 118, 0.28);
+  font-variant-numeric: tabular-nums;
 }
 .card-label { 
   font-size: 0.85rem; 
@@ -823,27 +827,64 @@ body {
 .ocr-btn svg { color: #60a5fa; }
 
 /* ─── App Init Loader ─── */
-.app-init-loader {
-  min-height: 100vh;
+/* Splash de arranque: overlay FIJO por encima de todo. Se funde hacia la app
+   (crossfade) en vez de un corte seco de "página cargando". */
+.app-splash {
+  position: fixed;
+  inset: 0;
+  z-index: 3000;
   background: var(--bg);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 20px;
+  gap: 18px;
+  opacity: 1;
+  transition: opacity 0.48s ease, transform 0.48s ease;
+}
+/* Fundido de salida: se desvanece y escala apenas mientras revela la app debajo. */
+.app-splash--out {
+  opacity: 0;
+  transform: scale(1.04);
+  pointer-events: none;
 }
 
-.logo-big {
-  font-size: 3.5rem;
-  font-weight: 900;
-  letter-spacing: -1.5px;
-  margin-bottom: 10px;
+/* Badge del splash: ícono de la app (cuadrado azul-noche redondeado, estilo iOS)
+   con el triángulo verde dentro. El fondo es el mismo azul; el borde y el glow
+   verde ("la luz verde") definen sus bordes. El glow "respira" mientras espera. */
+.splash-badge {
+  width: 112px;
+  height: 112px;
+  border-radius: 28px;
+  background: var(--bg);
+  border: 1px solid rgba(0, 230, 118, 0.28);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 44px rgba(0, 230, 118, 0.18), inset 0 0 0 1px rgba(255, 255, 255, 0.02);
+  animation: splashIn 0.55s cubic-bezier(0.22, 1, 0.36, 1) both,
+             splashBreathe 2.4s ease-in-out 0.55s infinite;
 }
-
-.app-init-loader p {
-  color: var(--text3);
-  font-size: 0.9rem;
+.splash-name {
+  font-size: 1.7rem;
+  font-weight: 800;
   letter-spacing: 0.5px;
+  color: var(--text1);
+  animation: splashIn 0.55s cubic-bezier(0.22, 1, 0.36, 1) 0.08s both;
+}
+@keyframes splashIn {
+  from { opacity: 0; transform: scale(0.92); }
+  to { opacity: 1; transform: scale(1); }
+}
+/* Respiración del glow: vivo, no congelado. Solo brillo/borde (paint), sin layout. */
+@keyframes splashBreathe {
+  0%, 100% { box-shadow: 0 0 40px rgba(0, 230, 118, 0.16), inset 0 0 0 1px rgba(255, 255, 255, 0.02); border-color: rgba(0, 230, 118, 0.24); }
+  50% { box-shadow: 0 0 64px rgba(0, 230, 118, 0.34), inset 0 0 0 1px rgba(255, 255, 255, 0.02); border-color: rgba(0, 230, 118, 0.5); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .app-splash { transition: opacity 0.2s ease; }
+  .app-splash--out { transform: none; }
+  .splash-badge, .splash-name { animation: none; }
 }
 
 .ocr-status {

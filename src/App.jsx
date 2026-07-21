@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Home, PieChart, Wallet, Plus, Settings, Loader2, CheckCircle, AlertCircle, Info, User, Calendar } from 'lucide-react';
 import Dashboard from './components/dashboard/Dashboard';
 import Summary from './components/dashboard/Summary';
@@ -18,6 +18,45 @@ import Logo from './components/ui/Logo';
 import { useFinance } from './context/FinanceContext';
 import { getCycleInfo, formatDateRange } from './utils/financeUtils';
 
+// Splash de arranque estilo app moderna: el ícono de la marca (cuadrado
+// azul-noche con el triángulo verde) + "Finly", con una duración MÍNIMA visible
+// para que no parpadee, un glow que "respira" mientras espera, y un fundido de
+// salida (crossfade) que revela la app en vez de un corte seco de "página
+// cargando". Se auto-desmonta al terminar. Respeta prefers-reduced-motion (CSS).
+function SplashScreen({ appReady }) {
+  const [minDone, setMinDone] = useState(false);
+  const [phase, setPhase] = useState('in'); // 'in' → 'out' → 'gone'
+
+  // Tiempo mínimo en pantalla: suficiente para registrar la marca, corto para no
+  // estorbar. Aunque la sesión resuelva en 50ms, el splash se queda este rato.
+  useEffect(() => {
+    const t = setTimeout(() => setMinDone(true), 850);
+    return () => clearTimeout(t);
+  }, []);
+
+  // Cuando la app está lista Y ya pasó el mínimo → fundir salida y desmontar.
+  useEffect(() => {
+    if (appReady && minDone && phase === 'in') {
+      setPhase('out');
+      const t = setTimeout(() => setPhase('gone'), 480); // = duración del fundido
+      return () => clearTimeout(t);
+    }
+  }, [appReady, minDone, phase]);
+
+  if (phase === 'gone') return null;
+
+  return (
+    <div className={`app-splash${phase === 'out' ? ' app-splash--out' : ''}`} aria-hidden="true">
+      <div className="splash-badge">
+        <svg width="64" height="64" viewBox="0 0 24 24" role="presentation">
+          <path d="M12 4 L21 19 L3 19 Z" fill="var(--green)" />
+        </svg>
+      </div>
+      <span className="splash-name" translate="no">Finly</span>
+    </div>
+  );
+}
+
 function App() {
   const [currentScreen, setCurrentScreen] = useState('dashboard');
   const [selectedExpense, setSelectedExpense] = useState(null);
@@ -32,23 +71,9 @@ function App() {
     setCurrentScreen('dashboard');
   };
 
-  // ─── Auth gate ───
-  if (authLoading) {
-    // Splash mínimo y silencioso: solo la marca, sin texto de "cargando" ni
-    // spinner. El arranque resuelve en <4s (timeout de seguridad en el
-    // contexto), así que esto casi nunca alcanza a verse.
-    return (
-      <div className="app-init-loader">
-        <Logo size={44} />
-      </div>
-    );
-  }
-
-  if (passwordRecovery) return <ResetPasswordScreen />;
-
-  if (!user) return <AuthScreen />;
-
-  if (needsOnboarding) return <OnboardingScreen user={user} onComplete={completeOnboarding} />;
+  // El gating de pantallas (recuperación / login / onboarding / app) se resuelve
+  // más abajo en `content`, para que <SplashScreen> pueda superponerse encima de
+  // cualquiera de ellas durante el arranque y luego fundirse hacia la app.
 
   const handleMonthSelect = (monthKey) => {
     updateSettings({ selectedMonth: monthKey });
@@ -155,7 +180,15 @@ function App() {
     </aside>
   );
 
-  return (
+  let content;
+  if (passwordRecovery) {
+    content = <ResetPasswordScreen />;
+  } else if (!user) {
+    content = <AuthScreen />;
+  } else if (needsOnboarding) {
+    content = <OnboardingScreen user={user} onComplete={completeOnboarding} />;
+  } else {
+    content = (
     <div id="app">
       <ToastContainer />
       <DesktopSidebar />
@@ -275,6 +308,14 @@ function App() {
         </button>
       </nav>
     </div>
+    );
+  }
+
+  return (
+    <>
+      {content}
+      <SplashScreen appReady={!authLoading} />
+    </>
   );
 }
 

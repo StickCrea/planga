@@ -552,7 +552,7 @@ export function FinanceProvider({ children }) {
 
   // ─── CRUD: Expenses ───
   const addExpense = async (expense) => {
-    if (!user) return;
+    if (!user) return false;
 
     // Find current ciclo_id
     const cicloId = state.currentCiclo?.id;
@@ -591,7 +591,7 @@ export function FinanceProvider({ children }) {
       showToast(`Error al guardar gasto: ${error.message || error.code}`, 'error');
       // Revert optimistic update by reloading data
       await loadCurrentCycleAndExpenses();
-      return; 
+      return false;
     }
 
     showToast('Anotado, gasto registrado.');
@@ -612,6 +612,7 @@ export function FinanceProvider({ children }) {
 
     // Reload expenses
     await loadCurrentCycleAndExpenses();
+    return true;
   };
 
   const deleteExpense = async (id) => {
@@ -707,21 +708,15 @@ export function FinanceProvider({ children }) {
   const markCommitmentAsPaid = async (commitment) => {
     if (!user) return;
     const currentMk = getMonthKey(state);
-    
-    // 1. Add to paidCommitmentIds in state
-    setState(prev => {
-      const currentPaid = prev.paidCommitmentIds?.[currentMk] || [];
-      if (currentPaid.includes(commitment.id)) return prev; // Already paid
-      return {
-        ...prev,
-        paidCommitmentIds: {
-          ...prev.paidCommitmentIds,
-          [currentMk]: [...currentPaid, commitment.id]
-        }
-      };
-    });
 
-    // 2. Automatically create a real expense in gastos
+    // Evita doble cobro si ya está pagado en este ciclo.
+    const alreadyPaid = state.paidCommitmentIds?.[currentMk] || [];
+    if (alreadyPaid.includes(commitment.id)) return;
+
+    // 1. Registrar PRIMERO el gasto real. El compromiso solo se marca como
+    //    pagado si el gasto se guardó de verdad: así "pagado" (✓) y "saldo
+    //    descontado" nunca quedan inconsistentes (antes se marcaba el ✓ aunque
+    //    el INSERT fallara, dejando el compromiso pagado sin bajar el saldo).
     const expense = {
       id: 'e' + Date.now(),
       amount: commitment.amount,
@@ -735,7 +730,21 @@ export function FinanceProvider({ children }) {
       metadata: []
     };
 
-    await addExpense(expense);
+    const ok = await addExpense(expense);
+    if (!ok) return; // addExpense ya avisó del error; no marcamos como pagado.
+
+    // 2. Marcar como pagado (addExpense recargó el estado, así que reusamos prev)
+    setState(prev => {
+      const currentPaid = prev.paidCommitmentIds?.[currentMk] || [];
+      if (currentPaid.includes(commitment.id)) return prev; // Already paid
+      return {
+        ...prev,
+        paidCommitmentIds: {
+          ...prev.paidCommitmentIds,
+          [currentMk]: [...currentPaid, commitment.id]
+        }
+      };
+    });
   };
 
   // ─── Settings ───

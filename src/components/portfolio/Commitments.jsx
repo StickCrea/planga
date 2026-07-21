@@ -13,7 +13,17 @@ export default function Commitments() {
   const [formData, setFormData] = useState({ name: '', amount: '', day: '' });
   const [confirmModal, setConfirmModal] = useState({ isOpen: false, commitment: null });
 
-  const totalCommitments = state.commitments.reduce((s, c) => s + c.amount, 0);
+  const commitments = state.commitments || [];
+  const currentMk = state.selectedMonth || state.currentCiclo?.nombre || '';
+  const paidIds = state.paidCommitmentIds?.[currentMk] || [];
+
+  const totalCommitments = commitments.reduce((s, c) => s + c.amount, 0);
+  const paidTotal = commitments.filter(c => paidIds.includes(c.id)).reduce((s, c) => s + c.amount, 0);
+  const pendingTotal = totalCommitments - paidTotal;
+  const paidCount = commitments.filter(c => paidIds.includes(c.id)).length;
+  const totalCount = commitments.length;
+  const paidPct = totalCommitments > 0 ? Math.round((paidTotal / totalCommitments) * 100) : 0;
+  const allPaid = totalCount > 0 && paidCount === totalCount;
 
   const openNewModal = () => {
     setEditingId(null);
@@ -60,24 +70,31 @@ export default function Commitments() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+      {/* Resumen del ciclo: lo que importa es cuánto FALTA por pagar. El número
+          se vuelve verde ("vas bien") cuando ya pagaste todo. Una sola tarjeta,
+          sin bloques explicativos repetidos. */}
       <div className="glass-card main-card">
-        <h2 className="card-label">Total Compromisos Mes</h2>
-        <div className="money-big" style={{ color: 'var(--red)' }}>{fmt(totalCommitments)}</div>
-        <p style={{ fontSize: '0.75rem', color: 'var(--text3)', marginTop: '8px', lineHeight: '1.4' }}>
-          Estos gastos fijos no se descuentan por adelantado. Solo se restan de tu dinero disponible del ciclo actual cuando los marcas como pagados.
-        </p>
-      </div>
-
-      {/* Cajita explicativa premium integrada */}
-      <div className="glass-card" style={{ padding: '16px', borderLeft: '3px solid var(--accent)', display: 'flex', gap: '12px', background: 'rgba(255,255,255,0.01)' }}>
-        <Info size={20} style={{ color: 'var(--accent)', flexShrink: 0, marginTop: '2px' }} />
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-          <h4 style={{ fontSize: '0.85rem', fontWeight: 700 }}>¿Qué son los Compromisos Fijos?</h4>
-          <p style={{ fontSize: '0.76rem', color: 'var(--text3)', lineHeight: '1.4' }}>
-            Son aquellos gastos obligatorios fijos recurrentes (como el arriendo, el plan del celular o servicios). 
-            A diferencia de las deudas, solo se descuentan de tu saldo disponible cuando confirmas su pago presionando "Pagar".
-          </p>
+        <h2 className="card-label">{allPaid ? 'Todo pagado este ciclo' : 'Pendiente por pagar'}</h2>
+        <div className="money-big" style={{ color: allPaid ? 'var(--green)' : 'var(--red)' }}>
+          {fmt(allPaid ? totalCommitments : pendingTotal)}
         </div>
+
+        {totalCount > 0 && (
+          <>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '10px', fontSize: '0.72rem', color: 'var(--text3)' }}>
+              <span>Pagado <strong style={{ color: 'var(--green)' }}>{fmt(paidTotal)}</strong> de {fmt(totalCommitments)}</span>
+              <span style={{ fontWeight: 700 }}>{paidCount}/{totalCount}</span>
+            </div>
+            <div style={{ height: '6px', borderRadius: '99px', background: 'rgba(255,255,255,0.06)', overflow: 'hidden', marginTop: '6px' }}>
+              <div style={{ height: '100%', width: '100%', background: 'var(--green)', borderRadius: '99px', transformOrigin: 'left', transform: `scaleX(${paidPct / 100})`, transition: 'transform 0.4s ease' }} />
+            </div>
+          </>
+        )}
+
+        <p style={{ fontSize: '0.72rem', color: 'var(--text3)', marginTop: '12px', lineHeight: '1.4', display: 'flex', gap: '6px', alignItems: 'flex-start' }}>
+          <Info size={14} style={{ color: 'var(--accent)', flexShrink: 0, marginTop: '1px' }} />
+          <span>Gastos fijos como arriendo o servicios. Solo se restan de tu saldo disponible cuando pulsas “Pagar”.</span>
+        </p>
       </div>
 
       <div className="glass-card">
@@ -89,16 +106,13 @@ export default function Commitments() {
         </div>
 
         {(() => {
-          const currentMk = state.selectedMonth || state.currentCiclo?.nombre || '';
-          const paidIds = state.paidCommitmentIds?.[currentMk] || [];
-          
-          if (state.commitments.length === 0) {
+          if (commitments.length === 0) {
             return <EmptyState message="No hay compromisos configurados." />;
           }
-          
+
           return (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              {state.commitments.sort((a, b) => a.day - b.day).map(c => {
+              {[...commitments].sort((a, b) => a.day - b.day).map(c => {
                 const isPaid = paidIds.includes(c.id);
                 return (
                   <div 
