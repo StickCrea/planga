@@ -540,6 +540,9 @@ body {
   .main-content {
     flex: 1;
     overflow-y: auto;
+    /* Contiene la banda a sangre completa del header sticky (::before con
+       left/right negativos) para que no genere scroll horizontal. */
+    overflow-x: hidden;
     position: relative;
     background: var(--bg);
   }
@@ -556,6 +559,23 @@ body {
        "fantasma" al hacer scroll (se superponía). Sólido = nunca se transparenta. */
     background: var(--bg);
     border-bottom: 1px solid var(--glass-border);
+  }
+
+  /* El header sticky está centrado (max-width + margin:auto) y su padre .screen
+     tiene padding asimétrico, así que su caja NO cubre todo el ancho del área de
+     scroll. Al hacer scroll, las tarjetas translúcidas (--bg-card) asomaban por
+     los lados del header = "fantasma". Esta banda a sangre completa pinta un
+     fondo opaco de borde a borde de .main-content, por detrás del contenido del
+     header pero por delante de lo que se desplaza. */
+  .screen-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: -50vw;
+    right: -50vw;
+    background: var(--bg);
+    z-index: -1;
   }
 
   .screen-header .logo {
