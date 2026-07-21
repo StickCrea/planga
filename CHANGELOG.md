@@ -9,6 +9,18 @@ y el proyecto usa [Versionado Semántico](https://semver.org/lang/es/):
 - **MINOR** (`1.1.0`) — funcionalidad nueva compatible hacia atrás.
 - **PATCH** (`1.0.1`) — correcciones de bugs y ajustes visuales.
 
+## [1.0.1] — 2026-07-21
+
+### Corregido
+
+- **Login con Google bloqueado al volver atrás:** si el usuario iniciaba el
+  acceso con Google y se devolvía sin completarlo, el navegador restauraba la
+  pantalla desde el bfcache con el estado intacto, dejando el botón girando y
+  deshabilitado para siempre — sin poder reintentar salvo recargando a mano.
+  Ahora, al volver a mostrarse la pantalla, se libera ese "cargando" huérfano.
+  El reseteo solo aplica si había un acceso externo pendiente, para no
+  interferir con el inicio de sesión por contraseña.
+
 ## [1.0.0] — 2026-07-21
 
 Primera versión etiquetada. Recoge el estado actual en producción.

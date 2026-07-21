@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../../lib/supabase';
 import { Loader2 } from 'lucide-react';
 import { useFinance } from '../../context/FinanceContext';
@@ -15,6 +15,31 @@ export default function AuthScreen() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
+  // Marca que salimos de la app hacia un proveedor externo (Google). Sobrevive al
+  // bfcache junto con el resto del estado, así sabemos que el "cargando" que
+  // quedó puesto es de un login que el usuario abandonó.
+  const oauthPendingRef = useRef(false);
+
+  // Si el usuario inicia el login con Google y se devuelve sin completarlo, el
+  // navegador restaura esta página desde el bfcache con el estado intacto: el
+  // botón se quedaba girando y deshabilitado para siempre, sin poder reintentar.
+  // Al volver a mostrarse la página, soltamos ese "cargando" huérfano.
+  useEffect(() => {
+    const releaseIfAbandoned = () => {
+      if (!oauthPendingRef.current) return; // no tocar un login por contraseña en curso
+      oauthPendingRef.current = false;
+      setLoading(false);
+    };
+    const onPageShow = (e) => { if (e.persisted) releaseIfAbandoned(); };
+    const onVisibility = () => { if (document.visibilityState === 'visible') releaseIfAbandoned(); };
+
+    window.addEventListener('pageshow', onPageShow);
+    document.addEventListener('visibilitychange', onVisibility);
+    return () => {
+      window.removeEventListener('pageshow', onPageShow);
+      document.removeEventListener('visibilitychange', onVisibility);
+    };
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -64,9 +89,13 @@ export default function AuthScreen() {
 
   const handleGoogle = async () => {
     setLoading(true);
+    setError('');
+    // A partir de aquí el navegador puede irse a Google: si vuelve sin completar,
+    // el efecto de arriba usa esta marca para soltar el "cargando".
+    oauthPendingRef.current = true;
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: { 
+      options: {
         redirectTo: window.location.origin,
         queryParams: {
           prompt: 'select_account'
@@ -76,6 +105,7 @@ export default function AuthScreen() {
     if (error) {
       setError(error.message);
       setLoading(false);
+      oauthPendingRef.current = false;
     }
   };
 
