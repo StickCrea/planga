@@ -14,7 +14,9 @@ export default defineConfig([
       reactRefresh.configs.vite,
     ],
     languageOptions: {
-      globals: globals.browser,
+      // __APP_VERSION__ lo inyecta Vite en build (define en vite.config.js)
+      // desde la versión de package.json; para ESLint es un global de solo lectura.
+      globals: { ...globals.browser, __APP_VERSION__: 'readonly' },
       parserOptions: { ecmaFeatures: { jsx: true } },
     },
   },

@@ -1,0 +1,26 @@
+{
+  "name": "Finly",
+  "short_name": "Finly",
+  "description": "Todo tu dinero en un solo lugar — cuánto puedes gastar hoy, sin fricción.",
+  "lang": "es-CO",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0A0F1E",
+  "theme_color": "#0A0F1E",
+  "icons": [
+    {
+      "src": "/finly.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/finly.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ]
+}

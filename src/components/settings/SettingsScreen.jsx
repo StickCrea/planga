@@ -172,6 +172,12 @@ export default function SettingsScreen({ onSave }) {
         message="¿Estás seguro de que deseas restablecer todos tus datos locales de prueba? Se borrarán tus gastos, ingresos, deudas y compromisos actuales."
         confirmLabel="Restablecer"
       />
+
+      {/* Versión del build: al reportar un bug sabemos exactamente qué está
+          corriendo el usuario. __APP_VERSION__ lo inyecta Vite desde package.json. */}
+      <p style={{ textAlign: 'center', fontSize: '0.72rem', color: 'var(--text3)', marginTop: 'var(--space-5)' }}>
+        Finly v{typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : 'dev'}
+      </p>
     </div>
   );
 }
